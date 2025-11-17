@@ -1,0 +1,21 @@
+[package]
+name = "fortifier-macros"
+description = "Macros for Fortifier."
+
+authors.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+version.workspace = true
+
+[lib]
+proc-macro = true
+
+[dependencies]
+proc-macro2 = "1.0.103"
+quote = "1.0.42"
+syn = "2.0.110"
+
+[dev-dependencies]
+fortifier.workspace = true
+trybuild = "1.0.114"

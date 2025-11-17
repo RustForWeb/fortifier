@@ -10,7 +10,7 @@ multiple-versions = "allow"
 wildcards = "deny"
 
 [licenses]
-allow = ["MIT"]
+allow = ["MIT", "Unicode-3.0"]
 confidence-threshold = 1.0
 
 [sources]
