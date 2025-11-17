@@ -1,0 +1,8 @@
+{
+    "$schema": "https://json.schemastore.org/prettierrc",
+    "jsonRecursiveSort": true,
+    "plugins": ["prettier-plugin-sort-json"],
+    "printWidth": 120,
+    "singleQuote": true,
+    "tabWidth": 4
+}

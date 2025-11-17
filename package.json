@@ -1,0 +1,21 @@
+{
+    "name": "@rustforweb/fortifier",
+    "description": "Schema validation.",
+    "author": "Rust for Web <info@rustforweb.org>",
+    "repository": "github:RustForWeb/fortifier",
+    "license": "MIT",
+    "private": true,
+    "workspaces": [],
+    "scripts": {
+        "build": "turbo build",
+        "dev": "turbo dev"
+    },
+    "devDependencies": {
+        "prettier": "^3.4.2",
+        "prettier-plugin-sort-json": "^4.1.1"
+    },
+    "engines": {
+        "node": ">=22"
+    },
+    "packageManager": "npm@11.6.2"
+}

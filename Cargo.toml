@@ -1,0 +1,13 @@
+[workspace]
+members = ["packages/*"]
+resolver = "2"
+
+[workspace.package]
+authors = ["Rust for Web <info@rustforweb.org>"]
+edition = "2024"
+license = "MIT"
+repository = "https://github.com/RustForWeb/fortifier"
+version = "0.0.1"
+
+[workspace.dependencies]
+fortifier = { path = "./packages/fortifier", version = "0.0.1" }

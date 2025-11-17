@@ -1,0 +1,18 @@
+[graph]
+all-features = true
+
+[advisories]
+ignore = []
+
+[bans]
+allow-wildcard-paths = true
+multiple-versions = "allow"
+wildcards = "deny"
+
+[licenses]
+allow = ["MIT"]
+confidence-threshold = 1.0
+
+[sources]
+unknown-git = "deny"
+unknown-registry = "deny"
