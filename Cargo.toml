@@ -11,3 +11,4 @@ version = "0.0.1"
 
 [workspace.dependencies]
 fortifier = { path = "./packages/fortifier", version = "0.0.1" }
+fortifier-macros = { path = "./packages/fortifier-macros", version = "0.0.1" }
