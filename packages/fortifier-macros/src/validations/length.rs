@@ -1,6 +1,6 @@
 use proc_macro2::TokenStream;
 use quote::quote;
-use syn::{Expr, Ident, Result, meta::ParseNestedMeta};
+use syn::{Expr, Result, meta::ParseNestedMeta};
 
 #[derive(Default)]
 pub struct Length {
@@ -37,7 +37,7 @@ impl Length {
         Ok(result)
     }
 
-    pub fn tokens(&self, ident: &Ident) -> TokenStream {
+    pub fn tokens(&self, expr: &TokenStream) -> TokenStream {
         let equal = if let Some(equal) = &self.equal {
             quote!(Some(#equal))
         } else {
@@ -55,7 +55,7 @@ impl Length {
         };
 
         quote! {
-            self.#ident.validate_length(#equal, #min, #max)
+            #expr.validate_length(#equal, #min, #max)
         }
     }
 }

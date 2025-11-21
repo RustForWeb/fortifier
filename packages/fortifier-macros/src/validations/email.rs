@@ -1,6 +1,6 @@
 use proc_macro2::TokenStream;
 use quote::quote;
-use syn::{Ident, Result, meta::ParseNestedMeta};
+use syn::{Result, meta::ParseNestedMeta};
 
 #[derive(Default)]
 pub struct Email {}
@@ -10,9 +10,9 @@ impl Email {
         Ok(Email::default())
     }
 
-    pub fn tokens(&self, ident: &Ident) -> TokenStream {
+    pub fn tokens(&self, expr: &TokenStream) -> TokenStream {
         quote! {
-            self.#ident.validate_email()
+            #expr.validate_email()
         }
     }
 }
