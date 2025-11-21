@@ -4,6 +4,7 @@ use std::{
     pin::Pin,
 };
 
+/// Validation errors.
 #[derive(Debug)]
 pub struct ValidationErrors<E: Error>(Vec<E>);
 
@@ -21,9 +22,12 @@ impl<E: Error> From<Vec<E>> for ValidationErrors<E> {
     }
 }
 
+/// Validate a schema.
 pub trait Validate {
+    /// Validation error.
     type Error: Error;
 
+    /// Validate schema using all validators.
     fn validate(
         &self,
     ) -> Pin<Box<impl Future<Output = Result<(), ValidationErrors<Self::Error>>> + Send>>
@@ -36,8 +40,10 @@ pub trait Validate {
         })
     }
 
+    /// Validate schema using only synchronous validators.
     fn validate_sync(&self) -> Result<(), ValidationErrors<Self::Error>>;
 
+    /// Validate schema using only asynchronous validators.
     fn validate_async(
         &self,
     ) -> Pin<Box<impl Future<Output = Result<(), ValidationErrors<Self::Error>>> + Send>>;
