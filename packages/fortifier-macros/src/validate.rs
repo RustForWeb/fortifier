@@ -1,22 +1,36 @@
 mod r#enum;
+mod field;
 mod r#struct;
 mod r#union;
 
 use proc_macro2::TokenStream;
-use quote::format_ident;
+use quote::ToTokens;
 use syn::{Data, DeriveInput, Result};
 
-use crate::validate::{
-    r#enum::validate_enum, r#struct::validate_struct_tokens, union::validate_union,
-};
+use crate::validate::{r#enum::ValidateEnum, r#struct::ValidateStruct, union::ValidateUnion};
 
-pub fn validate_tokens(input: DeriveInput) -> Result<TokenStream> {
-    let ident = input.ident;
-    let error_ident = format_ident!("{ident}ValidationError");
+pub enum Validate {
+    Struct(ValidateStruct),
+    Enum(ValidateEnum),
+    Union(ValidateUnion),
+}
 
-    match input.data {
-        Data::Struct(data) => validate_struct_tokens(ident, error_ident, data),
-        Data::Enum(data) => validate_enum(ident, error_ident, data),
-        Data::Union(data) => validate_union(ident, error_ident, data),
+impl Validate {
+    pub fn parse(input: DeriveInput) -> Result<Self> {
+        Ok(match &input.data {
+            Data::Struct(data) => Self::Struct(ValidateStruct::parse(&input, data)?),
+            Data::Enum(data) => Self::Enum(ValidateEnum::parse(&input, data)?),
+            Data::Union(data) => Self::Union(ValidateUnion::parse(&input, data)?),
+        })
+    }
+}
+
+impl ToTokens for Validate {
+    fn to_tokens(&self, tokens: &mut TokenStream) {
+        match self {
+            Validate::Struct(r#struct) => r#struct.to_tokens(tokens),
+            Validate::Enum(r#enum) => r#enum.to_tokens(tokens),
+            Validate::Union(r#union) => r#union.to_tokens(tokens),
+        }
     }
 }

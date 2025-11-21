@@ -9,58 +9,53 @@ pub struct Length {
     pub max: Option<Expr>,
 }
 
-pub fn parse_length(meta: &ParseNestedMeta<'_>) -> Result<Length> {
-    let mut length = Length::default();
+impl Length {
+    pub fn parse(meta: &ParseNestedMeta<'_>) -> Result<Length> {
+        let mut result = Length::default();
 
-    meta.parse_nested_meta(|meta| {
-        if meta.path.is_ident("equal") {
-            let expr: Expr = meta.value()?.parse()?;
-            length.equal = Some(expr);
+        meta.parse_nested_meta(|meta| {
+            if meta.path.is_ident("equal") {
+                let expr: Expr = meta.value()?.parse()?;
+                result.equal = Some(expr);
 
-            Ok(())
-        } else if meta.path.is_ident("min") {
-            let expr: Expr = meta.value()?.parse()?;
-            length.min = Some(expr);
+                Ok(())
+            } else if meta.path.is_ident("min") {
+                let expr: Expr = meta.value()?.parse()?;
+                result.min = Some(expr);
 
-            Ok(())
-        } else if meta.path.is_ident("max") {
-            let expr: Expr = meta.value()?.parse()?;
-            length.max = Some(expr);
+                Ok(())
+            } else if meta.path.is_ident("max") {
+                let expr: Expr = meta.value()?.parse()?;
+                result.max = Some(expr);
 
-            Ok(())
+                Ok(())
+            } else {
+                Err(meta.error("unknown length parameter"))
+            }
+        })?;
+
+        Ok(result)
+    }
+
+    pub fn tokens(&self, ident: &Ident) -> TokenStream {
+        let equal = if let Some(equal) = &self.equal {
+            quote!(Some(#equal))
         } else {
-            Err(meta.error("unknown length parameter"))
-        }
-    })?;
+            quote!(None)
+        };
+        let min = if let Some(min) = &self.min {
+            quote!(Some(#min))
+        } else {
+            quote!(None)
+        };
+        let max = if let Some(max) = &self.max {
+            quote!(Some(#max))
+        } else {
+            quote!(None)
+        };
 
-    Ok(length)
-}
-
-pub fn length_tokens(
-    length: Length,
-    error_ident: &Ident,
-    field_ident: &Ident,
-    field_error_ident: &Ident,
-) -> TokenStream {
-    let equal = if let Some(equal) = length.equal {
-        quote!(Some(#equal))
-    } else {
-        quote!(None)
-    };
-    let min = if let Some(min) = length.min {
-        quote!(Some(#min))
-    } else {
-        quote!(None)
-    };
-    let max = if let Some(max) = length.max {
-        quote!(Some(#max))
-    } else {
-        quote!(None)
-    };
-
-    quote! {
-        if let Err(err) = self.#field_ident.validate_length(#equal, #min, #max) {
-            errors.push(#error_ident::#field_error_ident(err));
+        quote! {
+            self.#ident.validate_length(#equal, #min, #max)
         }
     }
 }

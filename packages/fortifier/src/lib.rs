@@ -1,3 +1,7 @@
+#![warn(missing_docs)]
+
+//! Fortifier.
+
 mod validate;
 mod validations;
 

@@ -16,3 +16,6 @@ macros = ["dep:fortifier-macros"]
 [dependencies]
 fortifier-macros = { workspace = true, optional = true }
 indexmap = { version = "2.12.0", optional = true }
+
+[lints]
+workspace = true

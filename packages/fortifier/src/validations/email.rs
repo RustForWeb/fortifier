@@ -5,14 +5,19 @@ use std::{
     sync::Arc,
 };
 
+/// Email validation error.
 #[derive(Debug)]
 pub enum EmailError {
+    /// Invalid email address.
     Invalid,
 }
 
+/// Validate an email address.
 pub trait ValidateEmail {
+    /// The email address.
     fn email(&self) -> Option<Cow<'_, str>>;
 
+    /// Validate email address.
     fn validate_email(&self) -> Result<(), EmailError> {
         let Some(email) = self.email() else {
             return Ok(());

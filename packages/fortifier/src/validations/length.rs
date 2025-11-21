@@ -9,19 +9,44 @@ use std::{
 #[cfg(feature = "indexmap")]
 use indexmap::{IndexMap, IndexSet};
 
+/// Length validation error.
 #[derive(Debug)]
 pub enum LengthError<T> {
-    Equal { equal: T, length: T },
-    Min { min: T, length: T },
-    Max { max: T, length: T },
+    /// Length is not equal to the required length.
+    Equal {
+        /// The required length.
+        equal: T,
+
+        /// The actual length.
+        length: T,
+    },
+    /// Length is less than the minimum length.
+    Min {
+        /// The minimum length.
+        min: T,
+
+        /// The actual length.
+        length: T,
+    },
+    /// Length is more than the maximum length.
+    Max {
+        /// The maximum length.
+        max: T,
+
+        /// The length.
+        length: T,
+    },
 }
 
+/// Validate a length.
 pub trait ValidateLength<T>
 where
     T: PartialEq + PartialOrd,
 {
+    /// The length.
     fn length(&self) -> Option<T>;
 
+    /// Validate length.
     fn validate_length(
         &self,
         equal: Option<T>,
