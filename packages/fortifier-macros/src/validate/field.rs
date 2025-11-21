@@ -1,20 +1,20 @@
 use proc_macro2::TokenStream;
 use quote::quote;
-use syn::{Field, Ident, Result};
+use syn::{Field, Result};
 
 use crate::validations::{Email, Length};
 
 pub struct ValidateField {
-    ident: Ident,
+    expr: TokenStream,
     // TODO: Consider using a trait for validations.
     email: Option<Email>,
     length: Option<Length>,
 }
 
 impl ValidateField {
-    pub fn parse(ident: Ident, field: &Field) -> Result<Self> {
+    pub fn parse(expr: TokenStream, field: &Field) -> Result<Self> {
         let mut result = Self {
-            ident,
+            expr,
             email: None,
             length: None,
         };
@@ -53,11 +53,8 @@ impl ValidateField {
     }
 
     pub fn sync_validations(&self) -> Vec<TokenStream> {
-        let email = self.email.as_ref().map(|email| email.tokens(&self.ident));
-        let length = self
-            .length
-            .as_ref()
-            .map(|length| length.tokens(&self.ident));
+        let email = self.email.as_ref().map(|email| email.tokens(&self.expr));
+        let length = self.length.as_ref().map(|length| length.tokens(&self.expr));
 
         [email, length].into_iter().flatten().collect()
     }
