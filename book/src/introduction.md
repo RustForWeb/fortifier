@@ -2,6 +2,10 @@
 
 Schema validation.
 
+## Credits
+
+Inspired by [`validator`](https://github.com/Keats/validator).
+
 ## License
 
 This project is available under the [MIT license](https://github.com/RustForWeb/fortifier/blob/main/LICENSE.md).

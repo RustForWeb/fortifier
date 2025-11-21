@@ -6,6 +6,10 @@ Schema validation.
 
 See [the Fortifier book](https://fortifier.rustforweb.org/) for documentation.
 
+## Credits
+
+Inspired by [`validator`](https://github.com/Keats/validator).
+
 ## License
 
 This project is available under the [MIT license](LICENSE.md).
