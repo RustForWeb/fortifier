@@ -10,7 +10,7 @@ use std::{
 use indexmap::{IndexMap, IndexSet};
 
 /// Length validation error.
-#[derive(Debug)]
+#[derive(Debug, Eq, PartialEq)]
 pub enum LengthError<T> {
     /// Length is not equal to the required length.
     Equal {
@@ -79,27 +79,7 @@ where
     }
 }
 
-macro_rules! validate_type_with_deref {
-    ($type:ty) => {
-        impl<T> ValidateLength<usize> for $type
-        where
-            T: ValidateLength<usize>,
-        {
-            fn length(&self) -> Option<usize> {
-                T::length(self)
-            }
-        }
-    };
-}
-
-validate_type_with_deref!(&T);
-validate_type_with_deref!(Arc<T>);
-validate_type_with_deref!(Box<T>);
-validate_type_with_deref!(Rc<T>);
-validate_type_with_deref!(Ref<'_, T>);
-validate_type_with_deref!(RefMut<'_, T>);
-
-macro_rules! validate_type_with_chars {
+macro_rules! validate_with_chars {
     ($type:ty) => {
         impl ValidateLength<usize> for $type {
             fn length(&self) -> Option<usize> {
@@ -109,13 +89,19 @@ macro_rules! validate_type_with_chars {
     };
 }
 
-validate_type_with_chars!(str);
-validate_type_with_chars!(&str);
-validate_type_with_chars!(String);
+validate_with_chars!(str);
+validate_with_chars!(&str);
+validate_with_chars!(String);
 
-macro_rules! validate_type_with_len {
+impl<T, const N: usize> ValidateLength<usize> for [T; N] {
+    fn length(&self) -> Option<usize> {
+        Some(N)
+    }
+}
+
+macro_rules! validate_with_len {
     ($type:ty) => {
-        validate_type_with_len!($type,);
+        validate_with_len!($type,);
     };
     ($type:ty, $( $generic:ident ),*$( , )*) => {
         impl<$( $generic ),*> ValidateLength<usize> for $type {
@@ -126,33 +112,24 @@ macro_rules! validate_type_with_len {
     };
 }
 
-validate_type_with_len!([T], T);
-validate_type_with_len!(BTreeSet<T>, T);
-validate_type_with_len!(BTreeMap<K, V>, K, V);
-validate_type_with_len!(HashSet<T, S>, T, S);
-validate_type_with_len!(HashMap<K, V, S>, K, V, S);
-validate_type_with_len!(Vec<T>, T);
-validate_type_with_len!(VecDeque<T>, T);
+validate_with_len!([T], T);
+validate_with_len!(BTreeSet<T>, T);
+validate_with_len!(BTreeMap<K, V>, K, V);
+validate_with_len!(HashSet<T, S>, T, S);
+validate_with_len!(HashMap<K, V, S>, K, V, S);
+validate_with_len!(Vec<T>, T);
+validate_with_len!(VecDeque<T>, T);
 #[cfg(feature = "indexmap")]
-validate_type_with_len!(IndexSet<T>, T);
+validate_with_len!(IndexSet<T>, T);
 #[cfg(feature = "indexmap")]
-validate_type_with_len!(IndexMap<K, V>, K, V);
+validate_with_len!(IndexMap<K, V>, K, V);
 
-impl<T> ValidateLength<usize> for Cow<'_, T>
+impl<L, T> ValidateLength<L> for Option<T>
 where
-    T: ToOwned + ?Sized,
-    for<'a> &'a T: ValidateLength<usize>,
+    L: PartialEq + PartialOrd,
+    T: ValidateLength<L>,
 {
-    fn length(&self) -> Option<usize> {
-        self.as_ref().length()
-    }
-}
-
-impl<T> ValidateLength<usize> for Option<T>
-where
-    T: ValidateLength<usize>,
-{
-    fn length(&self) -> Option<usize> {
+    fn length(&self) -> Option<L> {
         if let Some(s) = self {
             T::length(s)
         } else {
@@ -161,8 +138,497 @@ where
     }
 }
 
-impl<T, const N: usize> ValidateLength<usize> for [T; N] {
-    fn length(&self) -> Option<usize> {
-        Some(N)
+macro_rules! validate_with_deref {
+    ($type:ty) => {
+        impl<L, T> ValidateLength<L> for $type
+        where
+            L: PartialEq + PartialOrd,
+            T: ValidateLength<L>,
+        {
+            fn length(&self) -> Option<L> {
+                T::length(self)
+            }
+        }
+    };
+}
+
+validate_with_deref!(&T);
+validate_with_deref!(Arc<T>);
+validate_with_deref!(Box<T>);
+validate_with_deref!(Rc<T>);
+validate_with_deref!(Ref<'_, T>);
+validate_with_deref!(RefMut<'_, T>);
+
+impl<L, T> ValidateLength<L> for Cow<'_, T>
+where
+    L: PartialEq + PartialOrd,
+    T: ToOwned + ?Sized,
+    for<'a> &'a T: ValidateLength<L>,
+{
+    fn length(&self) -> Option<L> {
+        self.as_ref().length()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use std::{
+        borrow::Cow,
+        cell::RefCell,
+        collections::{BTreeMap, BTreeSet, HashMap, HashSet, VecDeque},
+        rc::Rc,
+        sync::Arc,
+    };
+
+    #[cfg(feature = "indexmap")]
+    use indexmap::{IndexMap, IndexSet};
+
+    use super::{LengthError, ValidateLength};
+
+    #[test]
+    fn ok() {
+        assert_eq!((*"a").validate_length(Some(1), None, None), Ok(()));
+        assert_eq!("a".validate_length(Some(1), None, None), Ok(()));
+        assert_eq!("a".to_owned().validate_length(Some(1), None, None), Ok(()));
+        assert_eq!(
+            Cow::<str>::Borrowed("a").validate_length(Some(1), None, None),
+            Ok(())
+        );
+        assert_eq!(
+            Cow::<str>::Owned("a".to_owned()).validate_length(Some(1), None, None),
+            Ok(())
+        );
+
+        assert_eq!(None::<&str>.validate_length(Some(1), None, None), Ok(()));
+        assert_eq!(Some("a").validate_length(Some(1), None, None), Ok(()));
+
+        assert_eq!([""; 1].validate_length(Some(1), None, None), Ok(()));
+        assert_eq!([""].validate_length(Some(1), None, None), Ok(()));
+        assert_eq!(
+            BTreeSet::from([""]).validate_length(Some(1), None, None),
+            Ok(())
+        );
+        assert_eq!(
+            BTreeMap::from([("", "")]).validate_length(Some(1), None, None),
+            Ok(())
+        );
+        assert_eq!(
+            HashSet::from([""]).validate_length(Some(1), None, None),
+            Ok(())
+        );
+        assert_eq!(
+            HashMap::from([("", "")]).validate_length(Some(1), None, None),
+            Ok(())
+        );
+        assert_eq!(vec![""].validate_length(Some(1), None, None), Ok(()));
+        assert_eq!(
+            VecDeque::from([""]).validate_length(Some(1), None, None),
+            Ok(())
+        );
+
+        #[cfg(feature = "indexmap")]
+        {
+            assert_eq!(
+                IndexSet::from([""]).validate_length(Some(1), None, None),
+                Ok(())
+            );
+            assert_eq!(
+                IndexMap::from([("", "")]).validate_length(Some(1), None, None),
+                Ok(())
+            );
+        }
+
+        assert_eq!((&"a").validate_length(Some(1), None, None), Ok(()));
+        #[expect(unused_allocation)]
+        {
+            assert_eq!(Box::new("a").validate_length(Some(1), None, None), Ok(()));
+        }
+        assert_eq!(Arc::new("a").validate_length(Some(1), None, None), Ok(()));
+        assert_eq!(Rc::new("a").validate_length(Some(1), None, None), Ok(()));
+
+        let cell = RefCell::new("a");
+        assert_eq!(cell.borrow().validate_length(Some(1), None, None), Ok(()));
+        assert_eq!(
+            cell.borrow_mut().validate_length(Some(1), None, None),
+            Ok(())
+        );
+    }
+
+    #[test]
+    fn equal_error() {
+        assert_eq!(
+            (*"a").validate_length(Some(2), None, None),
+            Err(LengthError::Equal {
+                equal: 2,
+                length: 1
+            })
+        );
+        assert_eq!(
+            "a".validate_length(Some(2), None, None),
+            Err(LengthError::Equal {
+                equal: 2,
+                length: 1
+            })
+        );
+        assert_eq!(
+            "a".to_owned().validate_length(Some(2), None, None),
+            Err(LengthError::Equal {
+                equal: 2,
+                length: 1
+            })
+        );
+        assert_eq!(
+            Cow::<str>::Borrowed("a").validate_length(Some(2), None, None),
+            Err(LengthError::Equal {
+                equal: 2,
+                length: 1
+            })
+        );
+        assert_eq!(
+            Cow::<str>::Owned("a".to_owned()).validate_length(Some(2), None, None),
+            Err(LengthError::Equal {
+                equal: 2,
+                length: 1
+            })
+        );
+
+        assert_eq!(
+            Some("a").validate_length(Some(2), None, None),
+            Err(LengthError::Equal {
+                equal: 2,
+                length: 1
+            })
+        );
+
+        assert_eq!(
+            [""; 1].validate_length(Some(2), None, None),
+            Err(LengthError::Equal {
+                equal: 2,
+                length: 1
+            })
+        );
+        assert_eq!(
+            [""].validate_length(Some(2), None, None),
+            Err(LengthError::Equal {
+                equal: 2,
+                length: 1
+            })
+        );
+        assert_eq!(
+            BTreeSet::from([""]).validate_length(Some(2), None, None),
+            Err(LengthError::Equal {
+                equal: 2,
+                length: 1
+            })
+        );
+        assert_eq!(
+            BTreeMap::from([("", "")]).validate_length(Some(2), None, None),
+            Err(LengthError::Equal {
+                equal: 2,
+                length: 1
+            })
+        );
+        assert_eq!(
+            HashSet::from([""]).validate_length(Some(2), None, None),
+            Err(LengthError::Equal {
+                equal: 2,
+                length: 1
+            })
+        );
+        assert_eq!(
+            HashMap::from([("", "")]).validate_length(Some(2), None, None),
+            Err(LengthError::Equal {
+                equal: 2,
+                length: 1
+            })
+        );
+        assert_eq!(
+            vec![""].validate_length(Some(2), None, None),
+            Err(LengthError::Equal {
+                equal: 2,
+                length: 1
+            })
+        );
+        assert_eq!(
+            VecDeque::from([""]).validate_length(Some(2), None, None),
+            Err(LengthError::Equal {
+                equal: 2,
+                length: 1
+            })
+        );
+
+        #[cfg(feature = "indexmap")]
+        {
+            assert_eq!(
+                IndexSet::from([""]).validate_length(Some(2), None, None),
+                Err(LengthError::Equal {
+                    equal: 2,
+                    length: 1
+                })
+            );
+            assert_eq!(
+                IndexMap::from([("", "")]).validate_length(Some(2), None, None),
+                Err(LengthError::Equal {
+                    equal: 2,
+                    length: 1
+                })
+            );
+        }
+
+        assert_eq!(
+            (&"a").validate_length(Some(2), None, None),
+            Err(LengthError::Equal {
+                equal: 2,
+                length: 1
+            })
+        );
+        #[expect(unused_allocation)]
+        {
+            assert_eq!(
+                Box::new("a").validate_length(Some(2), None, None),
+                Err(LengthError::Equal {
+                    equal: 2,
+                    length: 1
+                })
+            );
+        }
+        assert_eq!(
+            Arc::new("a").validate_length(Some(2), None, None),
+            Err(LengthError::Equal {
+                equal: 2,
+                length: 1
+            })
+        );
+        assert_eq!(
+            Rc::new("a").validate_length(Some(2), None, None),
+            Err(LengthError::Equal {
+                equal: 2,
+                length: 1
+            })
+        );
+
+        let cell = RefCell::new("a");
+        assert_eq!(
+            cell.borrow().validate_length(Some(2), None, None),
+            Err(LengthError::Equal {
+                equal: 2,
+                length: 1
+            })
+        );
+        assert_eq!(
+            cell.borrow_mut().validate_length(Some(2), None, None),
+            Err(LengthError::Equal {
+                equal: 2,
+                length: 1
+            })
+        );
+    }
+
+    #[test]
+    fn min_error() {
+        assert_eq!(
+            (*"a").validate_length(None, Some(3), None),
+            Err(LengthError::Min { min: 3, length: 1 })
+        );
+        assert_eq!(
+            "a".validate_length(None, Some(3), None),
+            Err(LengthError::Min { min: 3, length: 1 })
+        );
+        assert_eq!(
+            "a".to_owned().validate_length(None, Some(3), None),
+            Err(LengthError::Min { min: 3, length: 1 })
+        );
+        assert_eq!(
+            Cow::<str>::Borrowed("a").validate_length(None, Some(3), None),
+            Err(LengthError::Min { min: 3, length: 1 })
+        );
+        assert_eq!(
+            Cow::<str>::Owned("a".to_owned()).validate_length(None, Some(3), None),
+            Err(LengthError::Min { min: 3, length: 1 })
+        );
+
+        assert_eq!(
+            Some("a").validate_length(None, Some(3), None),
+            Err(LengthError::Min { min: 3, length: 1 })
+        );
+
+        assert_eq!(
+            [""; 1].validate_length(None, Some(3), None),
+            Err(LengthError::Min { min: 3, length: 1 })
+        );
+        assert_eq!(
+            [""].validate_length(None, Some(3), None),
+            Err(LengthError::Min { min: 3, length: 1 })
+        );
+        assert_eq!(
+            BTreeSet::from([""]).validate_length(None, Some(3), None),
+            Err(LengthError::Min { min: 3, length: 1 })
+        );
+        assert_eq!(
+            BTreeMap::from([("", "")]).validate_length(None, Some(3), None),
+            Err(LengthError::Min { min: 3, length: 1 })
+        );
+        assert_eq!(
+            HashSet::from([""]).validate_length(None, Some(3), None),
+            Err(LengthError::Min { min: 3, length: 1 })
+        );
+        assert_eq!(
+            HashMap::from([("", "")]).validate_length(None, Some(3), None),
+            Err(LengthError::Min { min: 3, length: 1 })
+        );
+        assert_eq!(
+            vec![""].validate_length(None, Some(3), None),
+            Err(LengthError::Min { min: 3, length: 1 })
+        );
+        assert_eq!(
+            VecDeque::from([""]).validate_length(None, Some(3), None),
+            Err(LengthError::Min { min: 3, length: 1 })
+        );
+
+        #[cfg(feature = "indexmap")]
+        {
+            assert_eq!(
+                IndexSet::from([""]).validate_length(None, Some(3), None),
+                Err(LengthError::Min { min: 3, length: 1 })
+            );
+            assert_eq!(
+                IndexMap::from([("", "")]).validate_length(None, Some(3), None),
+                Err(LengthError::Min { min: 3, length: 1 })
+            );
+        }
+
+        assert_eq!(
+            (&"a").validate_length(None, Some(3), None),
+            Err(LengthError::Min { min: 3, length: 1 })
+        );
+        #[expect(unused_allocation)]
+        {
+            assert_eq!(
+                Box::new("a").validate_length(None, Some(3), None),
+                Err(LengthError::Min { min: 3, length: 1 })
+            );
+        }
+        assert_eq!(
+            Arc::new("a").validate_length(None, Some(3), None),
+            Err(LengthError::Min { min: 3, length: 1 })
+        );
+        assert_eq!(
+            Rc::new("a").validate_length(None, Some(3), None),
+            Err(LengthError::Min { min: 3, length: 1 })
+        );
+
+        let cell = RefCell::new("a");
+        assert_eq!(
+            cell.borrow().validate_length(None, Some(3), None),
+            Err(LengthError::Min { min: 3, length: 1 })
+        );
+        assert_eq!(
+            cell.borrow_mut().validate_length(None, Some(3), None),
+            Err(LengthError::Min { min: 3, length: 1 })
+        );
+    }
+
+    #[test]
+    fn max_error() {
+        assert_eq!(
+            (*"a").validate_length(None, None, Some(0)),
+            Err(LengthError::Max { max: 0, length: 1 })
+        );
+        assert_eq!(
+            "a".validate_length(None, None, Some(0)),
+            Err(LengthError::Max { max: 0, length: 1 })
+        );
+        assert_eq!(
+            "a".to_owned().validate_length(None, None, Some(0)),
+            Err(LengthError::Max { max: 0, length: 1 })
+        );
+        assert_eq!(
+            Cow::<str>::Borrowed("a").validate_length(None, None, Some(0)),
+            Err(LengthError::Max { max: 0, length: 1 })
+        );
+        assert_eq!(
+            Cow::<str>::Owned("a".to_owned()).validate_length(None, None, Some(0)),
+            Err(LengthError::Max { max: 0, length: 1 })
+        );
+
+        assert_eq!(
+            Some("a").validate_length(None, None, Some(0)),
+            Err(LengthError::Max { max: 0, length: 1 })
+        );
+
+        assert_eq!(
+            [""; 1].validate_length(None, None, Some(0)),
+            Err(LengthError::Max { max: 0, length: 1 })
+        );
+        assert_eq!(
+            [""].validate_length(None, None, Some(0)),
+            Err(LengthError::Max { max: 0, length: 1 })
+        );
+        assert_eq!(
+            BTreeSet::from([""]).validate_length(None, None, Some(0)),
+            Err(LengthError::Max { max: 0, length: 1 })
+        );
+        assert_eq!(
+            BTreeMap::from([("", "")]).validate_length(None, None, Some(0)),
+            Err(LengthError::Max { max: 0, length: 1 })
+        );
+        assert_eq!(
+            HashSet::from([""]).validate_length(None, None, Some(0)),
+            Err(LengthError::Max { max: 0, length: 1 })
+        );
+        assert_eq!(
+            HashMap::from([("", "")]).validate_length(None, None, Some(0)),
+            Err(LengthError::Max { max: 0, length: 1 })
+        );
+        assert_eq!(
+            vec![""].validate_length(None, None, Some(0)),
+            Err(LengthError::Max { max: 0, length: 1 })
+        );
+        assert_eq!(
+            VecDeque::from([""]).validate_length(None, None, Some(0)),
+            Err(LengthError::Max { max: 0, length: 1 })
+        );
+
+        #[cfg(feature = "indexmap")]
+        {
+            assert_eq!(
+                IndexSet::from([""]).validate_length(None, None, Some(0)),
+                Err(LengthError::Max { max: 0, length: 1 })
+            );
+            assert_eq!(
+                IndexMap::from([("", "")]).validate_length(None, None, Some(0)),
+                Err(LengthError::Max { max: 0, length: 1 })
+            );
+        }
+
+        assert_eq!(
+            (&"a").validate_length(None, None, Some(0)),
+            Err(LengthError::Max { max: 0, length: 1 })
+        );
+        #[expect(unused_allocation)]
+        {
+            assert_eq!(
+                Box::new("a").validate_length(None, None, Some(0)),
+                Err(LengthError::Max { max: 0, length: 1 })
+            );
+        }
+        assert_eq!(
+            Arc::new("a").validate_length(None, None, Some(0)),
+            Err(LengthError::Max { max: 0, length: 1 })
+        );
+        assert_eq!(
+            Rc::new("a").validate_length(None, None, Some(0)),
+            Err(LengthError::Max { max: 0, length: 1 })
+        );
+
+        let cell = RefCell::new("a");
+        assert_eq!(
+            cell.borrow().validate_length(None, None, Some(0)),
+            Err(LengthError::Max { max: 0, length: 1 })
+        );
+        assert_eq!(
+            cell.borrow_mut().validate_length(None, None, Some(0)),
+            Err(LengthError::Max { max: 0, length: 1 })
+        );
     }
 }
