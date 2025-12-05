@@ -3,6 +3,7 @@
 //! Fortifier macros.
 
 mod validate;
+mod validation;
 mod validations;
 
 use proc_macro::TokenStream;

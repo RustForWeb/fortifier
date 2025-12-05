@@ -2,38 +2,36 @@ use proc_macro2::TokenStream;
 use quote::quote;
 use syn::{Field, Result};
 
-use crate::validations::{Email, Length, Url};
+use crate::{
+    validation::Validation,
+    validations::{Email, Length, Url},
+};
 
 pub struct ValidateField {
     expr: TokenStream,
-    // TODO: Consider using a trait for validations.
-    email: Option<Email>,
-    length: Option<Length>,
-    url: Option<Url>,
+    validations: Vec<Box<dyn Validation>>,
 }
 
 impl ValidateField {
     pub fn parse(expr: TokenStream, field: &Field) -> Result<Self> {
         let mut result = Self {
             expr,
-            email: None,
-            length: None,
-            url: None,
+            validations: vec![],
         };
 
         for attr in &field.attrs {
             if attr.path().is_ident("validate") {
                 attr.parse_nested_meta(|meta| {
                     if meta.path.is_ident("email") {
-                        result.email = Some(Email::parse(&meta)?);
+                        result.validations.push(Box::new(Email::parse(&meta)?));
 
                         Ok(())
                     } else if meta.path.is_ident("length") {
-                        result.length = Some(Length::parse(&meta)?);
+                        result.validations.push(Box::new(Length::parse(&meta)?));
 
                         Ok(())
                     } else if meta.path.is_ident("url") {
-                        result.url = Some(Url::parse(&meta)?);
+                        result.validations.push(Box::new(Url::parse(&meta)?));
 
                         Ok(())
                     } else {
@@ -49,26 +47,25 @@ impl ValidateField {
     pub fn error_type(&self) -> TokenStream {
         // TODO: Merge error types
 
-        if self.email.is_some() {
-            quote!(EmailError)
-        } else if self.length.is_some() {
-            quote!(LengthError<usize>)
-        } else if self.url.is_some() {
-            quote!(UrlError)
-        } else {
-            quote!(())
-        }
+        self.validations
+            .first()
+            .map(|validation| validation.error_type())
+            .unwrap_or_else(|| quote!(()))
     }
 
     pub fn sync_validations(&self) -> Vec<TokenStream> {
-        let email = self.email.as_ref().map(|email| email.tokens(&self.expr));
-        let length = self.length.as_ref().map(|length| length.tokens(&self.expr));
-        let url = self.url.as_ref().map(|url| url.tokens(&self.expr));
-
-        [email, length, url].into_iter().flatten().collect()
+        self.validations
+            .iter()
+            .filter(|validation| !validation.is_async())
+            .map(|validation| validation.tokens(&self.expr))
+            .collect()
     }
 
     pub fn async_validations(&self) -> Vec<TokenStream> {
-        vec![]
+        self.validations
+            .iter()
+            .filter(|validation| validation.is_async())
+            .map(|validation| validation.tokens(&self.expr))
+            .collect()
     }
 }
