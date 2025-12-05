@@ -2,13 +2,14 @@ use proc_macro2::TokenStream;
 use quote::quote;
 use syn::{Field, Result};
 
-use crate::validations::{Email, Length};
+use crate::validations::{Email, Length, Url};
 
 pub struct ValidateField {
     expr: TokenStream,
     // TODO: Consider using a trait for validations.
     email: Option<Email>,
     length: Option<Length>,
+    url: Option<Url>,
 }
 
 impl ValidateField {
@@ -17,6 +18,7 @@ impl ValidateField {
             expr,
             email: None,
             length: None,
+            url: None,
         };
 
         for attr in &field.attrs {
@@ -28,6 +30,10 @@ impl ValidateField {
                         Ok(())
                     } else if meta.path.is_ident("length") {
                         result.length = Some(Length::parse(&meta)?);
+
+                        Ok(())
+                    } else if meta.path.is_ident("url") {
+                        result.url = Some(Url::parse(&meta)?);
 
                         Ok(())
                     } else {
@@ -47,6 +53,8 @@ impl ValidateField {
             quote!(EmailError)
         } else if self.length.is_some() {
             quote!(LengthError<usize>)
+        } else if self.url.is_some() {
+            quote!(UrlError)
         } else {
             quote!(())
         }
@@ -55,8 +63,9 @@ impl ValidateField {
     pub fn sync_validations(&self) -> Vec<TokenStream> {
         let email = self.email.as_ref().map(|email| email.tokens(&self.expr));
         let length = self.length.as_ref().map(|length| length.tokens(&self.expr));
+        let url = self.url.as_ref().map(|url| url.tokens(&self.expr));
 
-        [email, length].into_iter().flatten().collect()
+        [email, length, url].into_iter().flatten().collect()
     }
 
     pub fn async_validations(&self) -> Vec<TokenStream> {
