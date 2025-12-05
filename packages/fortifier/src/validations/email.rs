@@ -53,6 +53,12 @@ validate_type_with_deref!(Rc<T>);
 validate_type_with_deref!(Ref<'_, T>);
 validate_type_with_deref!(RefMut<'_, T>);
 
+impl ValidateEmail for str {
+    fn email(&self) -> Option<Cow<'_, str>> {
+        Some(self.into())
+    }
+}
+
 impl ValidateEmail for &str {
     fn email(&self) -> Option<Cow<'_, str>> {
         Some((*self).into())
