@@ -2,6 +2,8 @@ use proc_macro2::TokenStream;
 use quote::quote;
 use syn::{Expr, Result, meta::ParseNestedMeta};
 
+use crate::validation::Validation;
+
 #[derive(Default)]
 pub struct Length {
     pub equal: Option<Expr>,
@@ -9,8 +11,8 @@ pub struct Length {
     pub max: Option<Expr>,
 }
 
-impl Length {
-    pub fn parse(meta: &ParseNestedMeta<'_>) -> Result<Length> {
+impl Validation for Length {
+    fn parse(meta: &ParseNestedMeta<'_>) -> Result<Self> {
         let mut result = Length::default();
 
         meta.parse_nested_meta(|meta| {
@@ -37,7 +39,15 @@ impl Length {
         Ok(result)
     }
 
-    pub fn tokens(&self, expr: &TokenStream) -> TokenStream {
+    fn is_async(&self) -> bool {
+        false
+    }
+
+    fn error_type(&self) -> TokenStream {
+        quote!(LengthError<usize>)
+    }
+
+    fn tokens(&self, expr: &TokenStream) -> TokenStream {
         let equal = if let Some(equal) = &self.equal {
             quote!(Some(#equal))
         } else {
