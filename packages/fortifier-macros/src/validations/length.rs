@@ -1,6 +1,6 @@
 use proc_macro2::TokenStream;
-use quote::quote;
-use syn::{Expr, Result, meta::ParseNestedMeta};
+use quote::{format_ident, quote};
+use syn::{Expr, Ident, Result, meta::ParseNestedMeta};
 
 use crate::validation::Validation;
 
@@ -41,6 +41,10 @@ impl Validation for Length {
 
     fn is_async(&self) -> bool {
         false
+    }
+
+    fn ident(&self) -> Ident {
+        format_ident!("Length")
     }
 
     fn error_type(&self) -> TokenStream {

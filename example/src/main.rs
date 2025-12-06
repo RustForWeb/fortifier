@@ -14,6 +14,7 @@ struct CreateUser {
     url: String,
 
     #[validate(custom(function = validate_one_locale_required, error = OneLocaleRequiredError))]
+    #[validate(length(min = 1))]
     locales: Vec<String>,
 }
 
