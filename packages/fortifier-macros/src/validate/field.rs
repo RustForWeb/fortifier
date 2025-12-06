@@ -4,7 +4,7 @@ use syn::{Field, Result};
 
 use crate::{
     validation::Validation,
-    validations::{Email, Length, Url},
+    validations::{Custom, Email, Length, Url},
 };
 
 pub struct ValidateField {
@@ -22,7 +22,11 @@ impl ValidateField {
         for attr in &field.attrs {
             if attr.path().is_ident("validate") {
                 attr.parse_nested_meta(|meta| {
-                    if meta.path.is_ident("email") {
+                    if meta.path.is_ident("custom") {
+                        result.validations.push(Box::new(Custom::parse(&meta)?));
+
+                        Ok(())
+                    } else if meta.path.is_ident("email") {
                         result.validations.push(Box::new(Email::parse(&meta)?));
 
                         Ok(())
