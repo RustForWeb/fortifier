@@ -1,6 +1,7 @@
+use convert_case::{Case, Casing};
 use proc_macro2::TokenStream;
-use quote::quote;
-use syn::{Field, Result};
+use quote::{ToTokens, format_ident, quote};
+use syn::{Field, Ident, Result};
 
 use crate::{
     validation::Validation,
@@ -8,13 +9,23 @@ use crate::{
 };
 
 pub struct ValidateField {
+    error_type_ident: Ident,
     expr: TokenStream,
     validations: Vec<Box<dyn Validation>>,
 }
 
 impl ValidateField {
-    pub fn parse(expr: TokenStream, field: &Field) -> Result<Self> {
+    pub fn parse(
+        type_prefix: &Ident,
+        ident: Ident,
+        expr: TokenStream,
+        field: &Field,
+    ) -> Result<Self> {
+        let error_ident = format_ident!("{}", ident.to_string().to_case(Case::UpperCamel));
+        let error_type_ident = format_ident!("{type_prefix}{error_ident}ValidationError");
+
         let mut result = Self {
+            error_type_ident,
             expr,
             validations: vec![],
         };
@@ -48,28 +59,74 @@ impl ValidateField {
         Ok(result)
     }
 
-    pub fn error_type(&self) -> TokenStream {
-        // TODO: Merge error types
+    pub fn error_type(
+        &self,
+        ident: &Ident,
+        field_error_ident: &Ident,
+    ) -> (TokenStream, Option<TokenStream>) {
+        if self.validations.len() > 1 {
+            let ident = format_ident!("{}{}ValidationError", ident, field_error_ident);
+            let variant_ident = self.validations.iter().map(|validation| validation.ident());
+            let variant_type = self
+                .validations
+                .iter()
+                .map(|validation| validation.error_type());
 
-        self.validations
-            .first()
-            .map(|validation| validation.error_type())
-            .unwrap_or_else(|| quote!(()))
+            (
+                ident.to_token_stream(),
+                Some(quote! {
+                    #[derive(Debug)]
+                    enum #ident {
+                        #( #variant_ident(#variant_type) ),*
+                    }
+                }),
+            )
+        } else if let Some(validation) = self.validations.first() {
+            (validation.error_type(), None)
+        } else {
+            (quote!(()), None)
+        }
     }
 
     pub fn sync_validations(&self) -> Vec<TokenStream> {
+        let error_type_ident = &self.error_type_ident;
+
         self.validations
             .iter()
             .filter(|validation| !validation.is_async())
-            .map(|validation| validation.tokens(&self.expr))
+            .map(|validation| {
+                let validation_ident = validation.ident();
+                let tokens = validation.tokens(&self.expr);
+
+                if self.validations.len() > 1 {
+                    quote! {
+                        #tokens.map_err(#error_type_ident::#validation_ident)
+                    }
+                } else {
+                    tokens
+                }
+            })
             .collect()
     }
 
     pub fn async_validations(&self) -> Vec<TokenStream> {
+        let error_type_ident = &self.error_type_ident;
+
         self.validations
             .iter()
             .filter(|validation| validation.is_async())
-            .map(|validation| validation.tokens(&self.expr))
+            .map(|validation| {
+                let validation_ident = validation.ident();
+                let tokens = validation.tokens(&self.expr);
+
+                if self.validations.len() > 1 {
+                    quote! {
+                        #tokens.map_err(#error_type_ident::#validation_ident)
+                    }
+                } else {
+                    tokens
+                }
+            })
             .collect()
     }
 }

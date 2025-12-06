@@ -1,6 +1,6 @@
 use proc_macro2::TokenStream;
-use quote::{ToTokens, quote};
-use syn::{LitBool, Path, Result, Type, meta::ParseNestedMeta};
+use quote::{ToTokens, format_ident, quote};
+use syn::{Ident, LitBool, Path, Result, Type, meta::ParseNestedMeta};
 
 use crate::validation::Validation;
 
@@ -55,6 +55,11 @@ impl Validation for Custom {
 
     fn is_async(&self) -> bool {
         self.is_async
+    }
+
+    fn ident(&self) -> Ident {
+        // TODO: Determine ident from function or error type.
+        format_ident!("Custom")
     }
 
     fn error_type(&self) -> TokenStream {

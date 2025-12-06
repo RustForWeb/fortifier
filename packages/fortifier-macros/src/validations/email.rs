@@ -1,6 +1,6 @@
 use proc_macro2::TokenStream;
-use quote::quote;
-use syn::{Result, meta::ParseNestedMeta};
+use quote::{format_ident, quote};
+use syn::{Ident, Result, meta::ParseNestedMeta};
 
 use crate::validation::Validation;
 
@@ -14,6 +14,10 @@ impl Validation for Email {
 
     fn is_async(&self) -> bool {
         false
+    }
+
+    fn ident(&self) -> Ident {
+        format_ident!("Email")
     }
 
     fn error_type(&self) -> TokenStream {

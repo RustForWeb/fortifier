@@ -56,9 +56,10 @@ impl ValidateNamedStruct {
 
             let expr = quote!(self.#field_ident);
 
-            result
-                .fields
-                .insert(field_ident.clone(), ValidateField::parse(expr, field)?);
+            result.fields.insert(
+                field_ident.clone(),
+                ValidateField::parse(&input.ident, field_ident.clone(), expr, field)?,
+            );
         }
 
         Ok(result)
@@ -71,6 +72,7 @@ impl ToTokens for ValidateNamedStruct {
         let error_ident = &self.error_ident;
         let mut error_field_idents = vec![];
         let mut error_field_types = vec![];
+        let mut error_field_enums = vec![];
         let mut sync_validations = vec![];
         let mut async_validations = vec![];
 
@@ -78,8 +80,13 @@ impl ToTokens for ValidateNamedStruct {
             let field_error_ident =
                 format_ident!("{}", &field_ident.to_string().to_case(Case::UpperCamel));
 
+            let (error_type, error_enum) = field.error_type(ident, &field_error_ident);
+
             error_field_idents.push(field_error_ident.clone());
-            error_field_types.push(field.error_type());
+            error_field_types.push(error_type);
+            if let Some(error_enum) = error_enum {
+                error_field_enums.push(error_enum);
+            }
 
             for validation in field.sync_validations() {
                 sync_validations.push(quote! {
@@ -101,19 +108,25 @@ impl ToTokens for ValidateNamedStruct {
         tokens.append_all(quote! {
             use fortifier::*;
 
+            #[allow(dead_code)]
             #[derive(Debug)]
             enum #error_ident {
                 #( #error_field_idents(#error_field_types) ),*
             }
 
+            #[automatically_derived]
             impl ::std::fmt::Display for #error_ident {
                 fn fmt(&self, f: &mut ::std::fmt::Formatter<'_>) -> ::std::fmt::Result {
                     write!(f, "{self:#?}")
                 }
             }
 
+            #[automatically_derived]
             impl ::std::error::Error for #error_ident {}
 
+            #(#error_field_enums)*
+
+            #[automatically_derived]
             impl Validate for #ident {
                 type Error = #error_ident;
 
@@ -163,9 +176,15 @@ impl ValidateUnnamedStruct {
 
         for (index, field) in fields.unnamed.iter().enumerate() {
             let index = Literal::usize_unsuffixed(index);
+            let field_ident = format_ident!("F{index}");
             let expr = quote!(self.#index);
 
-            result.fields.push(ValidateField::parse(expr, field)?);
+            result.fields.push(ValidateField::parse(
+                &input.ident,
+                field_ident,
+                expr,
+                field,
+            )?);
         }
 
         Ok(result)
@@ -178,14 +197,20 @@ impl ToTokens for ValidateUnnamedStruct {
         let error_ident = &self.error_ident;
         let mut error_field_idents = vec![];
         let mut error_field_types = vec![];
+        let mut error_field_enums = vec![];
         let mut sync_validations = vec![];
         let mut async_validations = vec![];
 
         for (index, field) in self.fields.iter().enumerate() {
             let field_error_ident = format_ident!("F{index}");
 
+            let (error_type, error_enum) = field.error_type(ident, &field_error_ident);
+
             error_field_idents.push(field_error_ident.clone());
-            error_field_types.push(field.error_type());
+            error_field_types.push(error_type);
+            if let Some(error_enum) = error_enum {
+                error_field_enums.push(error_enum);
+            }
 
             for validation in field.sync_validations() {
                 sync_validations.push(quote! {
@@ -207,19 +232,25 @@ impl ToTokens for ValidateUnnamedStruct {
         tokens.append_all(quote! {
             use fortifier::*;
 
+            #[allow(dead_code)]
             #[derive(Debug)]
             enum #error_ident {
                 #( #error_field_idents(#error_field_types) ),*
             }
 
+            #[automatically_derived]
             impl ::std::fmt::Display for #error_ident {
                 fn fmt(&self, f: &mut ::std::fmt::Formatter<'_>) -> ::std::fmt::Result {
                     write!(f, "{self:#?}")
                 }
             }
 
+            #[automatically_derived]
             impl ::std::error::Error for #error_ident {}
 
+            #(#error_field_enums)*
+
+            #[automatically_derived]
             impl Validate for #ident {
                 type Error = #error_ident;
 
@@ -272,6 +303,7 @@ impl ToTokens for ValidateUnitStruct {
         tokens.append_all(quote! {
             use fortifier::ValidationErrors;
 
+            #[automatically_derived]
             impl Validate for #ident {
                 type Error = ::std::convert::Infallible;
 
