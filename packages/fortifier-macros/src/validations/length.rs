@@ -32,7 +32,7 @@ impl Validation for Length {
 
                 Ok(())
             } else {
-                Err(meta.error("unknown length parameter"))
+                Err(meta.error("unknown parameter"))
             }
         })?;
 

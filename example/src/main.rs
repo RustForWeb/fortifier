@@ -1,6 +1,10 @@
-use std::error::Error;
+use std::{error::Error, sync::LazyLock};
 
 use fortifier::Validate;
+use regex::Regex;
+
+static COUNTRY_CODE_REGEX: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r"[A-Z]{2}").expect("Regex should be valid."));
 
 #[derive(Validate)]
 struct CreateUser {
@@ -12,6 +16,9 @@ struct CreateUser {
 
     #[validate(url)]
     url: String,
+
+    #[validate(regex(expr = &COUNTRY_CODE_REGEX))]
+    country_code: String,
 
     #[validate(custom(function = validate_one_locale_required, error = OneLocaleRequiredError))]
     #[validate(length(min = 1))]
@@ -35,6 +42,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
         email: "john@doe.com".to_owned(),
         name: "John Doe".to_owned(),
         url: "https://john.doe.com".to_owned(),
+        country_code: "GB".to_owned(),
         locales: vec!["en_GB".to_owned()],
     };
 
