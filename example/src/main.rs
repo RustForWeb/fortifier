@@ -17,7 +17,7 @@ struct CreateUser {
     #[validate(url)]
     url: String,
 
-    #[validate(regex(expr = &COUNTRY_CODE_REGEX))]
+    #[validate(regex = &COUNTRY_CODE_REGEX)]
     country_code: String,
 
     #[validate(custom(function = validate_one_locale_required, error = OneLocaleRequiredError))]
