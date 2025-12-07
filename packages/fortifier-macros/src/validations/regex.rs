@@ -5,28 +5,32 @@ use syn::{Expr, Ident, Result, meta::ParseNestedMeta};
 use crate::validation::Validation;
 
 pub struct Regex {
-    pub expr: Expr,
+    pub expression: Expr,
 }
 
 impl Validation for Regex {
     fn parse(meta: &ParseNestedMeta<'_>) -> Result<Self> {
-        let mut expr: Option<Expr> = None;
+        let mut expression: Option<Expr> = None;
 
-        meta.parse_nested_meta(|meta| {
-            if meta.path.is_ident("expr") {
-                expr = Some(meta.value()?.parse()?);
+        if let Ok(value) = meta.value() {
+            expression = Some(value.parse()?);
+        } else {
+            meta.parse_nested_meta(|meta| {
+                if meta.path.is_ident("expression") {
+                    expression = Some(meta.value()?.parse()?);
 
-                Ok(())
-            } else {
-                Err(meta.error("unknown parameter"))
-            }
-        })?;
+                    Ok(())
+                } else {
+                    Err(meta.error("unknown parameter"))
+                }
+            })?;
+        }
 
-        let Some(expr) = expr else {
-            return Err(meta.error("missing expr parameter"));
+        let Some(expression) = expression else {
+            return Err(meta.error("missing expression parameter"));
         };
 
-        Ok(Regex { expr })
+        Ok(Regex { expression })
     }
 
     fn is_async(&self) -> bool {
@@ -42,10 +46,10 @@ impl Validation for Regex {
     }
 
     fn tokens(&self, expr: &TokenStream) -> TokenStream {
-        let regex_expr = &self.expr;
+        let expression = &self.expression;
 
         quote! {
-            #expr.validate_regex(#regex_expr)
+            #expr.validate_regex(#expression)
         }
     }
 }
