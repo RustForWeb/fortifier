@@ -5,7 +5,7 @@ use syn::{Field, Ident, Result};
 
 use crate::{
     validation::Validation,
-    validations::{Custom, Email, Length, Url},
+    validations::{Custom, Email, Length, Regex, Url},
 };
 
 pub struct ValidateField {
@@ -45,12 +45,16 @@ impl ValidateField {
                         result.validations.push(Box::new(Length::parse(&meta)?));
 
                         Ok(())
+                    } else if meta.path.is_ident("regex") {
+                        result.validations.push(Box::new(Regex::parse(&meta)?));
+
+                        Ok(())
                     } else if meta.path.is_ident("url") {
                         result.validations.push(Box::new(Url::parse(&meta)?));
 
                         Ok(())
                     } else {
-                        Err(meta.error("unknown validate parameter"))
+                        Err(meta.error("unknown parameter"))
                     }
                 })?;
             }

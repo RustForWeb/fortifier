@@ -12,6 +12,7 @@ version = "0.0.1"
 [workspace.dependencies]
 fortifier = { path = "./packages/fortifier", version = "0.0.1" }
 fortifier-macros = { path = "./packages/fortifier-macros", version = "0.0.1" }
+regex = "1.12.2"
 tokio = "1.48.0"
 
 [workspace.lints.rust]
