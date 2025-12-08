@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use convert_case::{Case, Casing};
 use proc_macro2::{Literal, TokenStream};
 use quote::{ToTokens, TokenStreamExt, format_ident, quote};
-use syn::{DataStruct, DeriveInput, Fields, FieldsNamed, FieldsUnnamed, Ident, Result};
+use syn::{DataStruct, DeriveInput, Fields, FieldsNamed, FieldsUnnamed, Generics, Ident, Result};
 
 use crate::validate::field::ValidateField;
 
@@ -38,6 +38,7 @@ impl ToTokens for ValidateStruct {
 pub struct ValidateNamedStruct {
     ident: Ident,
     error_ident: Ident,
+    generics: Generics,
     fields: HashMap<Ident, ValidateField>,
 }
 
@@ -46,6 +47,7 @@ impl ValidateNamedStruct {
         let mut result = Self {
             ident: input.ident.clone(),
             error_ident: format_ident!("{}ValidationError", input.ident),
+            generics: input.generics.clone(),
             fields: HashMap::default(),
         };
 
@@ -70,6 +72,8 @@ impl ToTokens for ValidateNamedStruct {
     fn to_tokens(&self, tokens: &mut TokenStream) {
         let ident = &self.ident;
         let error_ident = &self.error_ident;
+        let (impl_generics, type_generics, where_clause) = &self.generics.split_for_impl();
+
         let mut error_field_idents = vec![];
         let mut error_field_types = vec![];
         let mut error_field_enums = vec![];
@@ -127,7 +131,7 @@ impl ToTokens for ValidateNamedStruct {
             #(#error_field_enums)*
 
             #[automatically_derived]
-            impl Validate for #ident {
+            impl #impl_generics Validate for #ident #type_generics #where_clause {
                 type Error = #error_ident;
 
                 fn validate_sync(&self) -> Result<(), ValidationErrors<Self::Error>> {
@@ -163,6 +167,7 @@ impl ToTokens for ValidateNamedStruct {
 pub struct ValidateUnnamedStruct {
     ident: Ident,
     error_ident: Ident,
+    generics: Generics,
     fields: Vec<ValidateField>,
 }
 
@@ -171,6 +176,7 @@ impl ValidateUnnamedStruct {
         let mut result = Self {
             ident: input.ident.clone(),
             error_ident: format_ident!("{}ValidationError", input.ident),
+            generics: input.generics.clone(),
             fields: Vec::default(),
         };
 
@@ -195,6 +201,8 @@ impl ToTokens for ValidateUnnamedStruct {
     fn to_tokens(&self, tokens: &mut TokenStream) {
         let ident = &self.ident;
         let error_ident = &self.error_ident;
+        let (impl_generics, type_generics, where_clause) = &self.generics.split_for_impl();
+
         let mut error_field_idents = vec![];
         let mut error_field_types = vec![];
         let mut error_field_enums = vec![];
@@ -251,7 +259,7 @@ impl ToTokens for ValidateUnnamedStruct {
             #(#error_field_enums)*
 
             #[automatically_derived]
-            impl Validate for #ident {
+            impl #impl_generics Validate for #ident #type_generics #where_clause {
                 type Error = #error_ident;
 
                 fn validate_sync(&self) -> Result<(), ValidationErrors<Self::Error>> {
@@ -286,12 +294,14 @@ impl ToTokens for ValidateUnnamedStruct {
 
 pub struct ValidateUnitStruct {
     ident: Ident,
+    generics: Generics,
 }
 
 impl ValidateUnitStruct {
     fn parse(input: &DeriveInput) -> Result<Self> {
         Ok(Self {
             ident: input.ident.clone(),
+            generics: input.generics.clone(),
         })
     }
 }
@@ -299,12 +309,13 @@ impl ValidateUnitStruct {
 impl ToTokens for ValidateUnitStruct {
     fn to_tokens(&self, tokens: &mut TokenStream) {
         let ident = &self.ident;
+        let (impl_generics, type_generics, where_clause) = &self.generics.split_for_impl();
 
         tokens.append_all(quote! {
             use fortifier::ValidationErrors;
 
             #[automatically_derived]
-            impl Validate for #ident {
+            impl #impl_generics Validate for #ident #type_generics #where_clause {
                 type Error = ::std::convert::Infallible;
 
                 fn validate_sync(&self) -> Result<(), ValidationErrors<Self::Error>> {
