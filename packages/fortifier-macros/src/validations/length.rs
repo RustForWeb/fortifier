@@ -6,9 +6,9 @@ use crate::validation::Validation;
 
 #[derive(Default)]
 pub struct Length {
-    pub equal: Option<Expr>,
-    pub min: Option<Expr>,
-    pub max: Option<Expr>,
+    equal: Option<Expr>,
+    min: Option<Expr>,
+    max: Option<Expr>,
 }
 
 impl Validation for Length {
