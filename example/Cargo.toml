@@ -9,7 +9,7 @@ repository.workspace = true
 version.workspace = true
 
 [dependencies]
-fortifier.workspace = true
+fortifier = { workspace = true, features = ["email", "regex", "url"] }
 regex.workspace = true
 tokio = { workspace = true, features = ["macros", "rt-multi-thread"] }
 

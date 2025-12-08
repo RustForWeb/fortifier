@@ -9,17 +9,26 @@ repository.workspace = true
 version.workspace = true
 
 [features]
-default = ["macros", "regex", "url"]
+default = ["macros"]
+email = ["dep:email_address"]
 indexmap = ["dep:indexmap"]
 macros = ["dep:fortifier-macros"]
+message = []
 regex = ["dep:regex"]
+serde = ["dep:serde", "email_address/serde_support"]
 url = ["dep:url"]
 
 [dependencies]
+email_address = { version = "0.2.9", default-features = false, optional = true }
 fortifier-macros = { workspace = true, optional = true }
 indexmap = { version = "2.12.0", optional = true }
 regex = { workspace = true, optional = true }
+serde = { workspace = true, features = ["derive"], optional = true }
 url = { version = "2.5.7", optional = true }
+
+[dev-dependencies]
+pretty_assertions = "1.4.1"
+serde_json.workspace = true
 
 [lints]
 workspace = true
