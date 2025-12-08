@@ -18,7 +18,7 @@ quote = "1.0.42"
 syn = "2.0.110"
 
 [dev-dependencies]
-fortifier.workspace = true
+fortifier = { workspace = true, features = ["email"] }
 trybuild = "1.0.114"
 
 [lints]

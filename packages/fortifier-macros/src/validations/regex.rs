@@ -5,7 +5,7 @@ use syn::{Expr, Ident, Result, meta::ParseNestedMeta};
 use crate::validation::Validation;
 
 pub struct Regex {
-    pub expression: Expr,
+    expression: Expr,
 }
 
 impl Validation for Regex {

@@ -36,9 +36,25 @@ where
 
 /// Regular expression validation error.
 #[derive(Debug, Eq, PartialEq)]
-pub enum RegexError {
-    /// Regular expression does not match.
-    NoMatch,
+#[cfg_attr(
+    feature = "serde",
+    derive(serde::Deserialize, serde::Serialize),
+    serde(rename_all = "camelCase")
+)]
+pub struct RegexError {
+    /// A human-readable error message.
+    #[cfg(feature = "message")]
+    message: String,
+}
+
+#[cfg_attr(not(feature = "message"), expect(clippy::derivable_impls))]
+impl Default for RegexError {
+    fn default() -> Self {
+        Self {
+            #[cfg(feature = "message")]
+            message: "value does not match regular expression".to_owned(),
+        }
+    }
 }
 
 /// Validate a regular expression.
@@ -52,7 +68,7 @@ impl ValidateRegex for str {
         if regex.as_regex().is_match(self) {
             Ok(())
         } else {
-            Err(RegexError::NoMatch)
+            Err(RegexError::default())
         }
     }
 }
@@ -62,7 +78,7 @@ impl ValidateRegex for &str {
         if regex.as_regex().is_match(self) {
             Ok(())
         } else {
-            Err(RegexError::NoMatch)
+            Err(RegexError::default())
         }
     }
 }
@@ -72,7 +88,7 @@ impl ValidateRegex for String {
         if regex.as_regex().is_match(self) {
             Ok(())
         } else {
-            Err(RegexError::NoMatch)
+            Err(RegexError::default())
         }
     }
 }
@@ -165,48 +181,54 @@ mod tests {
 
     #[test]
     fn no_match_error() {
-        assert_eq!((*"123").validate_regex(&REGEX), Err(RegexError::NoMatch));
-        assert_eq!("123".validate_regex(&REGEX), Err(RegexError::NoMatch));
+        assert_eq!((*"123").validate_regex(&REGEX), Err(RegexError::default()));
+        assert_eq!("123".validate_regex(&REGEX), Err(RegexError::default()));
         assert_eq!(
             "123".to_owned().validate_regex(&REGEX),
-            Err(RegexError::NoMatch)
+            Err(RegexError::default())
         );
         assert_eq!(
             Cow::<str>::Borrowed("123").validate_regex(&REGEX),
-            Err(RegexError::NoMatch)
+            Err(RegexError::default())
         );
         assert_eq!(
             Cow::<str>::Owned("123".to_owned()).validate_regex(&REGEX),
-            Err(RegexError::NoMatch)
+            Err(RegexError::default())
         );
 
-        assert_eq!(Some("123").validate_regex(&REGEX), Err(RegexError::NoMatch));
+        assert_eq!(
+            Some("123").validate_regex(&REGEX),
+            Err(RegexError::default())
+        );
 
-        assert_eq!((&"123").validate_regex(&REGEX), Err(RegexError::NoMatch));
+        assert_eq!((&"123").validate_regex(&REGEX), Err(RegexError::default()));
         #[expect(unused_allocation)]
         {
             assert_eq!(
                 Box::new("123").validate_regex(&REGEX),
-                Err(RegexError::NoMatch)
+                Err(RegexError {
+                    #[cfg(feature = "message")]
+                    message: "value does not match regular expression".to_owned(),
+                })
             );
         }
         assert_eq!(
             Arc::new("123").validate_regex(&REGEX),
-            Err(RegexError::NoMatch)
+            Err(RegexError::default())
         );
         assert_eq!(
             Rc::new("123").validate_regex(&REGEX),
-            Err(RegexError::NoMatch)
+            Err(RegexError::default())
         );
 
         let cell = RefCell::new("123");
         assert_eq!(
             cell.borrow().validate_regex(&REGEX),
-            Err(RegexError::NoMatch)
+            Err(RegexError::default())
         );
         assert_eq!(
             cell.borrow_mut().validate_regex(&REGEX),
-            Err(RegexError::NoMatch)
+            Err(RegexError::default())
         );
     }
 }
