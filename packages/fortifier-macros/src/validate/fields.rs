@@ -89,46 +89,11 @@ impl ValidateNamedFields {
     }
 
     fn error_type(&self) -> (TokenStream, TokenStream) {
-        let visibility = &self.visibility;
-        let ident = &self.ident;
-        let error_ident = &self.error_ident;
-
-        let mut error_field_idents = vec![];
-        let mut error_field_types = vec![];
-        let mut error_field_enums = vec![];
-
-        for field in &self.fields {
-            let field_error_ident = field.error_ident();
-            let (field_error_type, field_error_enum) = field.error_type(ident);
-
-            error_field_idents.push(field_error_ident.clone());
-            error_field_types.push(field_error_type);
-            if let Some(error_enum) = field_error_enum {
-                error_field_enums.push(error_enum);
-            }
-        }
-
-        (
-            error_ident.to_token_stream(),
-            quote! {
-                #[allow(dead_code)]
-                #[derive(Debug)]
-                #visibility enum #error_ident {
-                    #( #error_field_idents(#error_field_types) ),*
-                }
-
-                #[automatically_derived]
-                impl ::std::fmt::Display for #error_ident {
-                    fn fmt(&self, f: &mut ::std::fmt::Formatter<'_>) -> ::std::fmt::Result {
-                        write!(f, "{self:#?}")
-                    }
-                }
-
-                #[automatically_derived]
-                impl ::std::error::Error for #error_ident {}
-
-                #( #error_field_enums )*
-            },
+        error_type(
+            &self.visibility,
+            &self.ident,
+            &self.error_ident,
+            self.fields.iter(),
         )
     }
 
@@ -181,46 +146,11 @@ impl ValidateUnnamedFields {
     }
 
     fn error_type(&self) -> (TokenStream, TokenStream) {
-        let visibility = &self.visibility;
-        let ident = &self.ident;
-        let error_ident = &self.error_ident;
-
-        let mut error_field_idents = vec![];
-        let mut error_field_types = vec![];
-        let mut error_field_enums = vec![];
-
-        for field in &self.fields {
-            let field_error_ident = field.error_ident();
-            let (field_error_type, field_error_enum) = field.error_type(ident);
-
-            error_field_idents.push(field_error_ident.clone());
-            error_field_types.push(field_error_type);
-            if let Some(error_enum) = field_error_enum {
-                error_field_enums.push(error_enum);
-            }
-        }
-
-        (
-            error_ident.to_token_stream(),
-            quote! {
-                #[allow(dead_code)]
-                #[derive(Debug)]
-                #visibility enum #error_ident {
-                    #( #error_field_idents(#error_field_types) ),*
-                }
-
-                #[automatically_derived]
-                impl ::std::fmt::Display for #error_ident {
-                    fn fmt(&self, f: &mut ::std::fmt::Formatter<'_>) -> ::std::fmt::Result {
-                        write!(f, "{self:#?}")
-                    }
-                }
-
-                #[automatically_derived]
-                impl ::std::error::Error for #error_ident {}
-
-                #( #error_field_enums )*
-            },
+        error_type(
+            &self.visibility,
+            &self.ident,
+            &self.error_ident,
+            self.fields.iter(),
         )
     }
 
@@ -256,6 +186,51 @@ impl ValidateUnitFields {
             Ok(())
         }
     }
+}
+
+fn error_type<'a>(
+    visibility: &Visibility,
+    ident: &Ident,
+    error_ident: &Ident,
+    fields: impl Iterator<Item = &'a ValidateField>,
+) -> (TokenStream, TokenStream) {
+    let mut error_field_idents = vec![];
+    let mut error_field_types = vec![];
+    let mut error_field_enums = vec![];
+
+    for field in fields {
+        let field_error_ident = field.error_ident();
+        let (field_error_type, field_error_enum) = field.error_type(ident);
+
+        error_field_idents.push(field_error_ident.clone());
+        error_field_types.push(field_error_type);
+        if let Some(error_enum) = field_error_enum {
+            error_field_enums.push(error_enum);
+        }
+    }
+
+    (
+        error_ident.to_token_stream(),
+        quote! {
+            #[allow(dead_code)]
+            #[derive(Debug)]
+            #visibility enum #error_ident {
+                #( #error_field_idents(#error_field_types) ),*
+            }
+
+            #[automatically_derived]
+            impl ::std::fmt::Display for #error_ident {
+                fn fmt(&self, f: &mut ::std::fmt::Formatter<'_>) -> ::std::fmt::Result {
+                    write!(f, "{self:#?}")
+                }
+            }
+
+            #[automatically_derived]
+            impl ::std::error::Error for #error_ident {}
+
+            #( #error_field_enums )*
+        },
+    )
 }
 
 fn validations<'a>(
