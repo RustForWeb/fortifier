@@ -1,5 +1,6 @@
 mod r#enum;
 mod field;
+mod fields;
 mod r#struct;
 mod r#union;
 

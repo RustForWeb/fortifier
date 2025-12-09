@@ -1,32 +1,62 @@
 use convert_case::{Case, Casing};
-use proc_macro2::TokenStream;
+use proc_macro2::{Literal, TokenStream};
 use quote::{ToTokens, format_ident, quote};
-use syn::{Field, Ident, Result};
+use syn::{Field, Ident, Result, Visibility};
 
 use crate::{
     validation::Validation,
     validations::{Custom, Email, Length, Regex, Url},
 };
 
+pub enum LiteralOrIdent {
+    Literal(Literal),
+    Ident(Ident),
+}
+
+impl ToTokens for LiteralOrIdent {
+    fn to_tokens(&self, tokens: &mut TokenStream) {
+        match self {
+            LiteralOrIdent::Literal(literal) => literal.to_tokens(tokens),
+            LiteralOrIdent::Ident(ident) => ident.to_tokens(tokens),
+        }
+    }
+}
+
+#[derive(Clone, Copy)]
+pub enum ValidateFieldPrefix {
+    None,
+    SelfKeyword,
+    F,
+}
+
 pub struct ValidateField {
+    visibility: Visibility,
+    ident: LiteralOrIdent,
+    error_ident: Ident,
     error_type_ident: Ident,
-    expr: TokenStream,
     validations: Vec<Box<dyn Validation>>,
 }
 
 impl ValidateField {
     pub fn parse(
+        visibility: &Visibility,
         type_prefix: &Ident,
-        ident: Ident,
-        expr: TokenStream,
+        ident: LiteralOrIdent,
         field: &Field,
     ) -> Result<Self> {
-        let error_ident = format_ident!("{}", ident.to_string().to_case(Case::UpperCamel));
+        let error_ident = match &ident {
+            LiteralOrIdent::Literal(literal) => format_ident!("F{literal}"),
+            LiteralOrIdent::Ident(ident) => {
+                format_ident!("{}", ident.to_string().to_case(Case::UpperCamel))
+            }
+        };
         let error_type_ident = format_ident!("{type_prefix}{error_ident}ValidationError");
 
         let mut result = Self {
+            visibility: visibility.clone(),
+            ident,
+            error_ident,
             error_type_ident,
-            expr,
             validations: vec![],
         };
 
@@ -63,13 +93,18 @@ impl ValidateField {
         Ok(result)
     }
 
-    pub fn error_type(
-        &self,
-        ident: &Ident,
-        field_error_ident: &Ident,
-    ) -> (TokenStream, Option<TokenStream>) {
+    pub fn ident(&self) -> &LiteralOrIdent {
+        &self.ident
+    }
+
+    pub fn error_ident(&self) -> &Ident {
+        &self.error_ident
+    }
+
+    pub fn error_type(&self, ident: &Ident) -> (TokenStream, Option<TokenStream>) {
         if self.validations.len() > 1 {
-            let ident = format_ident!("{}{}ValidationError", ident, field_error_ident);
+            let visibility = &self.visibility;
+            let ident = format_ident!("{}{}ValidationError", ident, self.error_ident);
             let variant_ident = self.validations.iter().map(|validation| validation.ident());
             let variant_type = self
                 .validations
@@ -80,7 +115,7 @@ impl ValidateField {
                 ident.to_token_stream(),
                 Some(quote! {
                     #[derive(Debug)]
-                    enum #ident {
+                    #visibility enum #ident {
                         #( #variant_ident(#variant_type) ),*
                     }
                 }),
@@ -92,15 +127,25 @@ impl ValidateField {
         }
     }
 
-    pub fn sync_validations(&self) -> Vec<TokenStream> {
+    pub fn sync_validations(&self, field_prefix: ValidateFieldPrefix) -> Vec<TokenStream> {
         let error_type_ident = &self.error_type_ident;
+        let ident = &self.ident;
 
         self.validations
             .iter()
             .filter(|validation| !validation.is_async())
             .map(|validation| {
                 let validation_ident = validation.ident();
-                let tokens = validation.tokens(&self.expr);
+                let tokens = validation.tokens(&match field_prefix {
+                    ValidateFieldPrefix::None => self.ident.to_token_stream(),
+                    ValidateFieldPrefix::SelfKeyword => quote!(self.#ident),
+                    ValidateFieldPrefix::F => match &self.ident {
+                        LiteralOrIdent::Literal(literal) => {
+                            format_ident!("f{literal}").to_token_stream()
+                        }
+                        LiteralOrIdent::Ident(ident) => ident.to_token_stream(),
+                    },
+                });
 
                 if self.validations.len() > 1 {
                     quote! {
@@ -113,7 +158,8 @@ impl ValidateField {
             .collect()
     }
 
-    pub fn async_validations(&self) -> Vec<TokenStream> {
+    pub fn async_validations(&self, field_prefix: ValidateFieldPrefix) -> Vec<TokenStream> {
+        let ident = &self.ident;
         let error_type_ident = &self.error_type_ident;
 
         self.validations
@@ -121,7 +167,16 @@ impl ValidateField {
             .filter(|validation| validation.is_async())
             .map(|validation| {
                 let validation_ident = validation.ident();
-                let tokens = validation.tokens(&self.expr);
+                let tokens = validation.tokens(&match field_prefix {
+                    ValidateFieldPrefix::None => self.ident.to_token_stream(),
+                    ValidateFieldPrefix::SelfKeyword => quote!(self.#ident),
+                    ValidateFieldPrefix::F => match &self.ident {
+                        LiteralOrIdent::Literal(literal) => {
+                            format_ident!("f{literal}").to_token_stream()
+                        }
+                        LiteralOrIdent::Ident(ident) => ident.to_token_stream(),
+                    },
+                });
 
                 if self.validations.len() > 1 {
                     quote! {
