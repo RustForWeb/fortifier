@@ -2,7 +2,7 @@ use proc_macro2::TokenStream;
 use quote::{format_ident, quote};
 use syn::{Expr, Ident, Result, meta::ParseNestedMeta};
 
-use crate::validation::Validation;
+use crate::validation::{Execution, Validation};
 
 #[derive(Default)]
 pub struct Length {
@@ -39,37 +39,38 @@ impl Validation for Length {
         Ok(result)
     }
 
-    fn is_async(&self) -> bool {
-        false
-    }
-
     fn ident(&self) -> Ident {
         format_ident!("Length")
     }
 
     fn error_type(&self) -> TokenStream {
-        quote!(LengthError<usize>)
+        quote!(::fortifier::LengthError<usize>)
     }
 
-    fn tokens(&self, expr: &TokenStream) -> TokenStream {
-        let equal = if let Some(equal) = &self.equal {
-            quote!(Some(#equal))
-        } else {
-            quote!(None)
-        };
-        let min = if let Some(min) = &self.min {
-            quote!(Some(#min))
-        } else {
-            quote!(None)
-        };
-        let max = if let Some(max) = &self.max {
-            quote!(Some(#max))
-        } else {
-            quote!(None)
-        };
+    fn expr(&self, exeuction: Execution, expr: &TokenStream) -> Option<TokenStream> {
+        match exeuction {
+            Execution::Sync => {
+                let equal = if let Some(equal) = &self.equal {
+                    quote!(Some(#equal))
+                } else {
+                    quote!(None)
+                };
+                let min = if let Some(min) = &self.min {
+                    quote!(Some(#min))
+                } else {
+                    quote!(None)
+                };
+                let max = if let Some(max) = &self.max {
+                    quote!(Some(#max))
+                } else {
+                    quote!(None)
+                };
 
-        quote! {
-            #expr.validate_length(#equal, #min, #max)
+                Some(quote! {
+                    ::fortifier::ValidateLength::validate_length(&#expr, #equal, #min, #max)
+                })
+            }
+            Execution::Async => None,
         }
     }
 }

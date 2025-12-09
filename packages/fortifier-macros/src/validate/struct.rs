@@ -1,10 +1,11 @@
-use std::str::FromStr;
-
 use proc_macro2::TokenStream;
 use quote::{ToTokens, TokenStreamExt, quote};
 use syn::{DataStruct, DeriveInput, Generics, Ident, Result};
 
-use crate::validate::{field::ValidateFieldPrefix, fields::ValidateFields};
+use crate::{
+    validate::{field::ValidateFieldPrefix, fields::ValidateFields},
+    validation::Execution,
+};
 
 pub struct ValidateStruct {
     ident: Ident,
@@ -29,35 +30,30 @@ impl ToTokens for ValidateStruct {
 
         let error_wrapper = |tokens| tokens;
 
-        let uses = self.fields.uses().into_iter().map(|r#use| {
-            let tokens = TokenStream::from_str(&r#use).expect("Tokens should be valid.");
-            quote!(use #tokens;)
-        });
         let (error_ident, error_type) = self.fields.error_type();
-        let sync_validations = self
-            .fields
-            .sync_validations(ValidateFieldPrefix::SelfKeyword, &error_wrapper);
-        let async_validations = self
-            .fields
-            .async_validations(ValidateFieldPrefix::SelfKeyword, &error_wrapper);
+        let sync_validations = self.fields.validations(
+            Execution::Sync,
+            ValidateFieldPrefix::SelfKeyword,
+            &error_wrapper,
+        );
+        let async_validations = self.fields.validations(
+            Execution::Async,
+            ValidateFieldPrefix::SelfKeyword,
+            &error_wrapper,
+        );
 
         tokens.append_all(quote! {
-            #( #uses )*
-
-            // TODO: Replace with granular uses.
-            use fortifier::*;
-
             #error_type
 
             #[automatically_derived]
-            impl #impl_generics Validate for #ident #type_generics #where_clause {
+            impl #impl_generics ::fortifier::Validate for #ident #type_generics #where_clause {
                 type Error = #error_ident;
 
-                fn validate_sync(&self) -> Result<(), ValidationErrors<Self::Error>> {
+                fn validate_sync(&self) -> Result<(), ::fortifier::ValidationErrors<Self::Error>> {
                     #sync_validations
                 }
 
-                fn validate_async(&self) -> ::std::pin::Pin<Box<impl Future<Output = Result<(), ValidationErrors<Self::Error>>>>> {
+                fn validate_async(&self) -> ::std::pin::Pin<Box<impl Future<Output = Result<(), ::fortifier::ValidationErrors<Self::Error>>>>> {
                     Box::pin(async {
                         #async_validations
                     })

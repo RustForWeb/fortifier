@@ -1,12 +1,13 @@
-use std::{collections::HashSet, str::FromStr};
-
 use proc_macro2::TokenStream;
 use quote::{ToTokens, TokenStreamExt, format_ident, quote};
 use syn::{DataEnum, DeriveInput, Generics, Ident, Result, Variant, Visibility};
 
-use crate::validate::{
-    field::{LiteralOrIdent, ValidateFieldPrefix},
-    fields::ValidateFields,
+use crate::{
+    validate::{
+        field::{LiteralOrIdent, ValidateFieldPrefix},
+        fields::ValidateFields,
+    },
+    validation::Execution,
 };
 
 pub struct ValidateEnum {
@@ -37,13 +38,6 @@ impl ValidateEnum {
         }
 
         Ok(result)
-    }
-
-    fn uses(&self) -> HashSet<String> {
-        self.variants
-            .iter()
-            .flat_map(|variant| variant.uses())
-            .collect()
     }
 
     fn error_type(&self) -> (Ident, TokenStream) {
@@ -89,42 +83,33 @@ impl ToTokens for ValidateEnum {
         let ident = &self.ident;
         let (impl_generics, type_generics, where_clause) = &self.generics.split_for_impl();
 
-        let uses = self.uses().into_iter().map(|r#use| {
-            let tokens = TokenStream::from_str(&r#use).expect("Tokens should be valid.");
-            quote!(use #tokens;)
-        });
         let (error_ident, error_type) = self.error_type();
         let variant_error_types = self.variants.iter().map(|variant| variant.error_type().1);
         let sync_variant_match_arms = self
             .variants
             .iter()
-            .map(|variant| variant.sync_match_arm_tokens());
+            .map(|variant| variant.match_arm(Execution::Sync));
         let async_variant_match_arms = self
             .variants
             .iter()
-            .map(|variant| variant.async_match_arm_tokens());
+            .map(|variant| variant.match_arm(Execution::Async));
 
         tokens.append_all(quote! {
-            #( #uses )*
-
-            // TODO: Replace with granular uses.
-            use fortifier::*;
-
             #error_type
 
             #( #variant_error_types )*
 
             #[automatically_derived]
-            impl #impl_generics Validate for #ident #type_generics #where_clause {
+            impl #impl_generics ::fortifier::Validate for #ident #type_generics #where_clause {
                 type Error = #error_ident;
 
-                fn validate_sync(&self) -> Result<(), ValidationErrors<Self::Error>> {
+                fn validate_sync(&self) -> Result<(), ::fortifier::ValidationErrors<Self::Error>> {
                     match &self {
                         #( #sync_variant_match_arms ),*
                     }
                 }
 
-                fn validate_async(&self) -> ::std::pin::Pin<Box<impl Future<Output = Result<(), ValidationErrors<Self::Error>>>>> {
+                fn validate_async(&self) -> ::std::pin::Pin<Box<impl Future<Output = Result<(), ::fortifier::ValidationErrors<Self::Error>>>>> {
                     Box::pin(async move {
                         match &self {
                             #( #async_variant_match_arms ),*
@@ -164,15 +149,11 @@ impl ValidateEnumVariant {
         Ok(result)
     }
 
-    fn uses(&self) -> HashSet<String> {
-        self.fields.uses()
-    }
-
-    fn error_type(&self) -> (Ident, TokenStream) {
+    fn error_type(&self) -> (TokenStream, TokenStream) {
         self.fields.error_type()
     }
 
-    fn sync_match_arm_tokens(&self) -> TokenStream {
+    fn match_arm(&self, exeuction: Execution) -> TokenStream {
         let enum_ident = &self.enum_ident;
         let enum_error_ident = &self.enum_error_ident;
         let ident = &self.ident;
@@ -182,8 +163,8 @@ impl ValidateEnumVariant {
         match &self.fields {
             ValidateFields::Named(fields) => {
                 let field_idents = fields.idents();
-                let sync_validations =
-                    fields.sync_validations(ValidateFieldPrefix::None, &error_wrapper);
+                let validations =
+                    fields.validations(exeuction, ValidateFieldPrefix::None, &error_wrapper);
 
                 // TODO: Only destructure fields required for validation.
                 quote! {
@@ -191,7 +172,7 @@ impl ValidateEnumVariant {
                     #enum_ident::#ident {
                         #( #field_idents ),*
                     } => {
-                        #sync_validations
+                        #validations
                     }
                 }
             }
@@ -200,74 +181,23 @@ impl ValidateEnumVariant {
                     LiteralOrIdent::Literal(literal) => format_ident!("f{literal}"),
                     LiteralOrIdent::Ident(ident) => ident.clone(),
                 });
-                let sync_validations =
-                    fields.sync_validations(ValidateFieldPrefix::F, &error_wrapper);
+                let validations =
+                    fields.validations(exeuction, ValidateFieldPrefix::F, &error_wrapper);
 
                 quote! {
                     #enum_ident::#ident(
                         #( #field_idents ),*
                     ) => {
-                        #sync_validations
+                        #validations
                     }
                 }
             }
             ValidateFields::Unit(fields) => {
-                let sync_validations = fields.sync_validations();
+                let validations = fields.validations();
 
                 quote! {
                     #enum_ident::#ident => {
-                        #sync_validations
-                    }
-                }
-            }
-        }
-    }
-
-    fn async_match_arm_tokens(&self) -> TokenStream {
-        let enum_ident = &self.enum_ident;
-        let enum_error_ident = &self.enum_error_ident;
-        let ident = &self.ident;
-
-        let error_wrapper = |tokens| quote!(#enum_error_ident::#ident(#tokens));
-
-        match &self.fields {
-            ValidateFields::Named(fields) => {
-                let field_idents = fields.idents();
-                let async_validations =
-                    fields.async_validations(ValidateFieldPrefix::None, &error_wrapper);
-
-                // TODO: Only destructure fields required for validation.
-                quote! {
-                    #[allow(unused_variables)]
-                    #enum_ident::#ident {
-                        #( #field_idents ),*
-                    } => {
-                        #async_validations
-                    }
-                }
-            }
-            ValidateFields::Unnamed(fields) => {
-                let field_idents = fields.idents().map(|ident| match ident {
-                    LiteralOrIdent::Literal(literal) => format_ident!("f{literal}"),
-                    LiteralOrIdent::Ident(ident) => ident.clone(),
-                });
-                let async_validations =
-                    fields.async_validations(ValidateFieldPrefix::F, &error_wrapper);
-
-                quote! {
-                    #enum_ident::#ident(
-                        #( #field_idents ),*
-                    ) => {
-                        #async_validations
-                    }
-                }
-            }
-            ValidateFields::Unit(fields) => {
-                let async_validations = fields.async_validations();
-
-                quote! {
-                    #enum_ident::#ident => {
-                        #async_validations
+                        #validations
                     }
                 }
             }

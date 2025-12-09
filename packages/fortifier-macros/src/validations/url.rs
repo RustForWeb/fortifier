@@ -2,7 +2,7 @@ use proc_macro2::TokenStream;
 use quote::{format_ident, quote};
 use syn::{Ident, Result, meta::ParseNestedMeta};
 
-use crate::validation::Validation;
+use crate::validation::{Execution, Validation};
 
 #[derive(Default)]
 pub struct Url {}
@@ -12,21 +12,20 @@ impl Validation for Url {
         Ok(Url::default())
     }
 
-    fn is_async(&self) -> bool {
-        false
-    }
-
     fn ident(&self) -> Ident {
         format_ident!("Url")
     }
 
     fn error_type(&self) -> TokenStream {
-        quote!(UrlError)
+        quote!(::fortifier::UrlError)
     }
 
-    fn tokens(&self, expr: &TokenStream) -> TokenStream {
-        quote! {
-            #expr.validate_url()
+    fn expr(&self, execution: Execution, expr: &TokenStream) -> Option<TokenStream> {
+        match execution {
+            Execution::Sync => Some(quote! {
+                ::fortifier::ValidateUrl::validate_url(&#expr)
+            }),
+            Execution::Async => None,
         }
     }
 }

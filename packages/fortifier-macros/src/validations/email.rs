@@ -2,7 +2,7 @@ use proc_macro2::TokenStream;
 use quote::{format_ident, quote};
 use syn::{Ident, LitBool, LitInt, Result, meta::ParseNestedMeta};
 
-use crate::validation::Validation;
+use crate::validation::{Execution, Validation};
 
 pub struct Email {
     allow_display_text: bool,
@@ -50,33 +50,33 @@ impl Validation for Email {
         Ok(result)
     }
 
-    fn is_async(&self) -> bool {
-        false
-    }
-
     fn ident(&self) -> Ident {
         format_ident!("Email")
     }
-
     fn error_type(&self) -> TokenStream {
-        quote!(EmailError)
+        quote!(::fortifier::EmailError)
     }
 
-    fn tokens(&self, expr: &TokenStream) -> TokenStream {
-        let allow_display_text = self.allow_display_text;
-        let allow_domain_literal = self.allow_domain_literal;
-        let minimum_sub_domains = self.minimum_sub_domains;
+    fn expr(&self, execution: Execution, expr: &TokenStream) -> Option<TokenStream> {
+        match execution {
+            Execution::Sync => {
+                let allow_display_text = self.allow_display_text;
+                let allow_domain_literal = self.allow_domain_literal;
+                let minimum_sub_domains = self.minimum_sub_domains;
 
-        quote! {
-            {
-                const EMAIL_ADDRESS_OPTIONS: EmailOptions = EmailOptions {
-                    allow_display_text: #allow_display_text,
-                    allow_domain_literal: #allow_domain_literal,
-                    minimum_sub_domains: #minimum_sub_domains,
-                };
+                Some(quote! {
+                    {
+                        const EMAIL_ADDRESS_OPTIONS: ::fortifier::EmailOptions = ::fortifier::EmailOptions {
+                            allow_display_text: #allow_display_text,
+                            allow_domain_literal: #allow_domain_literal,
+                            minimum_sub_domains: #minimum_sub_domains,
+                        };
 
-                #expr.validate_email(EMAIL_ADDRESS_OPTIONS)
+                        ::fortifier::ValidateEmail::validate_email(&#expr, EMAIL_ADDRESS_OPTIONS)
+                    }
+                })
             }
+            Execution::Async => None,
         }
     }
 }
