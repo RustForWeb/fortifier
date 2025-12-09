@@ -1,6 +1,6 @@
 use std::error::Error;
 
-use fortifier::Validate;
+use fortifier::{Validate, ValidateEmail, ValidateLength};
 
 #[derive(Validate)]
 struct CreateUser<E: ValidateEmail, N: ValidateLength<usize>> {

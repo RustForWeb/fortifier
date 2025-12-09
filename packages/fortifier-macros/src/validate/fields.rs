@@ -1,10 +1,11 @@
-use std::collections::HashSet;
-
 use proc_macro2::{Literal, TokenStream};
-use quote::{format_ident, quote};
+use quote::{ToTokens, format_ident, quote};
 use syn::{Fields, FieldsNamed, FieldsUnnamed, Ident, Result, Visibility};
 
-use crate::validate::field::{LiteralOrIdent, ValidateField, ValidateFieldPrefix};
+use crate::{
+    validate::field::{LiteralOrIdent, ValidateField, ValidateFieldPrefix},
+    validation::Execution,
+};
 
 pub enum ValidateFields {
     Named(ValidateNamedFields),
@@ -25,15 +26,7 @@ impl ValidateFields {
         })
     }
 
-    pub fn uses(&self) -> HashSet<String> {
-        match self {
-            ValidateFields::Named(named) => named.uses(),
-            ValidateFields::Unnamed(unnamed) => unnamed.uses(),
-            ValidateFields::Unit(unit) => unit.uses(),
-        }
-    }
-
-    pub fn error_type(&self) -> (Ident, TokenStream) {
+    pub fn error_type(&self) -> (TokenStream, TokenStream) {
         match self {
             ValidateFields::Named(named) => named.error_type(),
             ValidateFields::Unnamed(unnamed) => unnamed.error_type(),
@@ -41,31 +34,20 @@ impl ValidateFields {
         }
     }
 
-    pub fn sync_validations(
+    pub fn validations(
         &self,
+        execution: Execution,
         field_prefix: ValidateFieldPrefix,
         error_wrapper: &impl Fn(TokenStream) -> TokenStream,
     ) -> TokenStream {
         match self {
-            ValidateFields::Named(named) => named.sync_validations(field_prefix, error_wrapper),
-            ValidateFields::Unnamed(unnamed) => {
-                unnamed.sync_validations(field_prefix, error_wrapper)
+            ValidateFields::Named(named) => {
+                named.validations(execution, field_prefix, error_wrapper)
             }
-            ValidateFields::Unit(unit) => unit.sync_validations(),
-        }
-    }
-
-    pub fn async_validations(
-        &self,
-        field_prefix: ValidateFieldPrefix,
-        error_wrapper: &impl Fn(TokenStream) -> TokenStream,
-    ) -> TokenStream {
-        match self {
-            ValidateFields::Named(named) => named.async_validations(field_prefix, error_wrapper),
             ValidateFields::Unnamed(unnamed) => {
-                unnamed.async_validations(field_prefix, error_wrapper)
+                unnamed.validations(execution, field_prefix, error_wrapper)
             }
-            ValidateFields::Unit(unit) => unit.async_validations(),
+            ValidateFields::Unit(unit) => unit.validations(),
         }
     }
 }
@@ -106,11 +88,7 @@ impl ValidateNamedFields {
         self.fields.iter().map(|field| field.ident())
     }
 
-    fn uses(&self) -> HashSet<String> {
-        HashSet::default()
-    }
-
-    fn error_type(&self) -> (Ident, TokenStream) {
+    fn error_type(&self) -> (TokenStream, TokenStream) {
         let visibility = &self.visibility;
         let ident = &self.ident;
         let error_ident = &self.error_ident;
@@ -131,7 +109,7 @@ impl ValidateNamedFields {
         }
 
         (
-            error_ident.clone(),
+            error_ident.to_token_stream(),
             quote! {
                 #[allow(dead_code)]
                 #[derive(Debug)]
@@ -154,31 +132,18 @@ impl ValidateNamedFields {
         )
     }
 
-    pub fn sync_validations(
+    pub fn validations(
         &self,
+        execution: Execution,
         field_prefix: ValidateFieldPrefix,
         error_wrapper: &impl Fn(TokenStream) -> TokenStream,
     ) -> TokenStream {
         validations(
+            execution,
+            field_prefix,
             &self.error_ident,
             error_wrapper,
-            self.fields
-                .iter()
-                .map(|field| (field, field.sync_validations(field_prefix))),
-        )
-    }
-
-    pub fn async_validations(
-        &self,
-        field_prefix: ValidateFieldPrefix,
-        error_wrapper: &impl Fn(TokenStream) -> TokenStream,
-    ) -> TokenStream {
-        validations(
-            &self.error_ident,
-            error_wrapper,
-            self.fields
-                .iter()
-                .map(|field| (field, field.async_validations(field_prefix))),
+            self.fields.iter(),
         )
     }
 }
@@ -215,11 +180,7 @@ impl ValidateUnnamedFields {
         self.fields.iter().map(|field| field.ident())
     }
 
-    fn uses(&self) -> HashSet<String> {
-        HashSet::default()
-    }
-
-    fn error_type(&self) -> (Ident, TokenStream) {
+    fn error_type(&self) -> (TokenStream, TokenStream) {
         let visibility = &self.visibility;
         let ident = &self.ident;
         let error_ident = &self.error_ident;
@@ -240,7 +201,7 @@ impl ValidateUnnamedFields {
         }
 
         (
-            error_ident.clone(),
+            error_ident.to_token_stream(),
             quote! {
                 #[allow(dead_code)]
                 #[derive(Debug)]
@@ -263,31 +224,18 @@ impl ValidateUnnamedFields {
         )
     }
 
-    pub fn sync_validations(
+    pub fn validations(
         &self,
+        execution: Execution,
         field_prefix: ValidateFieldPrefix,
         error_wrapper: &impl Fn(TokenStream) -> TokenStream,
     ) -> TokenStream {
         validations(
+            execution,
+            field_prefix,
             &self.error_ident,
             error_wrapper,
-            self.fields
-                .iter()
-                .map(|field| (field, field.sync_validations(field_prefix))),
-        )
-    }
-
-    pub fn async_validations(
-        &self,
-        field_prefix: ValidateFieldPrefix,
-        error_wrapper: &impl Fn(TokenStream) -> TokenStream,
-    ) -> TokenStream {
-        validations(
-            &self.error_ident,
-            error_wrapper,
-            self.fields
-                .iter()
-                .map(|field| (field, field.async_validations(field_prefix))),
+            self.fields.iter(),
         )
     }
 }
@@ -299,21 +247,11 @@ impl ValidateUnitFields {
         Ok(Self {})
     }
 
-    fn uses(&self) -> HashSet<String> {
-        HashSet::from(["std::convert::Infallible".to_owned()])
+    fn error_type(&self) -> (TokenStream, TokenStream) {
+        (quote!(::std::convert::Infallible), TokenStream::new())
     }
 
-    fn error_type(&self) -> (Ident, TokenStream) {
-        (format_ident!("Infallible"), TokenStream::new())
-    }
-
-    pub fn sync_validations(&self) -> TokenStream {
-        quote! {
-            Ok(())
-        }
-    }
-
-    pub fn async_validations(&self) -> TokenStream {
+    pub fn validations(&self) -> TokenStream {
         quote! {
             Ok(())
         }
@@ -321,13 +259,18 @@ impl ValidateUnitFields {
 }
 
 fn validations<'a>(
+    execution: Execution,
+    field_prefix: ValidateFieldPrefix,
     error_ident: &Ident,
     error_wrapper: &impl Fn(TokenStream) -> TokenStream,
-    iterator: impl Iterator<Item = (&'a ValidateField, Vec<TokenStream>)>,
+    fields: impl Iterator<Item = &'a ValidateField>,
 ) -> TokenStream {
-    let validations = iterator
-        .flat_map(|(field, validations)| {
+    let error_ident = &error_ident;
+
+    let validations = fields
+        .flat_map(|field| {
             let field_error_ident = field.error_ident();
+            let validations = field.validations(execution, field_prefix);
 
             validations
                 .iter()

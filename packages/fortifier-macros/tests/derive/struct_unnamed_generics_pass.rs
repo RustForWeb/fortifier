@@ -1,6 +1,6 @@
 use std::error::Error;
 
-use fortifier::Validate;
+use fortifier::{Validate, ValidateLength};
 
 #[derive(Validate)]
 struct CreateUser<N: ValidateLength<usize>>(#[validate(length(min = 1, max = 256))] N);

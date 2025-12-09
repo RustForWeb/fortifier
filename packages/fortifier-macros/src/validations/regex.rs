@@ -2,7 +2,7 @@ use proc_macro2::TokenStream;
 use quote::{format_ident, quote};
 use syn::{Expr, Ident, Result, meta::ParseNestedMeta};
 
-use crate::validation::Validation;
+use crate::validation::{Execution, Validation};
 
 pub struct Regex {
     expression: Expr,
@@ -33,23 +33,24 @@ impl Validation for Regex {
         Ok(Regex { expression })
     }
 
-    fn is_async(&self) -> bool {
-        false
-    }
-
     fn ident(&self) -> Ident {
         format_ident!("Regex")
     }
 
     fn error_type(&self) -> TokenStream {
-        quote!(RegexError)
+        quote!(::fortifier::RegexError)
     }
 
-    fn tokens(&self, expr: &TokenStream) -> TokenStream {
-        let expression = &self.expression;
+    fn expr(&self, execution: Execution, expr: &TokenStream) -> Option<TokenStream> {
+        match execution {
+            Execution::Sync => {
+                let expression = &self.expression;
 
-        quote! {
-            #expr.validate_regex(#expression)
+                Some(quote! {
+                    ::fortifier::ValidateRegex::validate_regex(&#expr, #expression)
+                })
+            }
+            Execution::Async => None,
         }
     }
 }

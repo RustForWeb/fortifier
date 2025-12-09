@@ -2,17 +2,17 @@ use proc_macro2::TokenStream;
 use quote::{ToTokens, format_ident, quote};
 use syn::{Ident, LitBool, Path, Result, Type, meta::ParseNestedMeta};
 
-use crate::validation::Validation;
+use crate::validation::{Execution, Validation};
 
 pub struct Custom {
-    is_async: bool,
+    execution: Execution,
     error_type: Type,
     function_path: Path,
 }
 
 impl Validation for Custom {
     fn parse(meta: &ParseNestedMeta<'_>) -> Result<Self> {
-        let mut is_async = false;
+        let mut execution = Execution::Sync;
         let mut error_type: Option<Type> = None;
         let mut function_path: Option<Path> = None;
 
@@ -20,9 +20,13 @@ impl Validation for Custom {
             if meta.path.is_ident("async") {
                 if let Ok(value) = meta.value() {
                     let lit: LitBool = value.parse()?;
-                    is_async = lit.value;
+                    execution = if lit.value {
+                        Execution::Async
+                    } else {
+                        Execution::Sync
+                    };
                 } else {
-                    is_async = true;
+                    execution = Execution::Async;
                 }
 
                 Ok(())
@@ -47,14 +51,10 @@ impl Validation for Custom {
         };
 
         Ok(Custom {
-            is_async,
+            execution,
             error_type,
             function_path,
         })
-    }
-
-    fn is_async(&self) -> bool {
-        self.is_async
     }
 
     fn ident(&self) -> Ident {
@@ -66,17 +66,23 @@ impl Validation for Custom {
         self.error_type.to_token_stream()
     }
 
-    fn tokens(&self, expr: &TokenStream) -> TokenStream {
-        let function_path = &self.function_path;
+    fn expr(&self, execution: Execution, expr: &TokenStream) -> Option<TokenStream> {
+        match (execution, self.execution) {
+            (Execution::Sync, Execution::Sync) => {
+                let function_path = &self.function_path;
 
-        if self.is_async {
-            quote! {
-                #function_path(&#expr).await
+                Some(quote! {
+                    #function_path(&#expr)
+                })
             }
-        } else {
-            quote! {
-                #function_path(&#expr)
+            (Execution::Async, Execution::Async) => {
+                let function_path = &self.function_path;
+
+                Some(quote! {
+                    #function_path(&#expr).await
+                })
             }
+            _ => None,
         }
     }
 }
