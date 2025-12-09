@@ -1,40 +1,11 @@
-use std::{error::Error, sync::LazyLock};
+mod email_address;
+mod user;
+
+use std::error::Error;
 
 use fortifier::Validate;
-use regex::Regex;
 
-static COUNTRY_CODE_REGEX: LazyLock<Regex> =
-    LazyLock::new(|| Regex::new(r"[A-Z]{2}").expect("Regex should be valid."));
-
-#[derive(Validate)]
-struct CreateUser {
-    #[validate(email)]
-    email: String,
-
-    #[validate(length(min = 1, max = 256))]
-    name: String,
-
-    #[validate(url)]
-    url: String,
-
-    #[validate(regex = &COUNTRY_CODE_REGEX)]
-    country_code: String,
-
-    #[validate(custom(function = validate_one_locale_required, error = OneLocaleRequiredError))]
-    #[validate(length(min = 1))]
-    locales: Vec<String>,
-}
-
-#[derive(Debug)]
-struct OneLocaleRequiredError;
-
-fn validate_one_locale_required(locales: &[String]) -> Result<(), OneLocaleRequiredError> {
-    if locales.is_empty() {
-        Err(OneLocaleRequiredError)
-    } else {
-        Ok(())
-    }
-}
+use crate::{email_address::ChangeEmailAddressRelation, user::CreateUser};
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
@@ -45,6 +16,23 @@ async fn main() -> Result<(), Box<dyn Error>> {
         country_code: "GB".to_owned(),
         locales: vec!["en_GB".to_owned()],
     };
+
+    data.validate().await?;
+
+    let data = ChangeEmailAddressRelation::Create {
+        email_address: "john@doe.com".to_owned(),
+    };
+
+    data.validate().await?;
+
+    let data = ChangeEmailAddressRelation::Update {
+        id: "1".to_owned(),
+        email_address: "john@doe.com".to_owned(),
+    };
+
+    data.validate().await?;
+
+    let data = ChangeEmailAddressRelation::Delete { id: "1".to_owned() };
 
     data.validate().await?;
 
