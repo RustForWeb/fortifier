@@ -10,14 +10,14 @@ use crate::{
     validation::Execution,
 };
 
-pub enum ValidateFields {
-    Named(ValidateNamedFields),
-    Unnamed(ValidateUnnamedFields),
+pub enum ValidateFields<'a> {
+    Named(ValidateNamedFields<'a>),
+    Unnamed(ValidateUnnamedFields<'a>),
     Unit(ValidateUnitFields),
 }
 
-impl ValidateFields {
-    pub fn parse(visibility: &Visibility, ident: &Ident, fields: &Fields) -> Result<Self> {
+impl<'a> ValidateFields<'a> {
+    pub fn parse(visibility: &'a Visibility, ident: Ident, fields: &'a Fields) -> Result<Self> {
         Ok(match fields {
             Fields::Named(fields) => {
                 Self::Named(ValidateNamedFields::parse(visibility, ident, fields)?)
@@ -55,19 +55,21 @@ impl ValidateFields {
     }
 }
 
-pub struct ValidateNamedFields {
-    visibility: Visibility,
+pub struct ValidateNamedFields<'a> {
+    visibility: &'a Visibility,
     ident: Ident,
     error_ident: Ident,
-    fields: Vec<ValidateField>,
+    fields: Vec<ValidateField<'a>>,
 }
 
-impl ValidateNamedFields {
-    fn parse(visibility: &Visibility, ident: &Ident, fields: &FieldsNamed) -> Result<Self> {
+impl<'a> ValidateNamedFields<'a> {
+    fn parse(visibility: &'a Visibility, ident: Ident, fields: &'a FieldsNamed) -> Result<Self> {
+        let error_ident = format_ident!("{}ValidationError", ident);
+
         let mut result = Self {
-            visibility: visibility.clone(),
-            ident: ident.clone(),
-            error_ident: format_ident!("{}ValidationError", ident),
+            visibility,
+            ident,
+            error_ident,
             fields: Vec::with_capacity(fields.named.len()),
         };
 
@@ -78,7 +80,7 @@ impl ValidateNamedFields {
 
             result.fields.push(ValidateField::parse(
                 visibility,
-                ident,
+                &result.ident,
                 LiteralOrIdent::Ident(field_ident.clone()),
                 field,
             )?);
@@ -93,7 +95,7 @@ impl ValidateNamedFields {
 
     fn error_type(&self) -> (TokenStream, TokenStream) {
         error_type(
-            &self.visibility,
+            self.visibility,
             &self.ident,
             &self.error_ident,
             self.fields.iter(),
@@ -116,26 +118,28 @@ impl ValidateNamedFields {
     }
 }
 
-pub struct ValidateUnnamedFields {
-    visibility: Visibility,
+pub struct ValidateUnnamedFields<'a> {
+    visibility: &'a Visibility,
     ident: Ident,
     error_ident: Ident,
-    fields: Vec<ValidateField>,
+    fields: Vec<ValidateField<'a>>,
 }
 
-impl ValidateUnnamedFields {
-    fn parse(visibility: &Visibility, ident: &Ident, fields: &FieldsUnnamed) -> Result<Self> {
+impl<'a> ValidateUnnamedFields<'a> {
+    fn parse(visibility: &'a Visibility, ident: Ident, fields: &'a FieldsUnnamed) -> Result<Self> {
+        let error_ident = format_ident!("{}ValidationError", ident);
+
         let mut result = Self {
-            visibility: visibility.clone(),
-            ident: ident.clone(),
-            error_ident: format_ident!("{}ValidationError", ident),
+            visibility,
+            ident,
+            error_ident,
             fields: Vec::with_capacity(fields.unnamed.len()),
         };
 
         for (index, field) in fields.unnamed.iter().enumerate() {
             result.fields.push(ValidateField::parse(
                 visibility,
-                ident,
+                &result.ident,
                 LiteralOrIdent::Literal(Literal::usize_unsuffixed(index)),
                 field,
             )?);
@@ -150,7 +154,7 @@ impl ValidateUnnamedFields {
 
     fn error_type(&self) -> (TokenStream, TokenStream) {
         error_type(
-            &self.visibility,
+            self.visibility,
             &self.ident,
             &self.error_ident,
             self.fields.iter(),
@@ -195,7 +199,7 @@ fn error_type<'a>(
     visibility: &Visibility,
     ident: &Ident,
     error_ident: &Ident,
-    fields: impl Iterator<Item = &'a ValidateField>,
+    fields: impl Iterator<Item = &'a ValidateField<'a>>,
 ) -> (TokenStream, TokenStream) {
     let attributes = enum_attributes();
 
@@ -207,7 +211,7 @@ fn error_type<'a>(
         let field_error_ident = field.error_ident();
         let (field_error_type, field_error_enum) = field.error_type(ident);
 
-        error_field_idents.push(field_error_ident.clone());
+        error_field_idents.push(field_error_ident);
         error_field_types.push(field_error_type);
         if let Some(error_enum) = field_error_enum {
             error_field_enums.push(error_enum);
@@ -244,7 +248,7 @@ fn validations<'a>(
     field_prefix: ValidateFieldPrefix,
     error_ident: &Ident,
     error_wrapper: &impl Fn(TokenStream) -> TokenStream,
-    fields: impl Iterator<Item = &'a ValidateField>,
+    fields: impl Iterator<Item = &'a ValidateField<'a>>,
 ) -> TokenStream {
     let error_ident = &error_ident;
 

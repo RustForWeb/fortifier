@@ -7,23 +7,23 @@ use crate::{
     validation::Execution,
 };
 
-pub struct ValidateStruct {
-    ident: Ident,
-    generics: Generics,
-    fields: ValidateFields,
+pub struct ValidateStruct<'a> {
+    ident: &'a Ident,
+    generics: &'a Generics,
+    fields: ValidateFields<'a>,
 }
 
-impl ValidateStruct {
-    pub fn parse(input: &DeriveInput, data: &DataStruct) -> Result<Self> {
+impl<'a> ValidateStruct<'a> {
+    pub fn parse(input: &'a DeriveInput, data: &'a DataStruct) -> Result<Self> {
         Ok(ValidateStruct {
-            ident: input.ident.clone(),
-            generics: input.generics.clone(),
-            fields: ValidateFields::parse(&input.vis, &input.ident, &data.fields)?,
+            ident: &input.ident,
+            generics: &input.generics,
+            fields: ValidateFields::parse(&input.vis, input.ident.clone(), &data.fields)?,
         })
     }
 }
 
-impl ToTokens for ValidateStruct {
+impl<'a> ToTokens for ValidateStruct<'a> {
     fn to_tokens(&self, tokens: &mut TokenStream) {
         let ident = &self.ident;
         let (impl_generics, type_generics, where_clause) = self.generics.split_for_impl();

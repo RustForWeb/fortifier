@@ -11,29 +11,29 @@ use crate::{
     validation::Execution,
 };
 
-pub struct ValidateEnum {
-    visibility: Visibility,
-    ident: Ident,
+pub struct ValidateEnum<'a> {
+    visibility: &'a Visibility,
+    ident: &'a Ident,
     error_ident: Ident,
-    generics: Generics,
-    variants: Vec<ValidateEnumVariant>,
+    generics: &'a Generics,
+    variants: Vec<ValidateEnumVariant<'a>>,
 }
 
-impl ValidateEnum {
-    pub fn parse(input: &DeriveInput, data: &DataEnum) -> Result<Self> {
+impl<'a> ValidateEnum<'a> {
+    pub fn parse(input: &'a DeriveInput, data: &'a DataEnum) -> Result<Self> {
         let mut result = ValidateEnum {
-            visibility: input.vis.clone(),
-            ident: input.ident.clone(),
+            visibility: &input.vis,
+            ident: &input.ident,
             error_ident: format_ident!("{}ValidationError", input.ident),
-            generics: input.generics.clone(),
+            generics: &input.generics,
             variants: Vec::with_capacity(data.variants.len()),
         };
 
         for variant in &data.variants {
             result.variants.push(ValidateEnumVariant::parse(
                 &input.vis,
-                &result.ident,
-                &result.error_ident,
+                result.ident,
+                result.error_ident.clone(),
                 variant,
             )?);
         }
@@ -41,7 +41,7 @@ impl ValidateEnum {
         Ok(result)
     }
 
-    fn error_type(&self) -> (Ident, TokenStream) {
+    fn error_type(&self) -> (&Ident, TokenStream) {
         let visibility = &self.visibility;
         let error_ident = &self.error_ident;
 
@@ -58,7 +58,7 @@ impl ValidateEnum {
             .collect::<Vec<_>>();
 
         (
-            error_ident.clone(),
+            error_ident,
             quote! {
                 #[allow(dead_code)]
                 #[derive(Debug)]
@@ -81,7 +81,7 @@ impl ValidateEnum {
     }
 }
 
-impl ToTokens for ValidateEnum {
+impl<'a> ToTokens for ValidateEnum<'a> {
     fn to_tokens(&self, tokens: &mut TokenStream) {
         let ident = &self.ident;
         let (impl_generics, type_generics, where_clause) = &self.generics.split_for_impl();
@@ -124,27 +124,27 @@ impl ToTokens for ValidateEnum {
     }
 }
 
-pub struct ValidateEnumVariant {
-    enum_ident: Ident,
+pub struct ValidateEnumVariant<'a> {
+    enum_ident: &'a Ident,
     enum_error_ident: Ident,
-    ident: Ident,
-    fields: ValidateFields,
+    ident: &'a Ident,
+    fields: ValidateFields<'a>,
 }
 
-impl ValidateEnumVariant {
+impl<'a> ValidateEnumVariant<'a> {
     pub fn parse(
-        visibility: &Visibility,
-        enum_ident: &Ident,
-        enum_error_ident: &Ident,
-        variant: &Variant,
+        visibility: &'a Visibility,
+        enum_ident: &'a Ident,
+        enum_error_ident: Ident,
+        variant: &'a Variant,
     ) -> Result<Self> {
         let result = ValidateEnumVariant {
-            enum_ident: enum_ident.clone(),
-            enum_error_ident: enum_error_ident.clone(),
-            ident: variant.ident.clone(),
+            enum_ident,
+            enum_error_ident,
+            ident: &variant.ident,
             fields: ValidateFields::parse(
                 visibility,
-                &format_ident!("{}{}", enum_ident, variant.ident),
+                format_ident!("{}{}", enum_ident, variant.ident),
                 &variant.fields,
             )?,
         };
