@@ -1,3 +1,4 @@
+mod attributes;
 mod r#enum;
 mod field;
 mod fields;

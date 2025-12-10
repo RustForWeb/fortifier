@@ -4,6 +4,7 @@ use quote::{ToTokens, format_ident, quote};
 use syn::{Field, Ident, Result, Visibility};
 
 use crate::{
+    validate::attributes::enum_attributes,
     validation::{Execution, Validation},
     validations::{Custom, Email, Length, Regex, Url},
 };
@@ -103,6 +104,7 @@ impl ValidateField {
 
     pub fn error_type(&self, ident: &Ident) -> (TokenStream, Option<TokenStream>) {
         if self.validations.len() > 1 {
+            let attributes = enum_attributes();
             let visibility = &self.visibility;
             let ident = format_ident!("{}{}ValidationError", ident, self.error_ident);
             let variant_ident = self.validations.iter().map(|validation| validation.ident());
@@ -115,6 +117,7 @@ impl ValidateField {
                 ident.to_token_stream(),
                 Some(quote! {
                     #[derive(Debug)]
+                    #attributes
                     #visibility enum #ident {
                         #( #variant_ident(#variant_type) ),*
                     }

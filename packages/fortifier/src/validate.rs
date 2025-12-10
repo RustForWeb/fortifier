@@ -7,6 +7,7 @@ use std::{
 /// Validation errors.
 #[derive(Debug, Eq, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Deserialize, serde::Serialize))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct ValidationErrors<E>(Vec<E>);
 
 impl<E: Debug> Display for ValidationErrors<E> {

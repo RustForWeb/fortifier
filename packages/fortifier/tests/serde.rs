@@ -22,6 +22,7 @@ fn setup() -> (ValidationErrors<TestError>, Value) {
             TestError::Length(LengthError::Equal {
                 equal: 1,
                 length: 2,
+                #[cfg(feature = "message")]
                 message: "length 2 is not equal to required length 1".to_owned(),
             }),
             TestError::Regex(RegexError::default()),

@@ -41,6 +41,7 @@ where
     derive(serde::Deserialize, serde::Serialize),
     serde(rename_all = "camelCase")
 )]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct RegexError {
     /// A human-readable error message.
     #[cfg(feature = "message")]

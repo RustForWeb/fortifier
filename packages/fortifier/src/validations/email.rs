@@ -19,6 +19,7 @@ pub use email_address::Options as EmailOptions;
         rename_all_fields = "camelCase"
     )
 )]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub enum EmailError {
     /// Invalid character error.
     InvalidCharacter {

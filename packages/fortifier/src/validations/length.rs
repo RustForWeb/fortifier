@@ -21,6 +21,7 @@ use indexmap::{IndexMap, IndexSet};
         rename_all_fields = "camelCase"
     )
 )]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub enum LengthError<T> {
     /// Length is not equal to the required length.
     Equal {
