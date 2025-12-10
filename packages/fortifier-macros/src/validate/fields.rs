@@ -3,7 +3,10 @@ use quote::{ToTokens, format_ident, quote};
 use syn::{Fields, FieldsNamed, FieldsUnnamed, Ident, Result, Visibility};
 
 use crate::{
-    validate::field::{LiteralOrIdent, ValidateField, ValidateFieldPrefix},
+    validate::{
+        attributes::enum_attributes,
+        field::{LiteralOrIdent, ValidateField, ValidateFieldPrefix},
+    },
     validation::Execution,
 };
 
@@ -194,6 +197,8 @@ fn error_type<'a>(
     error_ident: &Ident,
     fields: impl Iterator<Item = &'a ValidateField>,
 ) -> (TokenStream, TokenStream) {
+    let attributes = enum_attributes();
+
     let mut error_field_idents = vec![];
     let mut error_field_types = vec![];
     let mut error_field_enums = vec![];
@@ -214,6 +219,7 @@ fn error_type<'a>(
         quote! {
             #[allow(dead_code)]
             #[derive(Debug)]
+            #attributes
             #visibility enum #error_ident {
                 #( #error_field_idents(#error_field_types) ),*
             }

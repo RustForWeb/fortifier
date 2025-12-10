@@ -4,6 +4,7 @@ use syn::{DataEnum, DeriveInput, Generics, Ident, Result, Variant, Visibility};
 
 use crate::{
     validate::{
+        attributes::enum_attributes,
         field::{LiteralOrIdent, ValidateFieldPrefix},
         fields::ValidateFields,
     },
@@ -44,6 +45,7 @@ impl ValidateEnum {
         let visibility = &self.visibility;
         let error_ident = &self.error_ident;
 
+        let attributes = enum_attributes();
         let error_variant_idents = self
             .variants
             .iter()
@@ -60,6 +62,7 @@ impl ValidateEnum {
             quote! {
                 #[allow(dead_code)]
                 #[derive(Debug)]
+                #attributes
                 #visibility enum #error_ident {
                     #( #error_variant_idents(#error_variant_types) ),*
                 }

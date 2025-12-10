@@ -1,0 +1,29 @@
+[package]
+name = "fortifier-example-server"
+description = "Fortifier server example."
+
+authors.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+version.workspace = true
+
+[dependencies]
+axum = "0.8.7"
+fortifier = { workspace = true, features = [
+    "email",
+    "regex",
+    "serde",
+    "url",
+    "utoipa",
+] }
+serde = { workspace = true, features = ["derive"] }
+thiserror = "2.0.17"
+tokio = { workspace = true, features = ["macros", "rt-multi-thread"] }
+utoipa = { workspace = true, features = ["axum_extras", "uuid"] }
+utoipa-axum = "0.2.0"
+utoipa-scalar = { version = "0.3.0", features = ["axum"] }
+uuid = { version = "1.19.0", features = ["serde", "v7"] }
+
+[lints]
+workspace = true

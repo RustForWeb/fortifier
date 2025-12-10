@@ -1,5 +1,5 @@
 [workspace]
-members = ["example", "packages/*"]
+members = ["examples/*", "packages/*"]
 resolver = "2"
 
 [workspace.package]
@@ -16,6 +16,7 @@ regex = "1.12.2"
 serde = "1.0.228"
 serde_json = "1.0.145"
 tokio = "1.48.0"
+utoipa = "5.4.0"
 
 [workspace.lints.rust]
 unsafe_code = "deny"

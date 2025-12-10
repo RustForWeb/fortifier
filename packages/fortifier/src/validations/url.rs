@@ -18,6 +18,7 @@ use url::{ParseError, Url};
         rename_all_fields = "camelCase"
     )
 )]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub enum UrlError {
     /// Empty host error.
     EmptyHost {

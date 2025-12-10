@@ -1,6 +1,6 @@
 [package]
-name = "fortifier-example"
-description = "Fortifier example."
+name = "fortifier-example-basic"
+description = "Fortifier basic example."
 
 authors.workspace = true
 edition.workspace = true
