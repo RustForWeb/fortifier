@@ -11,23 +11,23 @@ use syn::{Data, DeriveInput, Result};
 
 use crate::validate::{r#enum::ValidateEnum, r#struct::ValidateStruct, union::ValidateUnion};
 
-pub enum Validate {
-    Struct(ValidateStruct),
-    Enum(ValidateEnum),
+pub enum Validate<'a> {
+    Struct(ValidateStruct<'a>),
+    Enum(ValidateEnum<'a>),
     Union(ValidateUnion),
 }
 
-impl Validate {
-    pub fn parse(input: DeriveInput) -> Result<Self> {
+impl<'a> Validate<'a> {
+    pub fn parse(input: &'a DeriveInput) -> Result<Self> {
         Ok(match &input.data {
-            Data::Struct(data) => Self::Struct(ValidateStruct::parse(&input, data)?),
-            Data::Enum(data) => Self::Enum(ValidateEnum::parse(&input, data)?),
-            Data::Union(data) => Self::Union(ValidateUnion::parse(&input, data)?),
+            Data::Struct(data) => Self::Struct(ValidateStruct::parse(input, data)?),
+            Data::Enum(data) => Self::Enum(ValidateEnum::parse(input, data)?),
+            Data::Union(data) => Self::Union(ValidateUnion::parse(input, data)?),
         })
     }
 }
 
-impl ToTokens for Validate {
+impl<'a> ToTokens for Validate<'a> {
     fn to_tokens(&self, tokens: &mut TokenStream) {
         match self {
             Validate::Struct(r#struct) => r#struct.to_tokens(tokens),

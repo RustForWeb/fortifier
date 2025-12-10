@@ -30,17 +30,17 @@ pub enum ValidateFieldPrefix {
     F,
 }
 
-pub struct ValidateField {
-    visibility: Visibility,
+pub struct ValidateField<'a> {
+    visibility: &'a Visibility,
     ident: LiteralOrIdent,
     error_ident: Ident,
     error_type_ident: Ident,
     validations: Vec<Box<dyn Validation>>,
 }
 
-impl ValidateField {
+impl<'a> ValidateField<'a> {
     pub fn parse(
-        visibility: &Visibility,
+        visibility: &'a Visibility,
         type_prefix: &Ident,
         ident: LiteralOrIdent,
         field: &Field,
@@ -54,7 +54,7 @@ impl ValidateField {
         let error_type_ident = format_ident!("{type_prefix}{error_ident}ValidationError");
 
         let mut result = Self {
-            visibility: visibility.clone(),
+            visibility,
             ident,
             error_ident,
             error_type_ident,

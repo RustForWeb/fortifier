@@ -17,7 +17,7 @@ use crate::validate::Validate;
 pub fn derive(input: TokenStream) -> TokenStream {
     let input = parse_macro_input!(input as DeriveInput);
 
-    Validate::parse(input)
+    Validate::parse(&input)
         .map(|validate| validate.to_token_stream())
         .unwrap_or_else(Error::into_compile_error)
         .into()
