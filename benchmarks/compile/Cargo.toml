@@ -1,0 +1,27 @@
+[package]
+name = "fortifier-benchmark-compile"
+description = "Fortifier compile time benchmark."
+
+authors.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+version.workspace = true
+
+[features]
+default = []
+fortifier = ["dep:fortifier"]
+structs-1-fields-10 = []
+structs-10-fields-10 = []
+validator = ["dep:validator"]
+
+[dependencies]
+fortifier = { workspace = true, features = [
+    "email",
+    "serde",
+    "url",
+], optional = true }
+validator = { version = "0.20.0", features = ["derive"], optional = true }
+
+[lints]
+workspace = true
