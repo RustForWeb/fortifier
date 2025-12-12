@@ -161,3 +161,6 @@ target/
 
 # mdBook
 book/book/
+
+# Benchmarks
+benchmarks/compile/results.md
