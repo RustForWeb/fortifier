@@ -31,8 +31,11 @@ jobs:
             - name: Install mdBook
               run: cargo binstall --force -y mdbook mdbook-tabs
 
+            - name: Build Fortifier
+              run: cargo build -p fortifier
+
             - name: Run tests
-              run: mdbook test
+              run: mdbook test -L ../target/debug/deps
               working-directory: book
 
     book-build:

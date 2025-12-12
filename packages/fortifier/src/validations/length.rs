@@ -1,7 +1,7 @@
 use std::{
     borrow::Cow,
     cell::{Ref, RefMut},
-    collections::{BTreeMap, BTreeSet, HashMap, HashSet, VecDeque},
+    collections::{BTreeMap, BTreeSet, HashMap, HashSet, LinkedList, VecDeque},
     fmt::Display,
     rc::Rc,
     sync::Arc,
@@ -164,6 +164,7 @@ validate_with_len!(BTreeSet<T>, T);
 validate_with_len!(BTreeMap<K, V>, K, V);
 validate_with_len!(HashSet<T, S>, T, S);
 validate_with_len!(HashMap<K, V, S>, K, V, S);
+validate_with_len!(LinkedList<T>, T);
 validate_with_len!(Vec<T>, T);
 validate_with_len!(VecDeque<T>, T);
 #[cfg(feature = "indexmap")]
