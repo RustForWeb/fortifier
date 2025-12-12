@@ -61,7 +61,7 @@ impl<'a> ValidateEnum<'a> {
             error_ident,
             quote! {
                 #[allow(dead_code)]
-                #[derive(Debug)]
+                #[derive(Debug, PartialEq)]
                 #attributes
                 #visibility enum #error_ident {
                     #( #error_variant_idents(#error_variant_types) ),*

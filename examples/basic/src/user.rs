@@ -25,7 +25,7 @@ pub struct CreateUser {
     pub locales: Vec<String>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub struct OneLocaleRequiredError;
 
 fn validate_one_locale_required(locales: &[String]) -> Result<(), OneLocaleRequiredError> {

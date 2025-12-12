@@ -125,7 +125,7 @@ impl<'a> ValidateField<'a> {
             (
                 ident.to_token_stream(),
                 Some(quote! {
-                    #[derive(Debug)]
+                    #[derive(Debug, PartialEq)]
                     #attributes
                     #visibility enum #ident {
                         #( #variant_ident(#variant_type) ),*
