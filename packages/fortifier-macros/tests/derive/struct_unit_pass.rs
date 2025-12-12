@@ -1,11 +1,11 @@
-use std::error::Error;
+use std::convert::Infallible;
 
-use fortifier::Validate;
+use fortifier::{Validate, ValidationErrors};
 
 #[derive(Validate)]
 struct CreateUser;
 
-fn main() -> Result<(), Box<dyn Error>> {
+fn main() -> Result<(), ValidationErrors<Infallible>> {
     let data = CreateUser;
 
     data.validate_sync()?;

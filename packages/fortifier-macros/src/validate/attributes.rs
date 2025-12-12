@@ -2,6 +2,7 @@ use proc_macro2::TokenStream;
 use quote::quote;
 
 pub fn enum_attributes() -> TokenStream {
+    #[allow(unused_mut)]
     let mut attributes: Vec<TokenStream> = vec![];
 
     #[cfg(feature = "serde")]
@@ -12,7 +13,6 @@ pub fn enum_attributes() -> TokenStream {
             attributes.push(quote! {
                 #[derive(serde::Deserialize, serde::Serialize)]
                 #[serde(
-                    // TODO: Tag?
                     tag = "path",
                     rename_all = "camelCase",
                     rename_all_fields = "camelCase"

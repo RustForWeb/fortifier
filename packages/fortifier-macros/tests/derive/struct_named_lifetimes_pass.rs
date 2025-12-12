@@ -1,6 +1,4 @@
-use std::error::Error;
-
-use fortifier::Validate;
+use fortifier::{Validate, ValidationErrors};
 
 #[derive(Validate)]
 struct CreateUser<'a, 'b> {
@@ -11,7 +9,7 @@ struct CreateUser<'a, 'b> {
     name: &'b str,
 }
 
-fn main() -> Result<(), Box<dyn Error>> {
+fn main() -> Result<(), ValidationErrors<CreateUserValidationError>> {
     let data = CreateUser {
         email: "john@doe.com",
         name: "John Doe",

@@ -1,6 +1,4 @@
-use std::error::Error;
-
-use fortifier::Validate;
+use fortifier::{Validate, ValidationErrors};
 
 #[derive(Validate)]
 enum ChangeEmailAddressRelation {
@@ -9,7 +7,7 @@ enum ChangeEmailAddressRelation {
     Delete,
 }
 
-fn main() -> Result<(), Box<dyn Error>> {
+fn main() -> Result<(), ValidationErrors<ChangeEmailAddressRelationValidationError>> {
     let data = ChangeEmailAddressRelation::Create;
 
     data.validate_sync()?;
