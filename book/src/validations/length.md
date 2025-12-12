@@ -40,7 +40,7 @@ Validate the amount of entries in an iterable.
 
 ## Options
 
-### Equal
+### `equal`
 
 The length should be equal to the specified expression.
 
@@ -55,7 +55,7 @@ struct User {
 }
 ```
 
-### Minimum
+### `min`
 
 The length should be equal to or greater than the specified expression.
 
@@ -70,7 +70,7 @@ struct User {
 }
 ```
 
-### Maximum
+### `max`
 
 The length should be equal to or less than the specified expression.
 
