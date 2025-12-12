@@ -3,6 +3,7 @@ mod r#enum;
 mod field;
 mod fields;
 mod r#struct;
+mod r#type;
 mod r#union;
 
 use proc_macro2::TokenStream;

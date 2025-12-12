@@ -1,6 +1,4 @@
-use std::error::Error;
-
-use fortifier::{Validate, ValidateEmail, ValidateLength};
+use fortifier::{Validate, ValidateEmail, ValidateLength, ValidationErrors};
 
 #[derive(Validate)]
 struct CreateUser<E: ValidateEmail, N: ValidateLength<usize>> {
@@ -11,7 +9,7 @@ struct CreateUser<E: ValidateEmail, N: ValidateLength<usize>> {
     name: N,
 }
 
-fn main() -> Result<(), Box<dyn Error>> {
+fn main() -> Result<(), ValidationErrors<CreateUserValidationError>> {
     let data = CreateUser {
         email: "john@doe.com",
         name: "John Doe",

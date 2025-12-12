@@ -4,7 +4,7 @@ use quote::{ToTokens, format_ident, quote};
 use syn::{Field, Ident, Result, Visibility};
 
 use crate::{
-    validate::attributes::enum_attributes,
+    validate::{attributes::enum_attributes, r#type::should_validate_type},
     validation::{Execution, Validation},
     validations::{Custom, Email, Length, Regex, Url},
 };
@@ -60,6 +60,7 @@ impl<'a> ValidateField<'a> {
             error_type_ident,
             validations: vec![],
         };
+        let mut skip = false;
 
         for attr in &field.attrs {
             if attr.path().is_ident("validate") {
@@ -84,11 +85,19 @@ impl<'a> ValidateField<'a> {
                         result.validations.push(Box::new(Url::parse(&meta)?));
 
                         Ok(())
+                    } else if meta.path.is_ident("skip") {
+                        skip = true;
+
+                        Ok(())
                     } else {
                         Err(meta.error("unknown parameter"))
                     }
                 })?;
             }
+        }
+
+        if !skip && should_validate_type(&field.ty) {
+            // TODO: Nested validation
         }
 
         Ok(result)
