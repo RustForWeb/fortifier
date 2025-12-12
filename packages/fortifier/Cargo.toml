@@ -10,6 +10,7 @@ version.workspace = true
 
 [features]
 default = ["macros"]
+all-validations = ["email", "regex", "url"]
 email = ["dep:email_address"]
 indexmap = ["dep:indexmap"]
 macros = ["dep:fortifier-macros"]

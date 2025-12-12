@@ -2,6 +2,10 @@
 
 - [Introduction](./introduction.md)
 - [Getting Started](./getting-started.md)
+- [Installation](./installation.md)
+- [Validate](./validate/README.md)
+    - [Enum](./validate/enum.md)
+    - [Struct](./validate/struct.md)
 - [Validations](./validations/README.md)
     - [Email](./validations/email.md)
     - [Length](./validations/length.md)

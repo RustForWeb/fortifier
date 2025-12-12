@@ -2,6 +2,12 @@
 
 Schema validation.
 
+- Synchronous and asynchronous validation
+- Enums and structs
+- Typed errors
+- Email, regex, URL and more
+- Support for Serde and Utoipa
+
 ## Credits
 
 Inspired by [`validator`](https://github.com/Keats/validator).

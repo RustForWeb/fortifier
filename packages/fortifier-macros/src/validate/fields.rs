@@ -222,7 +222,7 @@ fn error_type<'a>(
         error_ident.to_token_stream(),
         quote! {
             #[allow(dead_code)]
-            #[derive(Debug)]
+            #[derive(Debug, PartialEq)]
             #attributes
             #visibility enum #error_ident {
                 #( #error_field_idents(#error_field_types) ),*

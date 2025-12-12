@@ -35,7 +35,7 @@ jobs:
               run: cargo clean -p fortifier
 
             - name: Build Fortifier
-              run: cargo build -p fortifier --all-features
+              run: cargo build -p fortifier --features all-validations
 
             - name: Run tests
               run: mdbook test -L ../target/debug/deps
