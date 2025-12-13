@@ -160,6 +160,7 @@ macro_rules! validate_with_len {
 }
 
 validate_with_len!([T], T);
+validate_with_len!(&[T], T);
 validate_with_len!(BTreeSet<T>, T);
 validate_with_len!(BTreeMap<K, V>, K, V);
 validate_with_len!(HashSet<T, S>, T, S);

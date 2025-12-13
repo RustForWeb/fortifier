@@ -230,12 +230,16 @@ name = "fortifier-macros"
 version = "0.0.1"
 dependencies = [
  "convert_case",
+ "email_address",
  "fortifier",
+ "indexmap",
  "proc-macro-crate",
  "proc-macro2",
  "quote",
+ "regex",
  "syn",
  "trybuild",
+ "url",
 ]
 
 [[package]]

@@ -36,6 +36,14 @@ impl Validation for Length {
             }
         })?;
 
+        if result.equal.is_some() {
+            if result.min.is_some() {
+                return Err(meta.error("`equal` and `min` are conflicting parameters"));
+            } else if result.max.is_some() {
+                return Err(meta.error("`equal` and `max` are conflicting parameters"));
+            }
+        }
+
         Ok(result)
     }
 
