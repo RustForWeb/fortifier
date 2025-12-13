@@ -6,7 +6,7 @@ use syn::{Field, Ident, Result, Visibility};
 use crate::{
     validate::{attributes::enum_attributes, r#type::should_validate_type},
     validation::{Execution, Validation},
-    validations::{Custom, Email, Length, Regex, Url},
+    validations::{Custom, Email, Length, Nested, Regex, Url},
 };
 
 pub enum LiteralOrIdent {
@@ -96,8 +96,11 @@ impl<'a> ValidateField<'a> {
             }
         }
 
-        if !skip && should_validate_type(&field.ty) {
+        // TODO: Use enum/struct generics to determine if a generic field type supports nested validation.
+        // TODO: Remove the validations empty check after resolving the issue above.
+        if !skip && result.validations.is_empty() && should_validate_type(&field.ty) {
             // TODO: Nested validation
+            result.validations.push(Box::new(Nested::new()));
         }
 
         Ok(result)

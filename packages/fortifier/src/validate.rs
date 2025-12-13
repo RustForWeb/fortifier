@@ -30,29 +30,62 @@ impl<E> From<Vec<E>> for ValidationErrors<E> {
     }
 }
 
-/// Validate a schema.
-pub trait Validate {
+/// Validate a schema with context.
+pub trait ValidateWithContext {
+    /// Validation context.
+    type Context: Send + Sync;
+
     /// Validation error.
     type Error: Error;
 
-    /// Validate schema using all validators.
-    fn validate(
+    /// Validate schema using all validators with context.
+    fn validate_with_context(
         &self,
+        context: &Self::Context,
     ) -> Pin<Box<impl Future<Output = Result<(), ValidationErrors<Self::Error>>> + Send>>
     where
         Self: Sync,
     {
         Box::pin(async {
-            self.validate_sync()?;
-            self.validate_async().await
+            self.validate_sync_with_context(context)?;
+            self.validate_async_with_context(context).await
         })
     }
 
+    /// Validate schema using only synchronous validators with context.
+    fn validate_sync_with_context(
+        &self,
+        context: &Self::Context,
+    ) -> Result<(), ValidationErrors<Self::Error>>;
+
+    /// Validate schema using only asynchronous validators  with context.
+    fn validate_async_with_context(
+        &self,
+        context: &Self::Context,
+    ) -> Pin<Box<impl Future<Output = Result<(), ValidationErrors<Self::Error>>> + Send>>;
+}
+
+/// Validate a schema.
+pub trait Validate: ValidateWithContext<Context = ()> {
+    /// Validate schema using all validators.
+    fn validate(
+        &self,
+    ) -> Pin<Box<impl Future<Output = Result<(), ValidationErrors<<Self>::Error>>> + Send>>
+    where
+        Self: Sync,
+    {
+        self.validate_with_context(&())
+    }
+
     /// Validate schema using only synchronous validators.
-    fn validate_sync(&self) -> Result<(), ValidationErrors<Self::Error>>;
+    fn validate_sync(&self) -> Result<(), ValidationErrors<Self::Error>> {
+        self.validate_sync_with_context(&())
+    }
 
     /// Validate schema using only asynchronous validators.
     fn validate_async(
         &self,
-    ) -> Pin<Box<impl Future<Output = Result<(), ValidationErrors<Self::Error>>> + Send>>;
+    ) -> Pin<Box<impl Future<Output = Result<(), ValidationErrors<Self::Error>>> + Send>> {
+        self.validate_async_with_context(&())
+    }
 }
