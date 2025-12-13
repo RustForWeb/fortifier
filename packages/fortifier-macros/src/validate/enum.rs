@@ -1,6 +1,6 @@
 use proc_macro2::TokenStream;
-use quote::{ToTokens, TokenStreamExt, format_ident, quote};
-use syn::{DataEnum, DeriveInput, Generics, Ident, Result, Variant, Visibility};
+use quote::{ToTokens, format_ident, quote};
+use syn::{DataEnum, DeriveInput, Ident, Result, Variant, Visibility};
 
 use crate::{
     validate::{
@@ -15,7 +15,6 @@ pub struct ValidateEnum<'a> {
     visibility: &'a Visibility,
     ident: &'a Ident,
     error_ident: Ident,
-    generics: &'a Generics,
     variants: Vec<ValidateEnumVariant<'a>>,
 }
 
@@ -25,7 +24,6 @@ impl<'a> ValidateEnum<'a> {
             visibility: &input.vis,
             ident: &input.ident,
             error_ident: format_ident!("{}ValidationError", input.ident),
-            generics: &input.generics,
             variants: Vec::with_capacity(data.variants.len()),
         };
 
@@ -41,7 +39,7 @@ impl<'a> ValidateEnum<'a> {
         Ok(result)
     }
 
-    fn error_type(&self) -> (&Ident, TokenStream) {
+    pub fn error_type(&self) -> (TokenStream, TokenStream) {
         let visibility = &self.visibility;
         let error_ident = &self.error_ident;
 
@@ -51,14 +49,14 @@ impl<'a> ValidateEnum<'a> {
             .iter()
             .map(|variant| &variant.ident)
             .collect::<Vec<_>>();
-        let error_variant_types = self
+        let (error_variant_types, variant_error_types): (Vec<_>, Vec<_>) = self
             .variants
             .iter()
-            .map(|variant| variant.error_type().0)
-            .collect::<Vec<_>>();
+            .map(|variant| variant.error_type())
+            .unzip();
 
         (
-            error_ident,
+            error_ident.to_token_stream(),
             quote! {
                 #[allow(dead_code)]
                 #[derive(Debug, PartialEq)]
@@ -76,51 +74,23 @@ impl<'a> ValidateEnum<'a> {
 
                 #[automatically_derived]
                 impl ::std::error::Error for #error_ident {}
+
+                #( #variant_error_types )*
             },
         )
     }
-}
 
-impl<'a> ToTokens for ValidateEnum<'a> {
-    fn to_tokens(&self, tokens: &mut TokenStream) {
-        let ident = &self.ident;
-        let (impl_generics, type_generics, where_clause) = &self.generics.split_for_impl();
-
-        let (error_ident, error_type) = self.error_type();
-        let variant_error_types = self.variants.iter().map(|variant| variant.error_type().1);
-        let sync_variant_match_arms = self
+    pub fn validations(&self, execution: Execution) -> TokenStream {
+        let variant_match_arms = self
             .variants
             .iter()
-            .map(|variant| variant.match_arm(Execution::Sync));
-        let async_variant_match_arms = self
-            .variants
-            .iter()
-            .map(|variant| variant.match_arm(Execution::Async));
+            .map(|variant| variant.match_arm(execution));
 
-        tokens.append_all(quote! {
-            #error_type
-
-            #( #variant_error_types )*
-
-            #[automatically_derived]
-            impl #impl_generics ::fortifier::Validate for #ident #type_generics #where_clause {
-                type Error = #error_ident;
-
-                fn validate_sync(&self) -> Result<(), ::fortifier::ValidationErrors<Self::Error>> {
-                    match &self {
-                        #( #sync_variant_match_arms ),*
-                    }
-                }
-
-                fn validate_async(&self) -> ::std::pin::Pin<Box<impl Future<Output = Result<(), ::fortifier::ValidationErrors<Self::Error>>>>> {
-                    Box::pin(async move {
-                        match &self {
-                            #( #async_variant_match_arms ),*
-                        }
-                    })
-                }
+        quote! {
+            match &self {
+                #( #variant_match_arms ),*
             }
-        })
+        }
     }
 }
 

@@ -1,17 +1,20 @@
 use proc_macro2::TokenStream;
-use quote::ToTokens;
 use syn::{DataUnion, DeriveInput, Result};
+
+use crate::validation::Execution;
 
 pub struct ValidateUnion {}
 
 impl ValidateUnion {
-    pub fn parse(_input: &DeriveInput, _data: &DataUnion) -> Result<Self> {
-        todo!("union")
+    pub fn parse(input: &DeriveInput, _data: &DataUnion) -> Result<Self> {
+        Err(syn::Error::new_spanned(input, "union is not supported"))
     }
-}
 
-impl ToTokens for ValidateUnion {
-    fn to_tokens(&self, _tokens: &mut TokenStream) {
-        // TODO
+    pub fn error_type(&self) -> (TokenStream, TokenStream) {
+        todo!()
+    }
+
+    pub fn validations(&self, _execution: Execution) -> TokenStream {
+        todo!()
     }
 }
