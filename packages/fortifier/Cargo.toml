@@ -21,12 +21,12 @@ url = ["dep:url"]
 utoipa = ["dep:utoipa", "fortifier-macros?/utoipa"]
 
 [dependencies]
-email_address = { version = "0.2.9", default-features = false, optional = true }
+email_address = { workspace = true, default-features = false, optional = true }
 fortifier-macros = { workspace = true, optional = true }
-indexmap = { version = "2.12.0", optional = true }
+indexmap = { workspace = true, optional = true }
 regex = { workspace = true, optional = true }
 serde = { workspace = true, features = ["derive"], optional = true }
-url = { version = "2.5.7", optional = true }
+url = { workspace = true, optional = true }
 utoipa = { workspace = true, optional = true }
 
 [dev-dependencies]

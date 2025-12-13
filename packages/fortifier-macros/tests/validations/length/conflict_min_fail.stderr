@@ -1,0 +1,5 @@
+error: `equal` and `min` are conflicting parameters
+ --> tests/validations/length/conflict_min_fail.rs:5:16
+  |
+5 |     #[validate(length(equal = 1, min = 2))]
+  |                ^^^^^^^^^^^^^^^^^^^^^^^^^^

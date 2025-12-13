@@ -1,0 +1,5 @@
+error: expected `,`
+ --> tests/validations/url/unknown_fail.rs:5:19
+  |
+5 |     #[validate(url(unknown))]
+  |                   ^

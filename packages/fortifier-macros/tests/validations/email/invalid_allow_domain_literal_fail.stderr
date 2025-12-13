@@ -1,0 +1,5 @@
+error: expected boolean literal
+ --> tests/validations/email/invalid_allow_domain_literal_fail.rs:5:45
+  |
+5 |     #[validate(email(allow_domain_literal = 1))]
+  |                                             ^

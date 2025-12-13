@@ -1,0 +1,5 @@
+error: unknown parameter
+ --> tests/validations/email/unknown_fail.rs:5:22
+  |
+5 |     #[validate(email(unknown = true))]
+  |                      ^^^^^^^

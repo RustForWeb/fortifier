@@ -1,0 +1,5 @@
+error: unknown parameter
+ --> tests/validations/regex/unknown_fail.rs:5:22
+  |
+5 |     #[validate(regex(unknown))]
+  |                      ^^^^^^^

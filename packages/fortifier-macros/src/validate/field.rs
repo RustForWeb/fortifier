@@ -47,9 +47,7 @@ impl<'a> ValidateField<'a> {
     ) -> Result<Self> {
         let error_ident = match &ident {
             LiteralOrIdent::Literal(literal) => format_ident!("F{literal}"),
-            LiteralOrIdent::Ident(ident) => {
-                format_ident!("{}", ident.to_string().to_case(Case::UpperCamel))
-            }
+            LiteralOrIdent::Ident(ident) => upper_camel_ident(ident),
         };
         let error_type_ident = format_ident!("{type_prefix}{error_ident}ValidationError");
 
@@ -176,5 +174,15 @@ impl<'a> ValidateField<'a> {
                 })
             })
             .collect()
+    }
+}
+
+fn upper_camel_ident(ident: &Ident) -> Ident {
+    let s = ident.to_string();
+
+    if s.starts_with("r#") {
+        format_ident!("{}", (&s[2..]).to_case(Case::UpperCamel))
+    } else {
+        format_ident!("{}", s.to_case(Case::UpperCamel))
     }
 }
