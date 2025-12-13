@@ -31,7 +31,7 @@ Validate the string is an RFC-compliant email address.
 
 Validate the value is an RFC-compliant email address.
 
-An `EmailAddress` can be constructed using [`EmailAddress::new_unchecked`](https://docs.rs/email_address/latest/email_address/struct.EmailAddress.html#method.new_unchecked) or with different options passed to [`EmailAddress::parse_with_options`](https://docs.rs/email_address/latest/email_address/struct.EmailAddress.html#method.parse_with_options), so it has to be re-validated.
+An `EmailAddress` can be constructed using [`EmailAddress::new_unchecked`](https://docs.rs/email_address/latest/email_address/struct.EmailAddress.html#method.new_unchecked) or with different options passed to [`EmailAddress::parse_with_options`](https://docs.rs/email_address/latest/email_address/struct.EmailAddress.html#method.parse_with_options), so re-validation is required.
 
 ## Options
 

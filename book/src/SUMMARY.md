@@ -10,7 +10,7 @@
     - [Email](./validations/email.md)
     - [Length](./validations/length.md)
     - [Regex]()
-    - [URL]()
+    - [URL](./validations/url.md)
 - [Integrations]()
     - [Serde]()
     - [Utoipa]()
