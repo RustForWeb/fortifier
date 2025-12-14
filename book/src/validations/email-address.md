@@ -7,9 +7,10 @@ Validate a string is an RFC-compliant email address using the [`email_address`](
 
 ```rust
 # extern crate fortifier;
-# use fortifier::Validate;
 #
-##[derive(Validate)]
+use fortifier::Validate;
+
+#[derive(Validate)]
 struct User {
     #[validate(email_address)]
     email_address: String
@@ -43,9 +44,10 @@ See [`Options::allow_display_text`](https://docs.rs/email_address/latest/email_a
 
 ```rust
 # extern crate fortifier;
-# use fortifier::Validate;
 #
-##[derive(Validate)]
+use fortifier::Validate;
+
+#[derive(Validate)]
 struct User<'a> {
     #[validate(email_address(allow_display_text = false))]
     email_address: &'a str
@@ -72,9 +74,10 @@ See [`Options::allow_domain_literal`](https://docs.rs/email_address/latest/email
 
 ```rust
 # extern crate fortifier;
-# use fortifier::Validate;
 #
-##[derive(Validate)]
+use fortifier::Validate;
+
+#[derive(Validate)]
 struct User<'a> {
     #[validate(email_address(allow_domain_literal = false))]
     email_address: &'a str
@@ -101,9 +104,10 @@ See [`Options::minimum_sub_domains`](https://docs.rs/email_address/latest/email_
 
 ```rust
 # extern crate fortifier;
-# use fortifier::Validate;
 #
-##[derive(Validate)]
+use fortifier::Validate;
+
+#[derive(Validate)]
 struct User<'a> {
     #[validate(email_address(minimum_sub_domains = 2))]
     email_address: &'a str

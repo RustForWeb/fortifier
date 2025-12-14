@@ -29,11 +29,11 @@ jobs:
             - name: Install mdBook
               run: cargo binstall --force -y mdbook mdbook-tabs
 
-            - name: Clean Fortifier
-              run: cargo clean -p fortifier
+            - name: Clean dependencies
+              run: cargo clean -p fortifier -p regex
 
-            - name: Build Fortifier
-              run: cargo build -p fortifier --features all-validations
+            - name: Build dependencies
+              run: cargo build -p fortifier --features all-validations -p regex
 
             - name: Run tests
               run: mdbook test -L ../target/debug/deps
