@@ -250,7 +250,7 @@ mod tests {
         );
         assert_eq!(
             Url::parse("http://localhost")
-                .expect("URL should be valid.")
+                .expect("valid URL")
                 .validate_url(),
             Ok(())
         );

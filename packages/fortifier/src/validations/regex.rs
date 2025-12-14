@@ -150,8 +150,7 @@ mod tests {
 
     use super::{RegexError, ValidateRegex};
 
-    static REGEX: LazyLock<Regex> =
-        LazyLock::new(|| Regex::new(r"[0-9]{4}").expect("Regex should be valid."));
+    static REGEX: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"[0-9]{4}").expect("valid regex"));
 
     #[test]
     fn ok() {
