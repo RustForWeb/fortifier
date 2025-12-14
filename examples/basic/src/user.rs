@@ -8,11 +8,14 @@ static COUNTRY_CODE_REGEX: LazyLock<Regex> =
 
 #[derive(Validate)]
 pub struct CreateUser {
+    #[validate(length(min = 1, max = 256))]
+    pub name: String,
+
     #[validate(email)]
     pub email: String,
 
-    #[validate(length(min = 1, max = 256))]
-    pub name: String,
+    #[validate(phone_number)]
+    pub phone_number: String,
 
     #[validate(url)]
     pub url: String,

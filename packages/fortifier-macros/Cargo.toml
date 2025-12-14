@@ -30,6 +30,7 @@ syn = "2.0.110"
 email_address.workspace = true
 fortifier = { workspace = true, features = ["all-validations", "indexmap"] }
 indexmap.workspace = true
+phonenumber.workspace = true
 regex.workspace = true
 trybuild = "1.0.114"
 url.workspace = true

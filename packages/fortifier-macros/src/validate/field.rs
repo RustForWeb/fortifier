@@ -6,7 +6,7 @@ use syn::{Field, Ident, Result, Visibility};
 use crate::{
     validate::{attributes::enum_attributes, r#type::should_validate_type},
     validation::{Execution, Validation},
-    validations::{Custom, Email, Length, Nested, Regex, Url},
+    validations::{Custom, Email, Length, Nested, PhoneNumber, Regex, Url},
 };
 
 pub enum LiteralOrIdent {
@@ -73,6 +73,12 @@ impl<'a> ValidateField<'a> {
                         Ok(())
                     } else if meta.path.is_ident("length") {
                         result.validations.push(Box::new(Length::parse(&meta)?));
+
+                        Ok(())
+                    } else if meta.path.is_ident("phone_number") {
+                        result
+                            .validations
+                            .push(Box::new(PhoneNumber::parse(&meta)?));
 
                         Ok(())
                     } else if meta.path.is_ident("regex") {

@@ -59,8 +59,8 @@ jobs:
             - name: Set up Rust toolchain
               uses: actions-rust-lang/setup-rust-toolchain@v1
               with:
-                  components: clippy, rustfmt
+                  components: clippy, rustfmt, rust-src
                   target: wasm32-unknown-unknown
 
             - name: Test
-              run: cargo test --locked --release
+              run: cargo test --all-features --locked --release

@@ -2,11 +2,16 @@
 
 Schema validation.
 
-- Synchronous and asynchronous validation
-- Enums and structs
+- Synchronous & asynchronous validation
+- Enums & structs
 - Typed errors
-- Email, regex, URL and more
-- Support for Serde and Utoipa
+- Built-in validations
+    - Email
+    - Length
+    - Phone number
+    - Regex
+    - URL
+- Support for Serde & Utoipa
 
 ## Credits
 
