@@ -7,7 +7,7 @@
     - [Enum](./validate/enum.md)
     - [Struct](./validate/struct.md)
 - [Validations](./validations/README.md)
-    - [Email](./validations/email.md)
+    - [Email Address](./validations/email-address.md)
     - [Length](./validations/length.md)
     - [Phone Number](./validations/phone-number.md)
     - [Regex]()

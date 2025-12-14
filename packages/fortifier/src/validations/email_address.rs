@@ -6,7 +6,7 @@ use std::{
 };
 
 use email_address::EmailAddress;
-pub use email_address::Options as EmailOptions;
+pub use email_address::Options as EmailAddressOptions;
 
 /// Email validation error.
 #[derive(Debug, Eq, PartialEq)]
@@ -20,7 +20,7 @@ pub use email_address::Options as EmailOptions;
     )
 )]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
-pub enum EmailError {
+pub enum EmailAddressError {
     /// Invalid character error.
     InvalidCharacter {
         /// A human-readable error message.
@@ -125,7 +125,7 @@ pub enum EmailError {
     },
 }
 
-impl From<email_address::Error> for EmailError {
+impl From<email_address::Error> for EmailAddressError {
     fn from(value: email_address::Error) -> Self {
         match value {
             email_address::Error::InvalidCharacter => Self::InvalidCharacter {
@@ -201,59 +201,63 @@ impl From<email_address::Error> for EmailError {
 }
 
 /// Validate an email address.
-pub trait ValidateEmail {
+pub trait ValidateEmailAddress {
     /// The email address.
-    fn email(&self) -> Option<Cow<'_, str>>;
+    fn email_address(&self) -> Option<Cow<'_, str>>;
 
     /// Validate email address.
-    fn validate_email(&self, options: EmailOptions) -> Result<(), EmailError> {
-        let Some(email) = self.email() else {
+    fn validate_email_address(
+        &self,
+        options: EmailAddressOptions,
+    ) -> Result<(), EmailAddressError> {
+        let Some(email_address) = self.email_address() else {
             return Ok(());
         };
 
-        EmailAddress::parse_with_options(&email, options).map_err(EmailError::from)?;
+        EmailAddress::parse_with_options(&email_address, options)
+            .map_err(EmailAddressError::from)?;
 
         Ok(())
     }
 }
 
-impl ValidateEmail for str {
-    fn email(&self) -> Option<Cow<'_, str>> {
+impl ValidateEmailAddress for str {
+    fn email_address(&self) -> Option<Cow<'_, str>> {
         Some(self.into())
     }
 }
 
-impl ValidateEmail for &str {
-    fn email(&self) -> Option<Cow<'_, str>> {
+impl ValidateEmailAddress for &str {
+    fn email_address(&self) -> Option<Cow<'_, str>> {
         Some((*self).into())
     }
 }
 
-impl ValidateEmail for String {
-    fn email(&self) -> Option<Cow<'_, str>> {
+impl ValidateEmailAddress for String {
+    fn email_address(&self) -> Option<Cow<'_, str>> {
         Some(self.into())
     }
 }
 
-impl ValidateEmail for Cow<'_, str> {
-    fn email(&self) -> Option<Cow<'_, str>> {
+impl ValidateEmailAddress for Cow<'_, str> {
+    fn email_address(&self) -> Option<Cow<'_, str>> {
         Some(self.clone())
     }
 }
 
-impl ValidateEmail for EmailAddress {
-    fn email(&self) -> Option<Cow<'_, str>> {
+impl ValidateEmailAddress for EmailAddress {
+    fn email_address(&self) -> Option<Cow<'_, str>> {
         Some(self.as_str().into())
     }
 }
 
-impl<T> ValidateEmail for Option<T>
+impl<T> ValidateEmailAddress for Option<T>
 where
-    T: ValidateEmail,
+    T: ValidateEmailAddress,
 {
-    fn email(&self) -> Option<Cow<'_, str>> {
+    fn email_address(&self) -> Option<Cow<'_, str>> {
         if let Some(s) = self {
-            T::email(s)
+            T::email_address(s)
         } else {
             None
         }
@@ -262,12 +266,12 @@ where
 
 macro_rules! validate_with_deref {
     ($type:ty) => {
-        impl<T> ValidateEmail for $type
+        impl<T> ValidateEmailAddress for $type
         where
-            T: ValidateEmail,
+            T: ValidateEmailAddress,
         {
-            fn email(&self) -> Option<Cow<'_, str>> {
-                T::email(self)
+            fn email_address(&self) -> Option<Cow<'_, str>> {
+                T::email_address(self)
             }
         }
     };
@@ -286,106 +290,147 @@ mod tests {
 
     use email_address::EmailAddress;
 
-    use super::{EmailError, EmailOptions, ValidateEmail};
+    use super::{EmailAddressError, EmailAddressOptions, ValidateEmailAddress};
 
     #[test]
     fn ok() {
-        let options = EmailOptions::default().without_display_text();
+        let options = EmailAddressOptions::default().without_display_text();
 
-        assert_eq!((*"admin@localhost").validate_email(options), Ok(()));
-        assert_eq!("admin@localhost".validate_email(options), Ok(()));
-        assert_eq!("admin@localhost".to_owned().validate_email(options), Ok(()));
+        assert_eq!((*"admin@localhost").validate_email_address(options), Ok(()));
+        assert_eq!("admin@localhost".validate_email_address(options), Ok(()));
         assert_eq!(
-            Cow::<str>::Borrowed("admin@localhost").validate_email(options),
+            "admin@localhost".to_owned().validate_email_address(options),
             Ok(())
         );
         assert_eq!(
-            Cow::<str>::Owned("admin@localhost".to_owned()).validate_email(options),
+            Cow::<str>::Borrowed("admin@localhost").validate_email_address(options),
             Ok(())
         );
         assert_eq!(
-            EmailAddress::new_unchecked("admin@localhost").validate_email(options),
+            Cow::<str>::Owned("admin@localhost".to_owned()).validate_email_address(options),
+            Ok(())
+        );
+        assert_eq!(
+            EmailAddress::new_unchecked("admin@localhost").validate_email_address(options),
             Ok(())
         );
 
-        assert_eq!(None::<&str>.validate_email(options), Ok(()));
-        assert_eq!(Some("admin@localhost").validate_email(options), Ok(()));
+        assert_eq!(None::<&str>.validate_email_address(options), Ok(()));
+        assert_eq!(
+            Some("admin@localhost").validate_email_address(options),
+            Ok(())
+        );
 
-        assert_eq!((&"admin@localhost").validate_email(options), Ok(()));
+        assert_eq!((&"admin@localhost").validate_email_address(options), Ok(()));
         #[expect(unused_allocation)]
         {
-            assert_eq!(Box::new("admin@localhost").validate_email(options), Ok(()));
+            assert_eq!(
+                Box::new("admin@localhost").validate_email_address(options),
+                Ok(())
+            );
         }
-        assert_eq!(Arc::new("admin@localhost").validate_email(options), Ok(()));
-        assert_eq!(Rc::new("admin@localhost").validate_email(options), Ok(()));
+        assert_eq!(
+            Arc::new("admin@localhost").validate_email_address(options),
+            Ok(())
+        );
+        assert_eq!(
+            Rc::new("admin@localhost").validate_email_address(options),
+            Ok(())
+        );
 
         let cell = RefCell::new("admin@localhost");
-        assert_eq!(cell.borrow().validate_email(options), Ok(()));
-        assert_eq!(cell.borrow_mut().validate_email(options), Ok(()));
+        assert_eq!(cell.borrow().validate_email_address(options), Ok(()));
+        assert_eq!(cell.borrow_mut().validate_email_address(options), Ok(()));
     }
 
     #[test]
     fn invalid_error() {
-        let options = EmailOptions::default().without_display_text();
+        let options = EmailAddressOptions::default().without_display_text();
 
         assert_eq!(
-            (*"admin").validate_email(options),
-            Err(EmailError::from(email_address::Error::MissingSeparator))
+            (*"admin").validate_email_address(options),
+            Err(EmailAddressError::from(
+                email_address::Error::MissingSeparator
+            ))
         );
         assert_eq!(
-            "admin".validate_email(options),
-            Err(EmailError::from(email_address::Error::MissingSeparator))
+            "admin".validate_email_address(options),
+            Err(EmailAddressError::from(
+                email_address::Error::MissingSeparator
+            ))
         );
         assert_eq!(
-            "admin".to_owned().validate_email(options),
-            Err(EmailError::from(email_address::Error::MissingSeparator))
+            "admin".to_owned().validate_email_address(options),
+            Err(EmailAddressError::from(
+                email_address::Error::MissingSeparator
+            ))
         );
         assert_eq!(
-            Cow::<str>::Borrowed("admin").validate_email(options),
-            Err(EmailError::from(email_address::Error::MissingSeparator))
+            Cow::<str>::Borrowed("admin").validate_email_address(options),
+            Err(EmailAddressError::from(
+                email_address::Error::MissingSeparator
+            ))
         );
         assert_eq!(
-            Cow::<str>::Owned("admin".to_owned()).validate_email(options),
-            Err(EmailError::from(email_address::Error::MissingSeparator))
+            Cow::<str>::Owned("admin".to_owned()).validate_email_address(options),
+            Err(EmailAddressError::from(
+                email_address::Error::MissingSeparator
+            ))
         );
         assert_eq!(
-            EmailAddress::new_unchecked("admin").validate_email(options),
-            Err(EmailError::from(email_address::Error::MissingSeparator))
+            EmailAddress::new_unchecked("admin").validate_email_address(options),
+            Err(EmailAddressError::from(
+                email_address::Error::MissingSeparator
+            ))
         );
 
         assert_eq!(
-            Some("admin").validate_email(options),
-            Err(EmailError::from(email_address::Error::MissingSeparator))
+            Some("admin").validate_email_address(options),
+            Err(EmailAddressError::from(
+                email_address::Error::MissingSeparator
+            ))
         );
 
         assert_eq!(
-            (&"admin").validate_email(options),
-            Err(EmailError::from(email_address::Error::MissingSeparator))
+            (&"admin").validate_email_address(options),
+            Err(EmailAddressError::from(
+                email_address::Error::MissingSeparator
+            ))
         );
         #[expect(unused_allocation)]
         {
             assert_eq!(
-                Box::new("admin").validate_email(options),
-                Err(EmailError::from(email_address::Error::MissingSeparator))
+                Box::new("admin").validate_email_address(options),
+                Err(EmailAddressError::from(
+                    email_address::Error::MissingSeparator
+                ))
             );
         }
         assert_eq!(
-            Arc::new("admin").validate_email(options),
-            Err(EmailError::from(email_address::Error::MissingSeparator))
+            Arc::new("admin").validate_email_address(options),
+            Err(EmailAddressError::from(
+                email_address::Error::MissingSeparator
+            ))
         );
         assert_eq!(
-            Rc::new("admin").validate_email(options),
-            Err(EmailError::from(email_address::Error::MissingSeparator))
+            Rc::new("admin").validate_email_address(options),
+            Err(EmailAddressError::from(
+                email_address::Error::MissingSeparator
+            ))
         );
 
         let cell = RefCell::new("admin");
         assert_eq!(
-            cell.borrow().validate_email(options),
-            Err(EmailError::from(email_address::Error::MissingSeparator))
+            cell.borrow().validate_email_address(options),
+            Err(EmailAddressError::from(
+                email_address::Error::MissingSeparator
+            ))
         );
         assert_eq!(
-            cell.borrow_mut().validate_email(options),
-            Err(EmailError::from(email_address::Error::MissingSeparator))
+            cell.borrow_mut().validate_email_address(options),
+            Err(EmailAddressError::from(
+                email_address::Error::MissingSeparator
+            ))
         );
     }
 }

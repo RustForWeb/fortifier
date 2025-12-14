@@ -10,7 +10,7 @@ version.workspace = true
 
 [dependencies]
 fortifier = { workspace = true, features = [
-    "email",
+    "email-address",
     "phone-number",
     "regex",
     "url",

@@ -1,0 +1,5 @@
+error: expected boolean literal
+ --> tests/validations/email-address/invalid_allow_display_text_fail.rs:5:51
+  |
+5 |     #[validate(email_address(allow_display_text = 1))]
+  |                                                   ^

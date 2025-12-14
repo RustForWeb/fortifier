@@ -1,0 +1,5 @@
+error: invalid digit found in string
+ --> tests/validations/email-address/invalid_minimum_sub_domains_fail.rs:5:52
+  |
+5 |     #[validate(email_address(minimum_sub_domains = -1))]
+  |                                                    ^

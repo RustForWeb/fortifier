@@ -5,7 +5,7 @@
 Add Fortifier to your project:
 
 ```shell
-cargo add fortifier --features email
+cargo add fortifier --features email-address
 ```
 
 See [Installation](installation.md) for more details.
@@ -46,7 +46,7 @@ use fortifier::Validate;
 
 #[derive(Validate)]
 struct CreateUser {
-    #[validate(email)]
+    #[validate(email_address)]
     email_address: String,
 
     #[validate(length(min = 1, max = 256))]
@@ -62,11 +62,11 @@ Call the `validate_sync` method on the data structure:
 
 ```rust
 # extern crate fortifier;
-use fortifier::{EmailError, LengthError, Validate, ValidationErrors};
+use fortifier::{EmailAddressError, LengthError, Validate, ValidationErrors};
 
 #[derive(Validate)]
 struct CreateUser {
-    #[validate(email)]
+    #[validate(email_address)]
     email_address: String,
 
     #[validate(length(min = 1, max = 256))]
@@ -90,7 +90,7 @@ fn main() {
         data.validate_sync(),
         Err(ValidationErrors::from_iter([
             CreateUserValidationError::EmailAddress(
-                EmailError::MissingSeparator {},
+                EmailAddressError::MissingSeparator {},
             ),
             CreateUserValidationError::Name(
                 LengthError::Min {

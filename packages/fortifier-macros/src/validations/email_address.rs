@@ -4,13 +4,13 @@ use syn::{Ident, LitBool, LitInt, Result, meta::ParseNestedMeta};
 
 use crate::validation::{Execution, Validation};
 
-pub struct Email {
+pub struct EmailAddress {
     allow_display_text: bool,
     allow_domain_literal: bool,
     minimum_sub_domains: usize,
 }
 
-impl Default for Email {
+impl Default for EmailAddress {
     fn default() -> Self {
         Self {
             allow_display_text: false,
@@ -20,9 +20,9 @@ impl Default for Email {
     }
 }
 
-impl Validation for Email {
+impl Validation for EmailAddress {
     fn parse(meta: &ParseNestedMeta<'_>) -> Result<Self> {
-        let mut result = Email::default();
+        let mut result = EmailAddress::default();
 
         if !meta.input.is_empty() {
             meta.parse_nested_meta(|meta| {
@@ -51,10 +51,10 @@ impl Validation for Email {
     }
 
     fn ident(&self) -> Ident {
-        format_ident!("Email")
+        format_ident!("EmailAddress")
     }
     fn error_type(&self) -> TokenStream {
-        quote!(::fortifier::EmailError)
+        quote!(::fortifier::EmailAddressError)
     }
 
     fn expr(&self, execution: Execution, expr: &TokenStream) -> Option<TokenStream> {
@@ -66,13 +66,13 @@ impl Validation for Email {
 
                 Some(quote! {
                     {
-                        const EMAIL_ADDRESS_OPTIONS: ::fortifier::EmailOptions = ::fortifier::EmailOptions {
+                        const EMAIL_ADDRESS_OPTIONS: ::fortifier::EmailAddressOptions = ::fortifier::EmailAddressOptions {
                             allow_display_text: #allow_display_text,
                             allow_domain_literal: #allow_domain_literal,
                             minimum_sub_domains: #minimum_sub_domains,
                         };
 
-                        ::fortifier::ValidateEmail::validate_email(&#expr, EMAIL_ADDRESS_OPTIONS)
+                        ::fortifier::ValidateEmailAddress::validate_email_address(&#expr, EMAIL_ADDRESS_OPTIONS)
                     }
                 })
             }
