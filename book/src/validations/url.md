@@ -7,9 +7,10 @@ Validate a string is a specification-compliant URL using the [`url`](https://doc
 
 ```rust
 # extern crate fortifier;
-# use fortifier::Validate;
 #
-##[derive(Validate)]
+use fortifier::Validate;
+
+#[derive(Validate)]
 struct User {
     #[validate(url)]
     url: String

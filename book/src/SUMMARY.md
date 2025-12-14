@@ -10,7 +10,7 @@
     - [Email Address](./validations/email-address.md)
     - [Length](./validations/length.md)
     - [Phone Number](./validations/phone-number.md)
-    - [Regex]()
+    - [Regular Expression](./validations/regular-expression.md)
     - [URL](./validations/url.md)
 - [Integrations]()
     - [Serde]()

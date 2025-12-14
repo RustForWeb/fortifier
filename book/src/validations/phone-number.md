@@ -7,9 +7,10 @@ Validate a string is a specification-compliant phone number using the [`phonenum
 
 ```rust
 # extern crate fortifier;
-# use fortifier::Validate;
 #
-##[derive(Validate)]
+use fortifier::Validate;
+
+#[derive(Validate)]
 struct User {
     #[validate(phone_number)]
     phone_number: String
@@ -43,6 +44,7 @@ See [`phonenumber::country::Id`](https://docs.rs/phonenumber/latest/phonenumber/
 
 ```rust
 # extern crate fortifier;
+#
 use fortifier::{PhoneNumberCountry, Validate};
 
 #[derive(Validate)]
@@ -72,6 +74,7 @@ See [`phonenumber::country::Id`](https://docs.rs/phonenumber/latest/phonenumber/
 
 ```rust
 # extern crate fortifier;
+#
 use fortifier::{PhoneNumberCountry, Validate};
 
 #[derive(Validate)]

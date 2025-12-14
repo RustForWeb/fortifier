@@ -4,9 +4,10 @@ Validate the length of a string or iterable.
 
 ```rust
 # extern crate fortifier;
-# use fortifier::Validate;
 #
-##[derive(Validate)]
+use fortifier::Validate;
+
+#[derive(Validate)]
 struct User {
     #[validate(length(min = 1, max = 256))]
     name: String
@@ -46,9 +47,10 @@ The length should be equal to the specified expression.
 
 ```rust
 # extern crate fortifier;
-# use fortifier::Validate;
 #
-##[derive(Validate)]
+use fortifier::Validate;
+
+#[derive(Validate)]
 struct User {
     #[validate(length(equal = 2))]
     country_code: String
@@ -61,9 +63,10 @@ The length should be equal to or greater than the specified expression.
 
 ```rust
 # extern crate fortifier;
-# use fortifier::Validate;
 #
-##[derive(Validate)]
+use fortifier::Validate;
+
+#[derive(Validate)]
 struct User {
     #[validate(length(min = 1))]
     name: String
@@ -76,9 +79,10 @@ The length should be equal to or less than the specified expression.
 
 ```rust
 # extern crate fortifier;
-# use fortifier::Validate;
 #
-##[derive(Validate)]
+use fortifier::Validate;
+
+#[derive(Validate)]
 struct User {
     #[validate(length(max = 256))]
     name: String
