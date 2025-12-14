@@ -1,7 +1,7 @@
-# Email
+# Email Address
 
 > [!NOTE]
-> Requires the `email` feature.
+> Requires the `email-address` feature.
 
 Validate a string is an RFC-compliant email address using the [`email_address`](https://docs.rs/email_address/latest/email_address/) crate.
 
@@ -11,7 +11,7 @@ Validate a string is an RFC-compliant email address using the [`email_address`](
 #
 ##[derive(Validate)]
 struct User {
-    #[validate(email)]
+    #[validate(email_address)]
     email_address: String
 }
 ```
@@ -47,7 +47,7 @@ See [`Options::allow_display_text`](https://docs.rs/email_address/latest/email_a
 #
 ##[derive(Validate)]
 struct User<'a> {
-    #[validate(email(allow_display_text = false))]
+    #[validate(email_address(allow_display_text = false))]
     email_address: &'a str
 }
 
@@ -76,7 +76,7 @@ See [`Options::allow_domain_literal`](https://docs.rs/email_address/latest/email
 #
 ##[derive(Validate)]
 struct User<'a> {
-    #[validate(email(allow_domain_literal = false))]
+    #[validate(email_address(allow_domain_literal = false))]
     email_address: &'a str
 }
 
@@ -105,7 +105,7 @@ See [`Options::minimum_sub_domains`](https://docs.rs/email_address/latest/email_
 #
 ##[derive(Validate)]
 struct User<'a> {
-    #[validate(email(minimum_sub_domains = 2))]
+    #[validate(email_address(minimum_sub_domains = 2))]
     email_address: &'a str
 }
 

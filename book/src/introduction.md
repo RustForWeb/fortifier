@@ -6,7 +6,7 @@ Schema validation.
 - Enums & structs
 - Typed errors
 - Built-in validations
-    - Email
+    - Email address
     - Length
     - Phone number
     - Regex

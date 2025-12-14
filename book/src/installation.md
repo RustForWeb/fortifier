@@ -22,7 +22,8 @@ cargo add fortifier
 ### Validations
 
 - `all-validations` - Enable all features below.
-- `email` - Email address validation using the [`email_address`](https://docs.rs/email_address/latest/email_address/) crate.
+- `email-address` - Email address validation using the [`email_address`](https://docs.rs/email_address/latest/email_address/) crate.
+- `phone-number` - Phone number validation using the [`phonenumber`](https://docs.rs/phonenumber/latest/phonenumber/) crate.
 - `regex` - Regular expression validation using the [`regex`](https://docs.rs/regex/latest/regex/) crate.
 - `url` - URL validation using the [`url`](https://docs.rs/url/latest/url/) crate.
 

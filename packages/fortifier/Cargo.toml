@@ -13,8 +13,8 @@ all-features = true
 
 [features]
 default = ["macros"]
-all-validations = ["email", "phone-number", "regex", "url"]
-email = ["dep:email_address"]
+all-validations = ["email-address", "phone-number", "regex", "url"]
+email-address = ["dep:email_address"]
 indexmap = ["dep:indexmap"]
 macros = ["dep:fortifier-macros"]
 message = []

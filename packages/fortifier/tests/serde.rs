@@ -1,6 +1,6 @@
 #![cfg(feature = "serde")]
 
-use fortifier::{EmailError, LengthError, RegexError, UrlError, ValidationErrors};
+use fortifier::{EmailAddressError, LengthError, RegexError, UrlError, ValidationErrors};
 use pretty_assertions::assert_eq;
 use serde::{Deserialize, Serialize};
 use serde_json::{Value, json};
@@ -9,7 +9,7 @@ use url::ParseError;
 #[derive(Debug, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(tag = "code", rename_all = "camelCase")]
 enum TestError {
-    Email(EmailError),
+    EmailAddress(EmailAddressError),
     Length(LengthError<usize>),
     Regex(RegexError),
     Url(UrlError),
@@ -18,7 +18,9 @@ enum TestError {
 fn setup() -> (ValidationErrors<TestError>, Value) {
     (
         ValidationErrors::from_iter([
-            TestError::Email(EmailError::from(email_address::Error::MissingSeparator)),
+            TestError::EmailAddress(EmailAddressError::from(
+                email_address::Error::MissingSeparator,
+            )),
             TestError::Length(LengthError::Equal {
                 equal: 1,
                 length: 2,
@@ -31,7 +33,7 @@ fn setup() -> (ValidationErrors<TestError>, Value) {
         #[cfg(not(feature = "message"))]
         json!([
             {
-                "code": "email",
+                "code": "emailAddress",
                 "subcode": "missingSeparator",
             },
             {
@@ -51,7 +53,7 @@ fn setup() -> (ValidationErrors<TestError>, Value) {
         #[cfg(feature = "message")]
         json!([
             {
-                "code": "email",
+                "code": "emailAddress",
                 "subcode": "missingSeparator",
                 "message": "",
             },

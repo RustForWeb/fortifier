@@ -1,5 +1,5 @@
-#[cfg(feature = "email")]
-mod email;
+#[cfg(feature = "email-address")]
+mod email_address;
 mod length;
 #[cfg(feature = "phone-number")]
 mod phone_number;
@@ -8,8 +8,8 @@ mod regex;
 #[cfg(feature = "url")]
 mod url;
 
-#[cfg(feature = "email")]
-pub use email::*;
+#[cfg(feature = "email-address")]
+pub use email_address::*;
 pub use length::*;
 #[cfg(feature = "phone-number")]
 pub use phone_number::*;

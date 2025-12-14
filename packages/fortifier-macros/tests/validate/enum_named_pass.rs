@@ -3,13 +3,13 @@ use fortifier::{Validate, ValidationErrors};
 #[derive(Validate)]
 enum ChangeEmailAddressRelation {
     Create {
-        #[validate(email)]
+        #[validate(email_address)]
         email_address: String,
     },
     Update {
         id: String,
 
-        #[validate(email)]
+        #[validate(email_address)]
         email_address: String,
     },
     Delete {

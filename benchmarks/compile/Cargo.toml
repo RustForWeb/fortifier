@@ -17,7 +17,7 @@ validator = ["dep:validator"]
 
 [dependencies]
 fortifier = { workspace = true, features = [
-    "email",
+    "email-address",
     "serde",
     "url",
 ], optional = true }

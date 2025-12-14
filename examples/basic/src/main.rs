@@ -11,7 +11,7 @@ use crate::{email_address::ChangeEmailAddressRelation, user::CreateUser};
 async fn main() -> Result<(), Box<dyn Error>> {
     let data = CreateUser {
         name: "John Doe".to_owned(),
-        email: "john@doe.com".to_owned(),
+        email_address: "john@doe.com".to_owned(),
         phone_number: "+44 20 7946 0000".to_owned(),
         url: "https://john.doe.com".to_owned(),
         country_code: "GB".to_owned(),
