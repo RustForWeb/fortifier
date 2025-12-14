@@ -82,7 +82,7 @@ fn serialize() {
     let (deserialized, serialized) = setup();
 
     assert_eq!(
-        serde_json::to_value(&deserialized).expect("Value should be serializable."),
+        serde_json::to_value(&deserialized).expect("serializable value"),
         serialized
     );
 }
@@ -93,7 +93,7 @@ fn deserialize() {
 
     assert_eq!(
         serde_json::from_value::<ValidationErrors<TestError>>(serialized)
-            .expect("Value should be deserializable."),
+            .expect("deserializable value"),
         deserialized,
     );
 }

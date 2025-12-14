@@ -4,7 +4,7 @@ use fortifier::Validate;
 use regex::Regex;
 
 static COUNTRY_CODE_REGEX: LazyLock<Regex> =
-    LazyLock::new(|| Regex::new(r"[A-Z]{2}").expect("Regex should be valid."));
+    LazyLock::new(|| Regex::new(r"[A-Z]{2}").expect("valid regex"));
 
 #[derive(Validate)]
 pub struct CreateUser {

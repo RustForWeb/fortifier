@@ -106,7 +106,7 @@ mod tests {
     use super::should_validate_type;
 
     fn validate(tokens: TokenStream) -> bool {
-        should_validate_type(&syn::parse2(tokens).expect("Type should be valid."))
+        should_validate_type(&syn::parse2(tokens).expect("valid type"))
     }
 
     #[test]
