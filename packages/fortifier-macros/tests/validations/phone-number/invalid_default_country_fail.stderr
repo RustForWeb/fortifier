@@ -1,0 +1,5 @@
+error[E0425]: cannot find value `ZZ` in this scope
+ --> tests/validations/phone-number/invalid_default_country_fail.rs:5:47
+  |
+5 |     #[validate(phone_number(default_country = ZZ))]
+  |                                               ^^ not found in this scope

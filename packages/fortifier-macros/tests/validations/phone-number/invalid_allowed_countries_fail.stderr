@@ -1,0 +1,25 @@
+error[E0308]: mismatched types
+ --> tests/validations/phone-number/invalid_allowed_countries_fail.rs:5:49
+  |
+3 | #[derive(Validate)]
+  |          -------- arguments to this enum variant are incorrect
+4 | struct PhoneNumberData<'a> {
+5 |     #[validate(phone_number(allowed_countries = PhoneNumberCountry::NL))]
+  |                                                 ^^^^^^^^^^^^^^^^^^^^^^ expected `Vec<PhoneNumberCountry>`, found `PhoneNumberCountry`
+  |
+  = note: expected struct `Vec<PhoneNumberCountry>`
+               found enum `PhoneNumberCountry`
+help: the type constructed contains `PhoneNumberCountry` due to the type of the argument passed
+ --> tests/validations/phone-number/invalid_allowed_countries_fail.rs:3:10
+  |
+3 | #[derive(Validate)]
+  |          ^^^^^^^^
+4 | struct PhoneNumberData<'a> {
+5 |     #[validate(phone_number(allowed_countries = PhoneNumberCountry::NL))]
+  |                                                 ---------------------- this argument influences the type of `Some`
+note: tuple variant defined here
+ --> $RUST/core/src/option.rs
+  |
+  |     Some(#[stable(feature = "rust1", since = "1.0.0")] T),
+  |     ^^^^
+  = note: this error originates in the derive macro `Validate` (in Nightly builds, run with -Z macro-backtrace for more info)

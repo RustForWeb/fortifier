@@ -13,11 +13,12 @@ all-features = true
 
 [features]
 default = ["macros"]
-all-validations = ["email", "regex", "url"]
+all-validations = ["email", "phone-number", "regex", "url"]
 email = ["dep:email_address"]
 indexmap = ["dep:indexmap"]
 macros = ["dep:fortifier-macros"]
 message = []
+phone-number = ["dep:phonenumber"]
 regex = ["dep:regex"]
 serde = ["dep:serde", "email_address?/serde_support", "fortifier-macros?/serde"]
 url = ["dep:url"]
@@ -27,6 +28,7 @@ utoipa = ["dep:utoipa", "fortifier-macros?/utoipa"]
 email_address = { workspace = true, default-features = false, optional = true }
 fortifier-macros = { workspace = true, optional = true }
 indexmap = { workspace = true, optional = true }
+phonenumber = { workspace = true, optional = true }
 regex = { workspace = true, optional = true }
 serde = { workspace = true, features = ["derive"], optional = true }
 url = { workspace = true, optional = true }
