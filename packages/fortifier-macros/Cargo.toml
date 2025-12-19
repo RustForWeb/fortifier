@@ -28,10 +28,17 @@ syn = "2.0.110"
 
 [dev-dependencies]
 email_address.workspace = true
-fortifier = { workspace = true, features = ["all-validations", "indexmap"] }
+fortifier = { workspace = true, features = [
+    "all-validations",
+    "indexmap",
+    "serde",
+] }
 indexmap.workspace = true
 phonenumber.workspace = true
+pretty_assertions.workspace = true
 regex.workspace = true
+serde.workspace = true
+serde_json.workspace = true
 trybuild = "1.0.114"
 url.workspace = true
 

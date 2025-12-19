@@ -3,8 +3,8 @@ use quote::{ToTokens, format_ident, quote};
 use syn::{DataEnum, DeriveInput, Ident, Result, Variant, Visibility};
 
 use crate::{
+    attributes::enum_attributes,
     validate::{
-        attributes::enum_attributes,
         field::{LiteralOrIdent, ValidateFieldPrefix, format_error_ident},
         fields::ValidateFields,
     },
@@ -39,7 +39,11 @@ impl<'a> ValidateEnum<'a> {
         Ok(result)
     }
 
-    pub fn error_type(&self) -> (TokenStream, TokenStream) {
+    pub fn error_type(&self) -> Option<(TokenStream, TokenStream)> {
+        if self.variants.is_empty() {
+            return None;
+        }
+
         let visibility = &self.visibility;
         let error_ident = &self.error_ident;
 
@@ -52,10 +56,14 @@ impl<'a> ValidateEnum<'a> {
         let (error_variant_types, variant_error_types): (Vec<_>, Vec<_>) = self
             .variants
             .iter()
-            .map(|variant| variant.error_type())
+            .flat_map(|variant| variant.error_type())
             .unzip();
 
-        (
+        if error_variant_types.is_empty() {
+            return None;
+        }
+
+        Some((
             error_ident.to_token_stream(),
             quote! {
                 #[allow(dead_code)]
@@ -77,7 +85,7 @@ impl<'a> ValidateEnum<'a> {
 
                 #( #variant_error_types )*
             },
-        )
+        ))
     }
 
     pub fn validations(&self, execution: Execution) -> TokenStream {
@@ -122,7 +130,7 @@ impl<'a> ValidateEnumVariant<'a> {
         Ok(result)
     }
 
-    fn error_type(&self) -> (TokenStream, TokenStream) {
+    fn error_type(&self) -> Option<(TokenStream, TokenStream)> {
         self.fields.error_type()
     }
 

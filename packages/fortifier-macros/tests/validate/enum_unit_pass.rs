@@ -1,3 +1,5 @@
+use std::convert::Infallible;
+
 use fortifier::{Validate, ValidationErrors};
 
 #[derive(Validate)]
@@ -7,7 +9,7 @@ enum ChangeEmailAddressRelation {
     Delete,
 }
 
-fn main() -> Result<(), ValidationErrors<ChangeEmailAddressRelationValidationError>> {
+fn main() -> Result<(), ValidationErrors<Infallible>> {
     let data = ChangeEmailAddressRelation::Create;
 
     data.validate_sync()?;

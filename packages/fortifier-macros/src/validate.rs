@@ -1,4 +1,3 @@
-mod attributes;
 mod data;
 mod r#enum;
 mod field;
@@ -61,7 +60,12 @@ impl<'a> ToTokens for Validate<'a> {
                 elems: Punctuated::new(),
             }),
         };
-        let (error_type, error_definition) = self.data.error_type();
+
+        let (error_type, error_definition) = self
+            .data
+            .error_type()
+            .unwrap_or_else(|| (quote!(::std::convert::Infallible), TokenStream::new()));
+
         let sync_validations = self.data.validations(Execution::Sync);
         let async_validations = self.data.validations(Execution::Async);
 

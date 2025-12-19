@@ -2,6 +2,7 @@
 
 //! Fortifier macros.
 
+mod attributes;
 mod validate;
 mod validation;
 mod validations;

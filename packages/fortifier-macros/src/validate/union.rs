@@ -10,7 +10,7 @@ impl ValidateUnion {
         Err(syn::Error::new_spanned(input, "union is not supported"))
     }
 
-    pub fn error_type(&self) -> (TokenStream, TokenStream) {
+    pub fn error_type(&self) -> Option<(TokenStream, TokenStream)> {
         todo!()
     }
 

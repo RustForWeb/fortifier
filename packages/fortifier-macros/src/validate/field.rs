@@ -4,10 +4,8 @@ use quote::{ToTokens, format_ident, quote};
 use syn::{Error, Field, Ident, Result, Visibility};
 
 use crate::{
-    validate::{
-        attributes::enum_attributes,
-        r#type::{KnownOrUnknown, should_validate_type},
-    },
+    attributes::enum_attributes,
+    validate::r#type::{KnownOrUnknown, should_validate_type},
     validation::{Execution, Validation},
     validations::{Custom, EmailAddress, Length, Nested, PhoneNumber, Regex, Url},
 };
@@ -137,7 +135,7 @@ impl<'a> ValidateField<'a> {
         &self.error_ident
     }
 
-    pub fn error_type(&self, ident: &Ident) -> (TokenStream, Option<TokenStream>) {
+    pub fn error_type(&self, ident: &Ident) -> Option<(TokenStream, Option<TokenStream>)> {
         if self.validations.len() > 1 {
             let attributes = enum_attributes();
             let visibility = &self.visibility;
@@ -148,7 +146,7 @@ impl<'a> ValidateField<'a> {
                 .iter()
                 .map(|validation| validation.error_type());
 
-            (
+            Some((
                 ident.to_token_stream(),
                 Some(quote! {
                     #[derive(Debug, PartialEq)]
@@ -157,11 +155,11 @@ impl<'a> ValidateField<'a> {
                         #( #variant_ident(#variant_type) ),*
                     }
                 }),
-            )
-        } else if let Some(validation) = self.validations.first() {
-            (validation.error_type(), None)
+            ))
         } else {
-            (quote!(()), None)
+            self.validations
+                .first()
+                .map(|validation| (validation.error_type(), None))
         }
     }
 
