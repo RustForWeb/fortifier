@@ -3,10 +3,8 @@ use quote::{ToTokens, quote};
 use syn::{Fields, FieldsNamed, FieldsUnnamed, Ident, Result, Visibility};
 
 use crate::{
-    validate::{
-        attributes::enum_attributes,
-        field::{LiteralOrIdent, ValidateField, ValidateFieldPrefix, format_error_ident},
-    },
+    attributes::enum_attributes,
+    validate::field::{LiteralOrIdent, ValidateField, ValidateFieldPrefix, format_error_ident},
     validation::Execution,
 };
 
@@ -29,7 +27,7 @@ impl<'a> ValidateFields<'a> {
         })
     }
 
-    pub fn error_type(&self) -> (TokenStream, TokenStream) {
+    pub fn error_type(&self) -> Option<(TokenStream, TokenStream)> {
         match self {
             ValidateFields::Named(named) => named.error_type(),
             ValidateFields::Unnamed(unnamed) => unnamed.error_type(),
@@ -93,13 +91,17 @@ impl<'a> ValidateNamedFields<'a> {
         self.fields.iter().map(|field| field.ident())
     }
 
-    fn error_type(&self) -> (TokenStream, TokenStream) {
-        error_type(
-            self.visibility,
-            &self.ident,
-            &self.error_ident,
-            self.fields.iter(),
-        )
+    fn error_type(&self) -> Option<(TokenStream, TokenStream)> {
+        if self.fields.is_empty() {
+            None
+        } else {
+            Some(error_type(
+                self.visibility,
+                &self.ident,
+                &self.error_ident,
+                self.fields.iter(),
+            ))
+        }
     }
 
     pub fn validations(
@@ -152,13 +154,17 @@ impl<'a> ValidateUnnamedFields<'a> {
         self.fields.iter().map(|field| field.ident())
     }
 
-    fn error_type(&self) -> (TokenStream, TokenStream) {
-        error_type(
-            self.visibility,
-            &self.ident,
-            &self.error_ident,
-            self.fields.iter(),
-        )
+    fn error_type(&self) -> Option<(TokenStream, TokenStream)> {
+        if self.fields.is_empty() {
+            None
+        } else {
+            Some(error_type(
+                self.visibility,
+                &self.ident,
+                &self.error_ident,
+                self.fields.iter(),
+            ))
+        }
     }
 
     pub fn validations(
@@ -184,8 +190,8 @@ impl ValidateUnitFields {
         Ok(Self {})
     }
 
-    fn error_type(&self) -> (TokenStream, TokenStream) {
-        (quote!(::std::convert::Infallible), TokenStream::new())
+    fn error_type(&self) -> Option<(TokenStream, TokenStream)> {
+        None
     }
 
     pub fn validations(&self) -> TokenStream {
@@ -208,13 +214,14 @@ fn error_type<'a>(
     let mut error_field_enums = vec![];
 
     for field in fields {
-        let field_error_ident = field.error_ident();
-        let (field_error_type, field_error_enum) = field.error_type(ident);
+        if let Some((field_error_type, field_error_enum)) = field.error_type(ident) {
+            let field_error_ident = field.error_ident();
 
-        error_field_idents.push(field_error_ident);
-        error_field_types.push(field_error_type);
-        if let Some(error_enum) = field_error_enum {
-            error_field_enums.push(error_enum);
+            error_field_idents.push(field_error_ident);
+            error_field_types.push(field_error_type);
+            if let Some(error_enum) = field_error_enum {
+                error_field_enums.push(error_enum);
+            }
         }
     }
 

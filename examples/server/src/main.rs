@@ -1,3 +1,4 @@
+mod email_address;
 mod routes;
 mod user;
 

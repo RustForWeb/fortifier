@@ -36,3 +36,23 @@ pub fn enum_attributes() -> TokenStream {
         #( #attributes )*
     }
 }
+
+pub fn enum_field_attributes() -> TokenStream {
+    #[allow(unused_mut)]
+    let mut attributes: Vec<TokenStream> = vec![];
+
+    #[cfg(feature = "serde")]
+    {
+        use proc_macro_crate::crate_name;
+
+        if crate_name("serde").is_ok() {
+            attributes.push(quote! {
+                #[serde(with = "::fortifier::serde::errors")]
+            });
+        }
+    }
+
+    quote! {
+        #( #attributes )*
+    }
+}

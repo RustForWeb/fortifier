@@ -62,6 +62,28 @@ pub trait Validate: ValidateWithContext<Context = ()> {
     }
 }
 
+impl<T> ValidateWithContext for &T
+where
+    T: ValidateWithContext,
+{
+    type Context = T::Context;
+    type Error = T::Error;
+
+    fn validate_sync_with_context(
+        &self,
+        context: &Self::Context,
+    ) -> Result<(), ValidationErrors<Self::Error>> {
+        T::validate_sync_with_context(self, context)
+    }
+
+    fn validate_async_with_context(
+        &self,
+        context: &Self::Context,
+    ) -> Pin<Box<impl Future<Output = Result<(), ValidationErrors<Self::Error>>> + Send>> {
+        T::validate_async_with_context(self, context)
+    }
+}
+
 impl<T> ValidateWithContext for Vec<T>
 where
     T: ValidateWithContext + Send + Sync,

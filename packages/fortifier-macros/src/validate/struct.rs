@@ -17,7 +17,7 @@ impl<'a> ValidateStruct<'a> {
         })
     }
 
-    pub fn error_type(&self) -> (TokenStream, TokenStream) {
+    pub fn error_type(&self) -> Option<(TokenStream, TokenStream)> {
         self.fields.error_type()
     }
 

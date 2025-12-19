@@ -2,7 +2,10 @@ use proc_macro2::TokenStream;
 use quote::{ToTokens, format_ident, quote};
 use syn::{Ident, Path, Result, meta::ParseNestedMeta};
 
-use crate::validation::{Execution, Validation};
+use crate::{
+    attributes::enum_field_attributes,
+    validation::{Execution, Validation},
+};
 
 #[derive(Default)]
 pub struct Nested {
@@ -43,7 +46,10 @@ impl Validation for Nested {
     }
 
     fn error_type(&self) -> TokenStream {
-        self.error_type.clone()
+        let error_type = &self.error_type;
+        let attributes = enum_field_attributes();
+
+        quote!(#attributes ::fortifier::ValidationErrors<#error_type>)
     }
 
     fn expr(&self, execution: Execution, expr: &TokenStream) -> Option<TokenStream> {

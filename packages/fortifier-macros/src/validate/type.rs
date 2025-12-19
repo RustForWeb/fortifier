@@ -80,10 +80,10 @@ fn should_validate_path(path: &Path) -> Option<KnownOrUnknown<TokenStream>> {
         && let Some(argument) = arguments.args.first()
     {
         return should_validate_generic_argument(argument).map(|error_type| match error_type {
-            KnownOrUnknown::Known(error_type) => KnownOrUnknown::Known(
-                quote!(::fortifier::ValidationErrors<::fortifier::IndexedValidationError<#error_type>>)
-            ),
-            KnownOrUnknown::Unknown => KnownOrUnknown::Unknown
+            KnownOrUnknown::Known(error_type) => {
+                KnownOrUnknown::Known(quote!(::fortifier::IndexedValidationError<#error_type>))
+            }
+            KnownOrUnknown::Unknown => KnownOrUnknown::Unknown,
         });
     }
 

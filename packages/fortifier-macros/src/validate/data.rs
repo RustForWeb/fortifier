@@ -21,7 +21,7 @@ impl<'a> ValidateData<'a> {
         })
     }
 
-    pub fn error_type(&self) -> (TokenStream, TokenStream) {
+    pub fn error_type(&self) -> Option<(TokenStream, TokenStream)> {
         match self {
             ValidateData::Struct(r#struct) => r#struct.error_type(),
             ValidateData::Enum(r#enum) => r#enum.error_type(),

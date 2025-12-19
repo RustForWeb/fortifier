@@ -49,10 +49,14 @@ impl<E> IntoIterator for ValidationErrors<E> {
 
 /// Validation error with index.
 #[derive(Debug, Eq, PartialEq)]
+#[cfg_attr(feature = "serde", derive(serde::Deserialize, serde::Serialize))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct IndexedValidationError<E: Error> {
     /// The index.
     pub index: usize,
+
     /// The error.
+    #[cfg_attr(feature = "serde", serde(flatten))]
     pub error: E,
 }
 
@@ -73,10 +77,14 @@ impl<E: Error> Error for IndexedValidationError<E> {}
 
 /// Validation error with key.
 #[derive(Debug, Eq, PartialEq)]
+#[cfg_attr(feature = "serde", derive(serde::Deserialize, serde::Serialize))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct KeyedValidationError<K, E: Error> {
     /// The key.
     pub key: K,
+
     /// The error.
+    #[cfg_attr(feature = "serde", serde(flatten))]
     pub error: E,
 }
 
