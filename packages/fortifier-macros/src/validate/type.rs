@@ -1,24 +1,24 @@
+use proc_macro2::TokenStream;
+use quote::{ToTokens, quote};
 use syn::{GenericArgument, Path, PathArguments, Type, TypeParamBound};
+
+use crate::validate::field::format_error_ident;
 
 const PRIMITIVE_AND_BUILT_IN_TYPES: [&str; 18] = [
     "bool", "i8", "i16", "i32", "i64", "i128", "isize", "u8", "u16", "u32", "u64", "u128", "usize",
     "f32", "f64", "char", "str", "String",
 ];
 
-const CONTAINER_TYPES: [&str; 20] = [
+const INDEXED_CONTAINER_TYPES: [&str; 16] = [
     "Arc",
-    "BTreeMap",
     "BTreeSet",
-    "HashMap",
     "HashSet",
     "LinkedList",
     "Option",
     "Rc",
     "Vec",
     "VecDeque",
-    "std::collections::BTreeMap",
     "std::collections::BTreeSet",
-    "std::collections::HashMap",
     "std::collections::HashSet",
     "std::collections::LinkedList",
     "std::collections::VecDeque",
@@ -26,6 +26,13 @@ const CONTAINER_TYPES: [&str; 20] = [
     "std::rc::Rc",
     "std::sync::Arc",
     "std::vec::Vec",
+];
+
+const KEYED_CONTAINER_TYPES: [&str; 4] = [
+    "BTreeMap",
+    "HashMap",
+    "std::collections::BTreeMap",
+    "std::collections::HashMap",
 ];
 
 fn path_to_string(path: &Path) -> String {
@@ -42,46 +49,75 @@ fn is_validate_path(path: &Path) -> bool {
     path_string == "Validate" || path_string == "fortifier::Validate"
 }
 
-fn should_validate_generic_argument(arg: &GenericArgument) -> bool {
+fn should_validate_generic_argument(arg: &GenericArgument) -> Option<KnownOrUnknown<TokenStream>> {
     match arg {
-        GenericArgument::Lifetime(_) => true,
+        GenericArgument::Lifetime(_) => Some(KnownOrUnknown::Unknown),
         GenericArgument::Type(r#type) => should_validate_type(r#type),
         GenericArgument::Const(_expr) => todo!(),
         GenericArgument::AssocType(_assoc_type) => todo!(),
         GenericArgument::AssocConst(_assoc_const) => todo!(),
         GenericArgument::Constraint(_constraint) => todo!(),
-        _ => true,
+        _ => Some(KnownOrUnknown::Unknown),
     }
 }
 
-fn should_validate_path(path: &Path) -> bool {
+fn should_validate_path(path: &Path) -> Option<KnownOrUnknown<TokenStream>> {
     if let Some(ident) = path.get_ident() {
-        return !PRIMITIVE_AND_BUILT_IN_TYPES.contains(&ident.to_string().as_str());
+        return if PRIMITIVE_AND_BUILT_IN_TYPES.contains(&ident.to_string().as_str()) {
+            None
+        } else {
+            Some(KnownOrUnknown::Known(
+                format_error_ident(ident).to_token_stream(),
+            ))
+        };
     }
     let path_string = path_to_string(path);
+    let path_string = path_string.as_str();
 
-    if CONTAINER_TYPES.contains(&path_string.as_str())
+    if INDEXED_CONTAINER_TYPES.contains(&path_string)
         && let Some(segment) = path.segments.last()
         && let PathArguments::AngleBracketed(arguments) = &segment.arguments
-        && !arguments.args.iter().all(should_validate_generic_argument)
+        && let Some(argument) = arguments.args.first()
     {
-        return false;
+        return should_validate_generic_argument(argument).map(|error_type| match error_type {
+            KnownOrUnknown::Known(error_type) => KnownOrUnknown::Known(
+                quote!(::fortifier::ValidationErrors<::fortifier::IndexedValidationError<#error_type>>)
+            ),
+            KnownOrUnknown::Unknown => KnownOrUnknown::Unknown
+        });
     }
 
-    true
+    // TODO: Determine error type.
+    if KEYED_CONTAINER_TYPES.contains(&path_string)
+        && let Some(segment) = path.segments.last()
+        && let PathArguments::AngleBracketed(arguments) = &segment.arguments
+        && !arguments
+            .args
+            .iter()
+            .all(|arg| should_validate_generic_argument(arg).is_some())
+    {
+        return None;
+    }
+
+    Some(KnownOrUnknown::Unknown)
 }
 
-pub fn should_validate_type(r#type: &Type) -> bool {
+pub enum KnownOrUnknown<T> {
+    Known(T),
+    Unknown,
+}
+
+pub fn should_validate_type(r#type: &Type) -> Option<KnownOrUnknown<TokenStream>> {
     match r#type {
         Type::Array(r#type) => should_validate_type(&r#type.elem),
-        Type::BareFn(_) => false,
+        Type::BareFn(_) => None,
         Type::Group(r#type) => should_validate_type(&r#type.elem),
         Type::ImplTrait(r#type) => r#type.bounds.iter().any(
             |bound| matches!(bound, TypeParamBound::Trait(bound) if is_validate_path(&bound.path)),
-        ),
-        Type::Infer(_) => true,
-        Type::Macro(_) => true,
-        Type::Never(_) => false,
+        ).then_some(KnownOrUnknown::Unknown),
+        Type::Infer(_) => Some(KnownOrUnknown::Unknown),
+        Type::Macro(_) => Some(KnownOrUnknown::Unknown),
+        Type::Never(_) => None,
         Type::Paren(r#type) => should_validate_type(&r#type.elem),
         Type::Path(r#type) => should_validate_path(&r#type.path),
         Type::Ptr(r#type) => should_validate_type(&r#type.elem),
@@ -89,12 +125,12 @@ pub fn should_validate_type(r#type: &Type) -> bool {
         Type::Slice(r#type) => should_validate_type(&r#type.elem),
         Type::TraitObject(r#type) => r#type.bounds.iter().any(
             |bound| matches!(bound, TypeParamBound::Trait(bound) if is_validate_path(&bound.path)),
-        ),
+        ).then_some(KnownOrUnknown::Unknown),
         Type::Tuple(r#type) => {
-            !r#type.elems.is_empty() && r#type.elems.iter().all(should_validate_type)
+            (!r#type.elems.is_empty() && r#type.elems.iter().all(|r#type| should_validate_type(r#type).is_some())).then_some(KnownOrUnknown::Unknown)
         }
-        Type::Verbatim(_) => false,
-        _ => false,
+        Type::Verbatim(_) => None,
+        _ => None,
     }
 }
 
@@ -106,7 +142,7 @@ mod tests {
     use super::should_validate_type;
 
     fn validate(tokens: TokenStream) -> bool {
-        should_validate_type(&syn::parse2(tokens).expect("valid type"))
+        should_validate_type(&syn::parse2(tokens).expect("valid type")).is_some()
     }
 
     #[test]
