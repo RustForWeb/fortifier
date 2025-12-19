@@ -1,34 +1,6 @@
-use std::{
-    error::Error,
-    fmt::{self, Debug, Display},
-    pin::Pin,
-};
+use std::{collections::HashMap, error::Error, fmt::Debug, pin::Pin};
 
-/// Validation errors.
-#[derive(Debug, Eq, PartialEq)]
-#[cfg_attr(feature = "serde", derive(serde::Deserialize, serde::Serialize))]
-#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
-pub struct ValidationErrors<E>(Vec<E>);
-
-impl<E: Debug> Display for ValidationErrors<E> {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{:?}", self.0)
-    }
-}
-
-impl<E: Error> Error for ValidationErrors<E> {}
-
-impl<E> FromIterator<E> for ValidationErrors<E> {
-    fn from_iter<T: IntoIterator<Item = E>>(iter: T) -> Self {
-        Self(Vec::from_iter(iter))
-    }
-}
-
-impl<E> From<Vec<E>> for ValidationErrors<E> {
-    fn from(value: Vec<E>) -> Self {
-        Self(value)
-    }
-}
+use crate::error::{IndexedValidationError, KeyedValidationError, ValidationErrors};
 
 /// Validate a schema with context.
 pub trait ValidateWithContext {
@@ -87,5 +59,119 @@ pub trait Validate: ValidateWithContext<Context = ()> {
         &self,
     ) -> Pin<Box<impl Future<Output = Result<(), ValidationErrors<Self::Error>>> + Send>> {
         self.validate_async_with_context(&())
+    }
+}
+
+impl<T> ValidateWithContext for Vec<T>
+where
+    T: ValidateWithContext + Send + Sync,
+    T::Error: Error + Send + Sync,
+{
+    type Context = T::Context;
+    type Error = IndexedValidationError<T::Error>;
+
+    fn validate_sync_with_context(
+        &self,
+        context: &Self::Context,
+    ) -> Result<(), ValidationErrors<Self::Error>> {
+        let mut errors = vec![];
+
+        for (index, value) in self.iter().enumerate() {
+            if let Err(error) = value.validate_sync_with_context(context) {
+                for error in error {
+                    errors.push(IndexedValidationError { index, error });
+                }
+            }
+        }
+
+        if errors.is_empty() {
+            Ok(())
+        } else {
+            Err(errors.into())
+        }
+    }
+
+    fn validate_async_with_context(
+        &self,
+        context: &Self::Context,
+    ) -> Pin<Box<impl Future<Output = Result<(), ValidationErrors<Self::Error>>> + Send>> {
+        Box::pin(async move {
+            let mut errors = vec![];
+
+            for (index, value) in self.iter().enumerate() {
+                if let Err(error) = value.validate_async_with_context(context).await {
+                    for error in error {
+                        errors.push(IndexedValidationError { index, error });
+                    }
+                }
+            }
+
+            if errors.is_empty() {
+                Ok(())
+            } else {
+                Err(errors.into())
+            }
+        })
+    }
+}
+
+// TODO: Should this validate both keys and values?
+impl<K, V> ValidateWithContext for HashMap<K, V>
+where
+    K: Clone + Debug + Send + Sync,
+    V: ValidateWithContext + Send + Sync,
+    V::Error: Error + Send + Sync,
+{
+    type Context = V::Context;
+    type Error = KeyedValidationError<K, V::Error>;
+
+    fn validate_sync_with_context(
+        &self,
+        context: &Self::Context,
+    ) -> Result<(), ValidationErrors<Self::Error>> {
+        let mut errors = vec![];
+
+        for (key, value) in self.iter() {
+            if let Err(error) = value.validate_sync_with_context(context) {
+                for error in error {
+                    errors.push(KeyedValidationError {
+                        key: key.clone(),
+                        error,
+                    });
+                }
+            }
+        }
+
+        if errors.is_empty() {
+            Ok(())
+        } else {
+            Err(errors.into())
+        }
+    }
+
+    fn validate_async_with_context(
+        &self,
+        context: &Self::Context,
+    ) -> Pin<Box<impl Future<Output = Result<(), ValidationErrors<Self::Error>>> + Send>> {
+        Box::pin(async move {
+            let mut errors = vec![];
+
+            for (key, value) in self.iter() {
+                if let Err(error) = value.validate_async_with_context(context).await {
+                    for error in error {
+                        errors.push(KeyedValidationError {
+                            key: key.clone(),
+                            error,
+                        });
+                    }
+                }
+            }
+
+            if errors.is_empty() {
+                Ok(())
+            } else {
+                Err(errors.into())
+            }
+        })
     }
 }

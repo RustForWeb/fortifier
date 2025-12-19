@@ -5,7 +5,7 @@ use syn::{DataEnum, DeriveInput, Ident, Result, Variant, Visibility};
 use crate::{
     validate::{
         attributes::enum_attributes,
-        field::{LiteralOrIdent, ValidateFieldPrefix},
+        field::{LiteralOrIdent, ValidateFieldPrefix, format_error_ident},
         fields::ValidateFields,
     },
     validation::Execution,
@@ -23,7 +23,7 @@ impl<'a> ValidateEnum<'a> {
         let mut result = ValidateEnum {
             visibility: &input.vis,
             ident: &input.ident,
-            error_ident: format_ident!("{}ValidationError", input.ident),
+            error_ident: format_error_ident(&input.ident),
             variants: Vec::with_capacity(data.variants.len()),
         };
 

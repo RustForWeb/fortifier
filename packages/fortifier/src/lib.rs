@@ -2,9 +2,11 @@
 
 //! Fortifier.
 
+mod error;
 mod validate;
 mod validations;
 
+pub use error::*;
 pub use validate::*;
 pub use validations::*;
 

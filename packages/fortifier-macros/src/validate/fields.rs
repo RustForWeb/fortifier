@@ -1,11 +1,11 @@
 use proc_macro2::{Literal, TokenStream};
-use quote::{ToTokens, format_ident, quote};
+use quote::{ToTokens, quote};
 use syn::{Fields, FieldsNamed, FieldsUnnamed, Ident, Result, Visibility};
 
 use crate::{
     validate::{
         attributes::enum_attributes,
-        field::{LiteralOrIdent, ValidateField, ValidateFieldPrefix},
+        field::{LiteralOrIdent, ValidateField, ValidateFieldPrefix, format_error_ident},
     },
     validation::Execution,
 };
@@ -64,7 +64,7 @@ pub struct ValidateNamedFields<'a> {
 
 impl<'a> ValidateNamedFields<'a> {
     fn parse(visibility: &'a Visibility, ident: Ident, fields: &'a FieldsNamed) -> Result<Self> {
-        let error_ident = format_ident!("{}ValidationError", ident);
+        let error_ident = format_error_ident(&ident);
 
         let mut result = Self {
             visibility,
@@ -127,7 +127,7 @@ pub struct ValidateUnnamedFields<'a> {
 
 impl<'a> ValidateUnnamedFields<'a> {
     fn parse(visibility: &'a Visibility, ident: Ident, fields: &'a FieldsUnnamed) -> Result<Self> {
-        let error_ident = format_ident!("{}ValidationError", ident);
+        let error_ident = format_error_ident(&ident);
 
         let mut result = Self {
             visibility,

@@ -1,10 +1,13 @@
 use convert_case::{Case, Casing};
 use proc_macro2::{Literal, TokenStream};
 use quote::{ToTokens, format_ident, quote};
-use syn::{Field, Ident, Result, Visibility};
+use syn::{Error, Field, Ident, Result, Visibility};
 
 use crate::{
-    validate::{attributes::enum_attributes, r#type::should_validate_type},
+    validate::{
+        attributes::enum_attributes,
+        r#type::{KnownOrUnknown, should_validate_type},
+    },
     validation::{Execution, Validation},
     validations::{Custom, EmailAddress, Length, Nested, PhoneNumber, Regex, Url},
 };
@@ -49,7 +52,7 @@ impl<'a> ValidateField<'a> {
             LiteralOrIdent::Literal(literal) => format_ident!("F{literal}"),
             LiteralOrIdent::Ident(ident) => upper_camel_ident(ident),
         };
-        let error_type_ident = format_ident!("{type_prefix}{error_ident}ValidationError");
+        let error_type_ident = format_error_ident_with_prefix(type_prefix, &error_ident);
 
         let mut result = Self {
             visibility,
@@ -58,7 +61,7 @@ impl<'a> ValidateField<'a> {
             error_type_ident,
             validations: vec![],
         };
-        let mut skip = false;
+        let mut skip_nested = false;
 
         for attr in &field.attrs {
             if attr.path().is_ident("validate") {
@@ -77,6 +80,11 @@ impl<'a> ValidateField<'a> {
                         result.validations.push(Box::new(Length::parse(&meta)?));
 
                         Ok(())
+                    } else if meta.path.is_ident("nested") {
+                        result.validations.push(Box::new(Nested::parse(&meta)?));
+                        skip_nested = true;
+
+                        Ok(())
                     } else if meta.path.is_ident("phone_number") {
                         result
                             .validations
@@ -92,7 +100,7 @@ impl<'a> ValidateField<'a> {
 
                         Ok(())
                     } else if meta.path.is_ident("skip") {
-                        skip = true;
+                        skip_nested = true;
 
                         Ok(())
                     } else {
@@ -104,9 +112,18 @@ impl<'a> ValidateField<'a> {
 
         // TODO: Use enum/struct generics to determine if a generic field type supports nested validation.
         // TODO: Remove the validations empty check after resolving the issue above.
-        if !skip && result.validations.is_empty() && should_validate_type(&field.ty) {
-            // TODO: Nested validation
-            result.validations.push(Box::new(Nested::new()));
+        if !skip_nested
+            && result.validations.is_empty()
+            && let Some(nested_type) = should_validate_type(&field.ty)
+        {
+            if let KnownOrUnknown::Known(nested_type) = nested_type {
+                result.validations.push(Box::new(Nested::new(nested_type)));
+            } else {
+                return Err(Error::new_spanned(
+                    field,
+                    "error type must be specified using `#[validate(nested(error_type = MyErrorType))]`",
+                ));
+            }
         }
 
         Ok(result)
@@ -124,7 +141,7 @@ impl<'a> ValidateField<'a> {
         if self.validations.len() > 1 {
             let attributes = enum_attributes();
             let visibility = &self.visibility;
-            let ident = format_ident!("{}{}ValidationError", ident, self.error_ident);
+            let ident = format_error_ident_with_prefix(ident, &self.error_ident);
             let variant_ident = self.validations.iter().map(|validation| validation.ident());
             let variant_type = self
                 .validations
@@ -193,4 +210,12 @@ fn upper_camel_ident(ident: &Ident) -> Ident {
     } else {
         format_ident!("{}", s.to_case(Case::UpperCamel))
     }
+}
+
+pub fn format_error_ident(ident: &Ident) -> Ident {
+    format_ident!("{}ValidationError", ident)
+}
+
+pub fn format_error_ident_with_prefix(prefix: &Ident, ident: &Ident) -> Ident {
+    format_ident!("{}{}ValidationError", prefix, ident)
 }
