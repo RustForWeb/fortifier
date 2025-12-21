@@ -10,6 +10,10 @@ use std::{
 #[cfg(feature = "indexmap")]
 use indexmap::{IndexMap, IndexSet};
 
+use crate::error_code;
+
+error_code!(LengthErrorCode, "length");
+
 /// Length validation error.
 #[derive(Debug, Eq, PartialEq)]
 #[cfg_attr(
@@ -31,6 +35,10 @@ pub enum LengthError<T> {
         /// The actual length.
         length: T,
 
+        /// The error code.
+        #[cfg_attr(feature = "serde", serde(default))]
+        code: LengthErrorCode,
+
         /// A human-readable error message.
         #[cfg(feature = "message")]
         message: String,
@@ -43,6 +51,10 @@ pub enum LengthError<T> {
         /// The actual length.
         length: T,
 
+        /// The error code.
+        #[cfg_attr(feature = "serde", serde(default))]
+        code: LengthErrorCode,
+
         /// A human-readable error message.
         #[cfg(feature = "message")]
         message: String,
@@ -54,6 +66,10 @@ pub enum LengthError<T> {
 
         /// The length.
         length: T,
+
+        /// The error code.
+        #[cfg_attr(feature = "serde", serde(default))]
+        code: LengthErrorCode,
 
         /// A human-readable error message.
         #[cfg(feature = "message")]
@@ -88,6 +104,7 @@ where
                 return Err(LengthError::Equal {
                     equal,
                     length,
+                    code: LengthErrorCode,
                     #[cfg(feature = "message")]
                     message,
                 });
@@ -102,6 +119,7 @@ where
                 return Err(LengthError::Min {
                     min,
                     length,
+                    code: LengthErrorCode,
                     #[cfg(feature = "message")]
                     message,
                 });
@@ -116,6 +134,7 @@ where
                 return Err(LengthError::Max {
                     max,
                     length,
+                    code: LengthErrorCode,
                     #[cfg(feature = "message")]
                     message,
                 });
@@ -232,6 +251,8 @@ mod tests {
     #[cfg(feature = "indexmap")]
     use indexmap::{IndexMap, IndexSet};
 
+    use crate::LengthErrorCode;
+
     use super::{LengthError, ValidateLength};
 
     #[test]
@@ -310,6 +331,7 @@ mod tests {
             Err(LengthError::Equal {
                 equal: 2,
                 length: 1,
+                code: LengthErrorCode,
                 #[cfg(feature = "message")]
                 message: "length 1 is not equal to required length 2".to_owned(),
             })
@@ -319,6 +341,7 @@ mod tests {
             Err(LengthError::Equal {
                 equal: 2,
                 length: 1,
+                code: LengthErrorCode,
                 #[cfg(feature = "message")]
                 message: "length 1 is not equal to required length 2".to_owned(),
             })
@@ -328,6 +351,7 @@ mod tests {
             Err(LengthError::Equal {
                 equal: 2,
                 length: 1,
+                code: LengthErrorCode,
                 #[cfg(feature = "message")]
                 message: "length 1 is not equal to required length 2".to_owned(),
             })
@@ -337,6 +361,7 @@ mod tests {
             Err(LengthError::Equal {
                 equal: 2,
                 length: 1,
+                code: LengthErrorCode,
                 #[cfg(feature = "message")]
                 message: "length 1 is not equal to required length 2".to_owned(),
             })
@@ -346,6 +371,7 @@ mod tests {
             Err(LengthError::Equal {
                 equal: 2,
                 length: 1,
+                code: LengthErrorCode,
                 #[cfg(feature = "message")]
                 message: "length 1 is not equal to required length 2".to_owned(),
             })
@@ -356,6 +382,7 @@ mod tests {
             Err(LengthError::Equal {
                 equal: 2,
                 length: 1,
+                code: LengthErrorCode,
                 #[cfg(feature = "message")]
                 message: "length 1 is not equal to required length 2".to_owned(),
             })
@@ -366,6 +393,7 @@ mod tests {
             Err(LengthError::Equal {
                 equal: 2,
                 length: 1,
+                code: LengthErrorCode,
                 #[cfg(feature = "message")]
                 message: "length 1 is not equal to required length 2".to_owned(),
             })
@@ -375,6 +403,7 @@ mod tests {
             Err(LengthError::Equal {
                 equal: 2,
                 length: 1,
+                code: LengthErrorCode,
                 #[cfg(feature = "message")]
                 message: "length 1 is not equal to required length 2".to_owned(),
             })
@@ -384,6 +413,7 @@ mod tests {
             Err(LengthError::Equal {
                 equal: 2,
                 length: 1,
+                code: LengthErrorCode,
                 #[cfg(feature = "message")]
                 message: "length 1 is not equal to required length 2".to_owned(),
             })
@@ -393,6 +423,7 @@ mod tests {
             Err(LengthError::Equal {
                 equal: 2,
                 length: 1,
+                code: LengthErrorCode,
                 #[cfg(feature = "message")]
                 message: "length 1 is not equal to required length 2".to_owned(),
             })
@@ -402,6 +433,7 @@ mod tests {
             Err(LengthError::Equal {
                 equal: 2,
                 length: 1,
+                code: LengthErrorCode,
                 #[cfg(feature = "message")]
                 message: "length 1 is not equal to required length 2".to_owned(),
             })
@@ -411,6 +443,7 @@ mod tests {
             Err(LengthError::Equal {
                 equal: 2,
                 length: 1,
+                code: LengthErrorCode,
                 #[cfg(feature = "message")]
                 message: "length 1 is not equal to required length 2".to_owned(),
             })
@@ -420,6 +453,7 @@ mod tests {
             Err(LengthError::Equal {
                 equal: 2,
                 length: 1,
+                code: LengthErrorCode,
                 #[cfg(feature = "message")]
                 message: "length 1 is not equal to required length 2".to_owned(),
             })
@@ -429,6 +463,7 @@ mod tests {
             Err(LengthError::Equal {
                 equal: 2,
                 length: 1,
+                code: LengthErrorCode,
                 #[cfg(feature = "message")]
                 message: "length 1 is not equal to required length 2".to_owned(),
             })
@@ -441,6 +476,7 @@ mod tests {
                 Err(LengthError::Equal {
                     equal: 2,
                     length: 1,
+                    code: LengthErrorCode,
                     #[cfg(feature = "message")]
                     message: "length 1 is not equal to required length 2".to_owned(),
                 })
@@ -450,6 +486,7 @@ mod tests {
                 Err(LengthError::Equal {
                     equal: 2,
                     length: 1,
+                    code: LengthErrorCode,
                     #[cfg(feature = "message")]
                     message: "length 1 is not equal to required length 2".to_owned(),
                 })
@@ -461,6 +498,7 @@ mod tests {
             Err(LengthError::Equal {
                 equal: 2,
                 length: 1,
+                code: LengthErrorCode,
                 #[cfg(feature = "message")]
                 message: "length 1 is not equal to required length 2".to_owned(),
             })
@@ -472,6 +510,7 @@ mod tests {
                 Err(LengthError::Equal {
                     equal: 2,
                     length: 1,
+                    code: LengthErrorCode,
                     #[cfg(feature = "message")]
                     message: "length 1 is not equal to required length 2".to_owned(),
                 })
@@ -482,6 +521,7 @@ mod tests {
             Err(LengthError::Equal {
                 equal: 2,
                 length: 1,
+                code: LengthErrorCode,
                 #[cfg(feature = "message")]
                 message: "length 1 is not equal to required length 2".to_owned(),
             })
@@ -491,6 +531,7 @@ mod tests {
             Err(LengthError::Equal {
                 equal: 2,
                 length: 1,
+                code: LengthErrorCode,
                 #[cfg(feature = "message")]
                 message: "length 1 is not equal to required length 2".to_owned(),
             })
@@ -502,6 +543,7 @@ mod tests {
             Err(LengthError::Equal {
                 equal: 2,
                 length: 1,
+                code: LengthErrorCode,
                 #[cfg(feature = "message")]
                 message: "length 1 is not equal to required length 2".to_owned(),
             })
@@ -511,6 +553,7 @@ mod tests {
             Err(LengthError::Equal {
                 equal: 2,
                 length: 1,
+                code: LengthErrorCode,
                 #[cfg(feature = "message")]
                 message: "length 1 is not equal to required length 2".to_owned(),
             })
@@ -524,6 +567,7 @@ mod tests {
             Err(LengthError::Min {
                 min: 3,
                 length: 1,
+                code: LengthErrorCode,
                 #[cfg(feature = "message")]
                 message: "length 1 is less than minimum length 3".to_owned(),
             })
@@ -533,6 +577,7 @@ mod tests {
             Err(LengthError::Min {
                 min: 3,
                 length: 1,
+                code: LengthErrorCode,
                 #[cfg(feature = "message")]
                 message: "length 1 is less than minimum length 3".to_owned(),
             })
@@ -542,6 +587,7 @@ mod tests {
             Err(LengthError::Min {
                 min: 3,
                 length: 1,
+                code: LengthErrorCode,
                 #[cfg(feature = "message")]
                 message: "length 1 is less than minimum length 3".to_owned(),
             })
@@ -551,6 +597,7 @@ mod tests {
             Err(LengthError::Min {
                 min: 3,
                 length: 1,
+                code: LengthErrorCode,
                 #[cfg(feature = "message")]
                 message: "length 1 is less than minimum length 3".to_owned(),
             })
@@ -560,6 +607,7 @@ mod tests {
             Err(LengthError::Min {
                 min: 3,
                 length: 1,
+                code: LengthErrorCode,
                 #[cfg(feature = "message")]
                 message: "length 1 is less than minimum length 3".to_owned(),
             })
@@ -570,6 +618,7 @@ mod tests {
             Err(LengthError::Min {
                 min: 3,
                 length: 1,
+                code: LengthErrorCode,
                 #[cfg(feature = "message")]
                 message: "length 1 is less than minimum length 3".to_owned(),
             })
@@ -580,6 +629,7 @@ mod tests {
             Err(LengthError::Min {
                 min: 3,
                 length: 1,
+                code: LengthErrorCode,
                 #[cfg(feature = "message")]
                 message: "length 1 is less than minimum length 3".to_owned(),
             })
@@ -589,6 +639,7 @@ mod tests {
             Err(LengthError::Min {
                 min: 3,
                 length: 1,
+                code: LengthErrorCode,
                 #[cfg(feature = "message")]
                 message: "length 1 is less than minimum length 3".to_owned(),
             })
@@ -598,6 +649,7 @@ mod tests {
             Err(LengthError::Min {
                 min: 3,
                 length: 1,
+                code: LengthErrorCode,
                 #[cfg(feature = "message")]
                 message: "length 1 is less than minimum length 3".to_owned(),
             })
@@ -607,6 +659,7 @@ mod tests {
             Err(LengthError::Min {
                 min: 3,
                 length: 1,
+                code: LengthErrorCode,
                 #[cfg(feature = "message")]
                 message: "length 1 is less than minimum length 3".to_owned(),
             })
@@ -616,6 +669,7 @@ mod tests {
             Err(LengthError::Min {
                 min: 3,
                 length: 1,
+                code: LengthErrorCode,
                 #[cfg(feature = "message")]
                 message: "length 1 is less than minimum length 3".to_owned(),
             })
@@ -625,6 +679,7 @@ mod tests {
             Err(LengthError::Min {
                 min: 3,
                 length: 1,
+                code: LengthErrorCode,
                 #[cfg(feature = "message")]
                 message: "length 1 is less than minimum length 3".to_owned(),
             })
@@ -634,6 +689,7 @@ mod tests {
             Err(LengthError::Min {
                 min: 3,
                 length: 1,
+                code: LengthErrorCode,
                 #[cfg(feature = "message")]
                 message: "length 1 is less than minimum length 3".to_owned(),
             })
@@ -643,6 +699,7 @@ mod tests {
             Err(LengthError::Min {
                 min: 3,
                 length: 1,
+                code: LengthErrorCode,
                 #[cfg(feature = "message")]
                 message: "length 1 is less than minimum length 3".to_owned(),
             })
@@ -655,6 +712,7 @@ mod tests {
                 Err(LengthError::Min {
                     min: 3,
                     length: 1,
+                    code: LengthErrorCode,
                     #[cfg(feature = "message")]
                     message: "length 1 is less than minimum length 3".to_owned(),
                 })
@@ -664,6 +722,7 @@ mod tests {
                 Err(LengthError::Min {
                     min: 3,
                     length: 1,
+                    code: LengthErrorCode,
                     #[cfg(feature = "message")]
                     message: "length 1 is less than minimum length 3".to_owned(),
                 })
@@ -675,6 +734,7 @@ mod tests {
             Err(LengthError::Min {
                 min: 3,
                 length: 1,
+                code: LengthErrorCode,
                 #[cfg(feature = "message")]
                 message: "length 1 is less than minimum length 3".to_owned(),
             })
@@ -686,6 +746,7 @@ mod tests {
                 Err(LengthError::Min {
                     min: 3,
                     length: 1,
+                    code: LengthErrorCode,
                     #[cfg(feature = "message")]
                     message: "length 1 is less than minimum length 3".to_owned(),
                 })
@@ -696,6 +757,7 @@ mod tests {
             Err(LengthError::Min {
                 min: 3,
                 length: 1,
+                code: LengthErrorCode,
                 #[cfg(feature = "message")]
                 message: "length 1 is less than minimum length 3".to_owned(),
             })
@@ -705,6 +767,7 @@ mod tests {
             Err(LengthError::Min {
                 min: 3,
                 length: 1,
+                code: LengthErrorCode,
                 #[cfg(feature = "message")]
                 message: "length 1 is less than minimum length 3".to_owned(),
             })
@@ -716,6 +779,7 @@ mod tests {
             Err(LengthError::Min {
                 min: 3,
                 length: 1,
+                code: LengthErrorCode,
                 #[cfg(feature = "message")]
                 message: "length 1 is less than minimum length 3".to_owned(),
             })
@@ -725,6 +789,7 @@ mod tests {
             Err(LengthError::Min {
                 min: 3,
                 length: 1,
+                code: LengthErrorCode,
                 #[cfg(feature = "message")]
                 message: "length 1 is less than minimum length 3".to_owned(),
             })
@@ -738,6 +803,7 @@ mod tests {
             Err(LengthError::Max {
                 max: 0,
                 length: 1,
+                code: LengthErrorCode,
                 #[cfg(feature = "message")]
                 message: "length 1 is greater than maximum length 0".to_owned(),
             })
@@ -747,6 +813,7 @@ mod tests {
             Err(LengthError::Max {
                 max: 0,
                 length: 1,
+                code: LengthErrorCode,
                 #[cfg(feature = "message")]
                 message: "length 1 is greater than maximum length 0".to_owned(),
             })
@@ -756,6 +823,7 @@ mod tests {
             Err(LengthError::Max {
                 max: 0,
                 length: 1,
+                code: LengthErrorCode,
                 #[cfg(feature = "message")]
                 message: "length 1 is greater than maximum length 0".to_owned(),
             })
@@ -765,6 +833,7 @@ mod tests {
             Err(LengthError::Max {
                 max: 0,
                 length: 1,
+                code: LengthErrorCode,
                 #[cfg(feature = "message")]
                 message: "length 1 is greater than maximum length 0".to_owned(),
             })
@@ -774,6 +843,7 @@ mod tests {
             Err(LengthError::Max {
                 max: 0,
                 length: 1,
+                code: LengthErrorCode,
                 #[cfg(feature = "message")]
                 message: "length 1 is greater than maximum length 0".to_owned(),
             })
@@ -784,6 +854,7 @@ mod tests {
             Err(LengthError::Max {
                 max: 0,
                 length: 1,
+                code: LengthErrorCode,
                 #[cfg(feature = "message")]
                 message: "length 1 is greater than maximum length 0".to_owned(),
             })
@@ -794,6 +865,7 @@ mod tests {
             Err(LengthError::Max {
                 max: 0,
                 length: 1,
+                code: LengthErrorCode,
                 #[cfg(feature = "message")]
                 message: "length 1 is greater than maximum length 0".to_owned(),
             })
@@ -803,6 +875,7 @@ mod tests {
             Err(LengthError::Max {
                 max: 0,
                 length: 1,
+                code: LengthErrorCode,
                 #[cfg(feature = "message")]
                 message: "length 1 is greater than maximum length 0".to_owned(),
             })
@@ -812,6 +885,7 @@ mod tests {
             Err(LengthError::Max {
                 max: 0,
                 length: 1,
+                code: LengthErrorCode,
                 #[cfg(feature = "message")]
                 message: "length 1 is greater than maximum length 0".to_owned(),
             })
@@ -821,6 +895,7 @@ mod tests {
             Err(LengthError::Max {
                 max: 0,
                 length: 1,
+                code: LengthErrorCode,
                 #[cfg(feature = "message")]
                 message: "length 1 is greater than maximum length 0".to_owned(),
             })
@@ -830,6 +905,7 @@ mod tests {
             Err(LengthError::Max {
                 max: 0,
                 length: 1,
+                code: LengthErrorCode,
                 #[cfg(feature = "message")]
                 message: "length 1 is greater than maximum length 0".to_owned(),
             })
@@ -839,6 +915,7 @@ mod tests {
             Err(LengthError::Max {
                 max: 0,
                 length: 1,
+                code: LengthErrorCode,
                 #[cfg(feature = "message")]
                 message: "length 1 is greater than maximum length 0".to_owned(),
             })
@@ -848,6 +925,7 @@ mod tests {
             Err(LengthError::Max {
                 max: 0,
                 length: 1,
+                code: LengthErrorCode,
                 #[cfg(feature = "message")]
                 message: "length 1 is greater than maximum length 0".to_owned(),
             })
@@ -857,6 +935,7 @@ mod tests {
             Err(LengthError::Max {
                 max: 0,
                 length: 1,
+                code: LengthErrorCode,
                 #[cfg(feature = "message")]
                 message: "length 1 is greater than maximum length 0".to_owned(),
             })
@@ -869,6 +948,7 @@ mod tests {
                 Err(LengthError::Max {
                     max: 0,
                     length: 1,
+                    code: LengthErrorCode,
                     #[cfg(feature = "message")]
                     message: "length 1 is greater than maximum length 0".to_owned(),
                 })
@@ -878,6 +958,7 @@ mod tests {
                 Err(LengthError::Max {
                     max: 0,
                     length: 1,
+                    code: LengthErrorCode,
                     #[cfg(feature = "message")]
                     message: "length 1 is greater than maximum length 0".to_owned(),
                 })
@@ -889,6 +970,7 @@ mod tests {
             Err(LengthError::Max {
                 max: 0,
                 length: 1,
+                code: LengthErrorCode,
                 #[cfg(feature = "message")]
                 message: "length 1 is greater than maximum length 0".to_owned(),
             })
@@ -900,6 +982,7 @@ mod tests {
                 Err(LengthError::Max {
                     max: 0,
                     length: 1,
+                    code: LengthErrorCode,
                     #[cfg(feature = "message")]
                     message: "length 1 is greater than maximum length 0".to_owned(),
                 })
@@ -910,6 +993,7 @@ mod tests {
             Err(LengthError::Max {
                 max: 0,
                 length: 1,
+                code: LengthErrorCode,
                 #[cfg(feature = "message")]
                 message: "length 1 is greater than maximum length 0".to_owned(),
             })
@@ -919,6 +1003,7 @@ mod tests {
             Err(LengthError::Max {
                 max: 0,
                 length: 1,
+                code: LengthErrorCode,
                 #[cfg(feature = "message")]
                 message: "length 1 is greater than maximum length 0".to_owned(),
             })
@@ -930,6 +1015,7 @@ mod tests {
             Err(LengthError::Max {
                 max: 0,
                 length: 1,
+                code: LengthErrorCode,
                 #[cfg(feature = "message")]
                 message: "length 1 is greater than maximum length 0".to_owned(),
             })
@@ -939,6 +1025,7 @@ mod tests {
             Err(LengthError::Max {
                 max: 0,
                 length: 1,
+                code: LengthErrorCode,
                 #[cfg(feature = "message")]
                 message: "length 1 is greater than maximum length 0".to_owned(),
             })

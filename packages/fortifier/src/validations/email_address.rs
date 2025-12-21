@@ -8,6 +8,10 @@ use std::{
 use email_address::EmailAddress;
 pub use email_address::Options as EmailAddressOptions;
 
+use crate::error_code;
+
+error_code!(EmailAddressErrorCode, "emailAddress");
+
 /// Email validation error.
 #[derive(Debug, Eq, PartialEq)]
 #[cfg_attr(
@@ -23,102 +27,170 @@ pub use email_address::Options as EmailAddressOptions;
 pub enum EmailAddressError {
     /// Invalid character error.
     InvalidCharacter {
+        /// The error code.
+        #[cfg_attr(feature = "serde", serde(default))]
+        code: EmailAddressErrorCode,
+
         /// A human-readable error message.
         #[cfg(feature = "message")]
         message: String,
     },
     /// Missing separator error.
     MissingSeparator {
+        /// The error code.
+        #[cfg_attr(feature = "serde", serde(default))]
+        code: EmailAddressErrorCode,
+
         /// A human-readable error message.
         #[cfg(feature = "message")]
         message: String,
     },
     /// Locale part empty error.
     LocalPartEmpty {
+        /// The error code.
+        #[cfg_attr(feature = "serde", serde(default))]
+        code: EmailAddressErrorCode,
+
         /// A human-readable error message.
         #[cfg(feature = "message")]
         message: String,
     },
     /// Local part too long error.
     LocalPartTooLong {
+        /// The error code.
+        #[cfg_attr(feature = "serde", serde(default))]
+        code: EmailAddressErrorCode,
+
         /// A human-readable error message.
         #[cfg(feature = "message")]
         message: String,
     },
     /// Domain empty error.
     DomainEmpty {
+        /// The error code.
+        #[cfg_attr(feature = "serde", serde(default))]
+        code: EmailAddressErrorCode,
+
         /// A human-readable error message.
         #[cfg(feature = "message")]
         message: String,
     },
     /// Domain too long error.
     DomainTooLong {
+        /// The error code.
+        #[cfg_attr(feature = "serde", serde(default))]
+        code: EmailAddressErrorCode,
+
         /// A human-readable error message.
         #[cfg(feature = "message")]
         message: String,
     },
     /// Subdomain empty error.
     SubDomainEmpty {
+        /// The error code.
+        #[cfg_attr(feature = "serde", serde(default))]
+        code: EmailAddressErrorCode,
+
         /// A human-readable error message.
         #[cfg(feature = "message")]
         message: String,
     },
     /// Subdomain too long error.
     SubDomainTooLong {
+        /// The error code.
+        #[cfg_attr(feature = "serde", serde(default))]
+        code: EmailAddressErrorCode,
+
         /// A human-readable error message.
         #[cfg(feature = "message")]
         message: String,
     },
     /// Domain too few error.
     DomainTooFew {
+        /// The error code.
+        #[cfg_attr(feature = "serde", serde(default))]
+        code: EmailAddressErrorCode,
+
         /// A human-readable error message.
         #[cfg(feature = "message")]
         message: String,
     },
     /// Domain invalid separator error.
     DomainInvalidSeparator {
+        /// The error code.
+        #[cfg_attr(feature = "serde", serde(default))]
+        code: EmailAddressErrorCode,
+
         /// A human-readable error message.
         #[cfg(feature = "message")]
         message: String,
     },
     /// Unbalanced quotes error.
     UnbalancedQuotes {
+        /// The error code.
+        #[cfg_attr(feature = "serde", serde(default))]
+        code: EmailAddressErrorCode,
+
         /// A human-readable error message.
         #[cfg(feature = "message")]
         message: String,
     },
     /// Invalid comment error.
     InvalidComment {
+        /// The error code.
+        #[cfg_attr(feature = "serde", serde(default))]
+        code: EmailAddressErrorCode,
+
         /// A human-readable error message.
         #[cfg(feature = "message")]
         message: String,
     },
     /// Invalid IP Address error.
     InvalidIPAddress {
+        /// The error code.
+        #[cfg_attr(feature = "serde", serde(default))]
+        code: EmailAddressErrorCode,
+
         /// A human-readable error message.
         #[cfg(feature = "message")]
         message: String,
     },
     /// Unsupported domain literal error.
     UnsupportedDomainLiteral {
+        /// The error code.
+        #[cfg_attr(feature = "serde", serde(default))]
+        code: EmailAddressErrorCode,
+
         /// A human-readable error message.
         #[cfg(feature = "message")]
         message: String,
     },
     /// Unsupported display name error.
     UnsupportedDisplayName {
+        /// The error code.
+        #[cfg_attr(feature = "serde", serde(default))]
+        code: EmailAddressErrorCode,
+
         /// A human-readable error message.
         #[cfg(feature = "message")]
         message: String,
     },
     /// Missing display name error.
     MissingDisplayName {
+        /// The error code.
+        #[cfg_attr(feature = "serde", serde(default))]
+        code: EmailAddressErrorCode,
+
         /// A human-readable error message.
         #[cfg(feature = "message")]
         message: String,
     },
     /// Missing end bracket error.
     MissingEndBracket {
+        /// The error code.
+        #[cfg_attr(feature = "serde", serde(default))]
+        code: EmailAddressErrorCode,
+
         /// A human-readable error message.
         #[cfg(feature = "message")]
         message: String,
@@ -127,72 +199,108 @@ pub enum EmailAddressError {
 
 impl From<email_address::Error> for EmailAddressError {
     fn from(value: email_address::Error) -> Self {
+        let code = EmailAddressErrorCode;
+
         match value {
             email_address::Error::InvalidCharacter => Self::InvalidCharacter {
+                code,
+
                 #[cfg(feature = "message")]
                 message: "".to_owned(),
             },
             email_address::Error::MissingSeparator => Self::MissingSeparator {
+                code,
+
                 #[cfg(feature = "message")]
                 message: "".to_owned(),
             },
             email_address::Error::LocalPartEmpty => Self::LocalPartEmpty {
+                code,
+
                 #[cfg(feature = "message")]
                 message: "".to_owned(),
             },
             email_address::Error::LocalPartTooLong => Self::LocalPartTooLong {
+                code,
+
                 #[cfg(feature = "message")]
                 message: "".to_owned(),
             },
             email_address::Error::DomainEmpty => Self::DomainEmpty {
+                code,
+
                 #[cfg(feature = "message")]
                 message: "".to_owned(),
             },
             email_address::Error::DomainTooLong => Self::DomainTooLong {
+                code,
+
                 #[cfg(feature = "message")]
                 message: "".to_owned(),
             },
             email_address::Error::SubDomainEmpty => Self::SubDomainEmpty {
+                code,
+
                 #[cfg(feature = "message")]
                 message: "".to_owned(),
             },
             email_address::Error::SubDomainTooLong => Self::SubDomainTooLong {
+                code,
+
                 #[cfg(feature = "message")]
                 message: "".to_owned(),
             },
             email_address::Error::DomainTooFew => Self::DomainTooFew {
+                code,
+
                 #[cfg(feature = "message")]
                 message: "".to_owned(),
             },
             email_address::Error::DomainInvalidSeparator => Self::DomainInvalidSeparator {
+                code,
+
                 #[cfg(feature = "message")]
                 message: "".to_owned(),
             },
             email_address::Error::UnbalancedQuotes => Self::UnbalancedQuotes {
+                code,
+
                 #[cfg(feature = "message")]
                 message: "".to_owned(),
             },
             email_address::Error::InvalidComment => Self::InvalidComment {
+                code,
+
                 #[cfg(feature = "message")]
                 message: "".to_owned(),
             },
             email_address::Error::InvalidIPAddress => Self::InvalidIPAddress {
+                code,
+
                 #[cfg(feature = "message")]
                 message: "".to_owned(),
             },
             email_address::Error::UnsupportedDomainLiteral => Self::UnsupportedDomainLiteral {
+                code,
+
                 #[cfg(feature = "message")]
                 message: "".to_owned(),
             },
             email_address::Error::UnsupportedDisplayName => Self::UnsupportedDisplayName {
+                code,
+
                 #[cfg(feature = "message")]
                 message: "".to_owned(),
             },
             email_address::Error::MissingDisplayName => Self::MissingDisplayName {
+                code,
+
                 #[cfg(feature = "message")]
                 message: "".to_owned(),
             },
             email_address::Error::MissingEndBracket => Self::MissingEndBracket {
+                code,
+
                 #[cfg(feature = "message")]
                 message: "".to_owned(),
             },

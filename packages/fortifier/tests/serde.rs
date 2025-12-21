@@ -1,6 +1,8 @@
 #![cfg(feature = "serde")]
 
-use fortifier::{EmailAddressError, LengthError, RegexError, UrlError, ValidationErrors};
+use fortifier::{
+    EmailAddressError, LengthError, LengthErrorCode, RegexError, UrlError, ValidationErrors,
+};
 use pretty_assertions::assert_eq;
 use serde::{Deserialize, Serialize};
 use serde_json::{Value, json};
@@ -24,6 +26,7 @@ fn setup() -> (ValidationErrors<TestError>, Value) {
             TestError::Length(LengthError::Equal {
                 equal: 1,
                 length: 2,
+                code: LengthErrorCode,
                 #[cfg(feature = "message")]
                 message: "length 2 is not equal to required length 1".to_owned(),
             }),

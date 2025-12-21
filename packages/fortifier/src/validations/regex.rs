@@ -7,6 +7,8 @@ use std::{
 
 use regex::Regex;
 
+use crate::error_code;
+
 /// Convert to a regular expression.
 pub trait AsRegex {
     /// Convert to a regular expression.
@@ -34,6 +36,8 @@ where
     }
 }
 
+error_code!(RegexErrorCode, "regex");
+
 /// Regular expression validation error.
 #[derive(Debug, Eq, PartialEq)]
 #[cfg_attr(
@@ -43,15 +47,20 @@ where
 )]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct RegexError {
+    /// The error code.
+    #[cfg_attr(feature = "serde", serde(default))]
+    code: RegexErrorCode,
+
     /// A human-readable error message.
     #[cfg(feature = "message")]
     message: String,
 }
 
-#[cfg_attr(not(feature = "message"), expect(clippy::derivable_impls))]
 impl Default for RegexError {
     fn default() -> Self {
         Self {
+            code: RegexErrorCode,
+
             #[cfg(feature = "message")]
             message: "value does not match regular expression".to_owned(),
         }
@@ -148,6 +157,8 @@ mod tests {
 
     use regex::Regex;
 
+    use crate::RegexErrorCode;
+
     use super::{RegexError, ValidateRegex};
 
     static REGEX: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"[0-9]{4}").expect("valid regex"));
@@ -207,6 +218,7 @@ mod tests {
             assert_eq!(
                 Box::new("123").validate_regex(&REGEX),
                 Err(RegexError {
+                    code: RegexErrorCode,
                     #[cfg(feature = "message")]
                     message: "value does not match regular expression".to_owned(),
                 })
