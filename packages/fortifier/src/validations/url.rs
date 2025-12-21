@@ -7,6 +7,10 @@ use std::{
 
 use url::{ParseError, Url};
 
+use crate::error_code;
+
+error_code!(UrlErrorCode, "url");
+
 /// URL validation error.
 #[derive(Debug, Eq, PartialEq)]
 #[cfg_attr(
@@ -22,66 +26,110 @@ use url::{ParseError, Url};
 pub enum UrlError {
     /// Empty host error.
     EmptyHost {
+        /// The error code.
+        #[cfg_attr(feature = "serde", serde(default))]
+        code: UrlErrorCode,
+
         /// A human-readable error message.
         #[cfg(feature = "message")]
         message: String,
     },
     /// Invalid international domain name error.
     IdnaError {
+        /// The error code.
+        #[cfg_attr(feature = "serde", serde(default))]
+        code: UrlErrorCode,
+
         /// A human-readable error message.
         #[cfg(feature = "message")]
         message: String,
     },
     /// Invalid port error.
     InvalidPort {
+        /// The error code.
+        #[cfg_attr(feature = "serde", serde(default))]
+        code: UrlErrorCode,
+
         /// A human-readable error message.
         #[cfg(feature = "message")]
         message: String,
     },
     /// Invalid IPv4 address error.
     InvalidIpv4Address {
+        /// The error code.
+        #[cfg_attr(feature = "serde", serde(default))]
+        code: UrlErrorCode,
+
         /// A human-readable error message.
         #[cfg(feature = "message")]
         message: String,
     },
     /// Invalid IPv6 address error.
     InvalidIpv6Address {
+        /// The error code.
+        #[cfg_attr(feature = "serde", serde(default))]
+        code: UrlErrorCode,
+
         /// A human-readable error message.
         #[cfg(feature = "message")]
         message: String,
     },
     /// Invalid domain character error.
     InvalidDomainCharacter {
+        /// The error code.
+        #[cfg_attr(feature = "serde", serde(default))]
+        code: UrlErrorCode,
+
         /// A human-readable error message.
         #[cfg(feature = "message")]
         message: String,
     },
     /// Relative URL without base error.
     RelativeUrlWithoutBase {
+        /// The error code.
+        #[cfg_attr(feature = "serde", serde(default))]
+        code: UrlErrorCode,
+
         /// A human-readable error message.
         #[cfg(feature = "message")]
         message: String,
     },
     /// Relative URL with cannot-be-a-base base error.
     RelativeUrlWithCannotBeABaseBase {
+        /// The error code.
+        #[cfg_attr(feature = "serde", serde(default))]
+        code: UrlErrorCode,
+
         /// A human-readable error message.
         #[cfg(feature = "message")]
         message: String,
     },
     /// Set host on cannot-be-a-base URL error.
     SetHostOnCannotBeABaseUrl {
+        /// The error code.
+        #[cfg_attr(feature = "serde", serde(default))]
+        code: UrlErrorCode,
+
         /// A human-readable error message.
         #[cfg(feature = "message")]
         message: String,
     },
     /// Overflow error.
     Overflow {
+        /// The error code.
+        #[cfg_attr(feature = "serde", serde(default))]
+        code: UrlErrorCode,
+
         /// A human-readable error message.
         #[cfg(feature = "message")]
         message: String,
     },
     /// Unknown error.
     Unknown {
+        /// The error code.
+        #[cfg_attr(feature = "serde", serde(default))]
+        code: UrlErrorCode,
+
         /// A human-readable error message.
         #[cfg(feature = "message")]
         message: String,
@@ -90,51 +138,75 @@ pub enum UrlError {
 
 impl From<ParseError> for UrlError {
     fn from(value: ParseError) -> Self {
+        let code = UrlErrorCode;
+
         match value {
             ParseError::EmptyHost => UrlError::EmptyHost {
+                code,
+
                 #[cfg(feature = "message")]
                 message: value.to_string(),
             },
             ParseError::IdnaError => UrlError::IdnaError {
+                code,
+
                 #[cfg(feature = "message")]
                 message: value.to_string(),
             },
             ParseError::InvalidPort => UrlError::InvalidPort {
+                code,
+
                 #[cfg(feature = "message")]
                 message: value.to_string(),
             },
             ParseError::InvalidIpv4Address => UrlError::InvalidIpv4Address {
+                code,
+
                 #[cfg(feature = "message")]
                 message: value.to_string(),
             },
             ParseError::InvalidIpv6Address => UrlError::InvalidIpv6Address {
+                code,
+
                 #[cfg(feature = "message")]
                 message: value.to_string(),
             },
             ParseError::InvalidDomainCharacter => UrlError::InvalidDomainCharacter {
+                code,
+
                 #[cfg(feature = "message")]
                 message: value.to_string(),
             },
             ParseError::RelativeUrlWithoutBase => UrlError::RelativeUrlWithoutBase {
+                code,
+
                 #[cfg(feature = "message")]
                 message: value.to_string(),
             },
             ParseError::RelativeUrlWithCannotBeABaseBase => {
                 UrlError::RelativeUrlWithCannotBeABaseBase {
+                    code,
+
                     #[cfg(feature = "message")]
                     message: value.to_string(),
                 }
             }
             ParseError::SetHostOnCannotBeABaseUrl => UrlError::SetHostOnCannotBeABaseUrl {
+                code,
+
                 #[cfg(feature = "message")]
                 message: value.to_string(),
             },
             ParseError::Overflow => UrlError::Overflow {
+                code,
+
                 #[cfg(feature = "message")]
                 message: value.to_string(),
             },
             #[cfg_attr(not(feature = "message"), allow(unused_variables))]
             value => UrlError::Overflow {
+                code,
+
                 #[cfg(feature = "message")]
                 message: value.to_string(),
             },
@@ -233,6 +305,8 @@ mod tests {
 
     use url::{ParseError, Url};
 
+    use crate::UrlErrorCode;
+
     use super::{UrlError, ValidateUrl};
 
     #[test]
@@ -308,6 +382,7 @@ mod tests {
             assert_eq!(
                 Box::new("http://").validate_url(),
                 Err(UrlError::EmptyHost {
+                    code: UrlErrorCode,
                     #[cfg(feature = "message")]
                     message: "empty host".to_owned(),
                 })

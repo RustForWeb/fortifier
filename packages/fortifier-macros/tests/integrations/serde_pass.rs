@@ -31,19 +31,19 @@ fn main() {
         json!([
             {
                 "path": "name",
-                // "code": "length",
+                "code": "length",
                 "subcode": "min",
                 "min": 1,
                 "length": 0
             },
             {
                 "path": "emailAddresses",
-                // "code": "nested",
+                "code": "nested",
                 "errors": [
                     {
                         "index": 0,
                         "path": "emailAddress",
-                        // "code": "emailAddress",
+                        "code": "emailAddress",
                         "subcode": "missingSeparator"
                     }
                 ]

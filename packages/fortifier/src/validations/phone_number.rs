@@ -8,6 +8,10 @@ use std::{
 pub use phonenumber::country::Id as PhoneNumberCountry;
 use phonenumber::{ParseError, PhoneNumber};
 
+use crate::error_code;
+
+error_code!(PhoneNumberErrorCode, "phoneNumber");
+
 /// Phone number validation error.
 #[derive(Debug, Eq, PartialEq)]
 #[cfg_attr(
@@ -23,42 +27,70 @@ use phonenumber::{ParseError, PhoneNumber};
 pub enum PhoneNumberError {
     /// No number error.
     NoNumber {
+        /// The error code.
+        #[cfg_attr(feature = "serde", serde(default))]
+        code: PhoneNumberErrorCode,
+
         /// A human-readable error message.
         #[cfg(feature = "message")]
         message: String,
     },
     /// Invalid country error.
     InvalidCountryCode {
+        /// The error code.
+        #[cfg_attr(feature = "serde", serde(default))]
+        code: PhoneNumberErrorCode,
+
         /// A human-readable error message.
         #[cfg(feature = "message")]
         message: String,
     },
     /// Too short after IDD error.
     TooShortAfterIdd {
+        /// The error code.
+        #[cfg_attr(feature = "serde", serde(default))]
+        code: PhoneNumberErrorCode,
+
         /// A human-readable error message.
         #[cfg(feature = "message")]
         message: String,
     },
     /// Too short NSN error.
     TooShortNsn {
+        /// The error code.
+        #[cfg_attr(feature = "serde", serde(default))]
+        code: PhoneNumberErrorCode,
+
         /// A human-readable error message.
         #[cfg(feature = "message")]
         message: String,
     },
     /// Too long error.
     TooLong {
+        /// The error code.
+        #[cfg_attr(feature = "serde", serde(default))]
+        code: PhoneNumberErrorCode,
+
         /// A human-readable error message.
         #[cfg(feature = "message")]
         message: String,
     },
     /// Malformed integer error.
     MalformedInteger {
+        /// The error code.
+        #[cfg_attr(feature = "serde", serde(default))]
+        code: PhoneNumberErrorCode,
+
         /// A human-readable error message.
         #[cfg(feature = "message")]
         message: String,
     },
     /// Disallowed country code error.
     DisallowedCountryCode {
+        /// The error code.
+        #[cfg_attr(feature = "serde", serde(default))]
+        code: PhoneNumberErrorCode,
+
         /// Allowed country codes.
         #[cfg_attr(feature = "utoipa", schema(value_type = Vec<String>))]
         allowed: Vec<PhoneNumberCountry>,
@@ -77,28 +109,42 @@ pub enum PhoneNumberError {
 
 impl From<ParseError> for PhoneNumberError {
     fn from(value: ParseError) -> Self {
+        let code = PhoneNumberErrorCode;
+
         match value {
             ParseError::NoNumber => Self::NoNumber {
+                code,
+
                 #[cfg(feature = "message")]
                 message: "no number".to_owned(),
             },
             ParseError::InvalidCountryCode => Self::InvalidCountryCode {
+                code,
+
                 #[cfg(feature = "message")]
                 message: "invalid country code".to_owned(),
             },
             ParseError::TooShortAfterIdd => Self::TooShortAfterIdd {
+                code,
+
                 #[cfg(feature = "message")]
                 message: "too short after IDD".to_owned(),
             },
             ParseError::TooShortNsn => Self::TooShortNsn {
+                code,
+
                 #[cfg(feature = "message")]
                 message: "too short NSN".to_owned(),
             },
             ParseError::TooLong => Self::TooLong {
+                code,
+
                 #[cfg(feature = "message")]
                 message: "too long".to_owned(),
             },
             ParseError::MalformedInteger(_) => Self::MalformedInteger {
+                code,
+
                 #[cfg(feature = "message")]
                 message: "malformed integer".to_owned(),
             },
@@ -142,6 +188,7 @@ pub trait ValidatePhoneNumber {
                         return Err(PhoneNumberError::DisallowedCountryCode {
                             allowed: allowed_countries,
                             value: Some(country),
+                            code: PhoneNumberErrorCode,
                             #[cfg(feature = "message")]
                             message,
                         });
@@ -161,6 +208,7 @@ pub trait ValidatePhoneNumber {
                     return Err(PhoneNumberError::DisallowedCountryCode {
                         allowed: allowed_countries,
                         value: None,
+                        code: PhoneNumberErrorCode,
                         #[cfg(feature = "message")]
                         message,
                     });
@@ -240,6 +288,8 @@ mod tests {
     use std::{borrow::Cow, cell::RefCell, rc::Rc, str::FromStr, sync::Arc};
 
     use phonenumber::{ParseError, PhoneNumber};
+
+    use crate::PhoneNumberErrorCode;
 
     use super::{PhoneNumberCountry, PhoneNumberError, ValidatePhoneNumber};
 
@@ -368,6 +418,7 @@ mod tests {
             Err(PhoneNumberError::DisallowedCountryCode {
                 allowed: vec![PhoneNumberCountry::NL],
                 value: Some(PhoneNumberCountry::GB),
+                code: PhoneNumberErrorCode,
                 #[cfg(feature = "message")]
                 message: "country code `GB` is not allowed, must be one of `NL`".to_owned()
             })

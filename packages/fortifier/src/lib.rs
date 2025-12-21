@@ -3,6 +3,7 @@
 //! Fortifier.
 
 mod error;
+mod error_code;
 mod integrations;
 mod validate;
 mod validations;

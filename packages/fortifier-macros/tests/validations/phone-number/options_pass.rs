@@ -1,4 +1,6 @@
-use fortifier::{PhoneNumberCountry, PhoneNumberError, Validate, ValidationErrors};
+use fortifier::{
+    PhoneNumberCountry, PhoneNumberError, PhoneNumberErrorCode, Validate, ValidationErrors,
+};
 use phonenumber::ParseError;
 
 #[derive(Validate)]
@@ -29,6 +31,7 @@ fn main() {
             )),
             PhoneNumberDataValidationError::AllowedCountries(
                 PhoneNumberError::DisallowedCountryCode {
+                    code: PhoneNumberErrorCode,
                     allowed: vec![PhoneNumberCountry::GB],
                     value: Some(PhoneNumberCountry::NL)
                 }

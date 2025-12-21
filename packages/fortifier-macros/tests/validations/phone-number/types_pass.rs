@@ -1,6 +1,8 @@
 use std::str::FromStr;
 
-use fortifier::{PhoneNumberCountry, PhoneNumberError, Validate, ValidationErrors};
+use fortifier::{
+    PhoneNumberCountry, PhoneNumberError, PhoneNumberErrorCode, Validate, ValidationErrors,
+};
 use phonenumber::{ParseError, PhoneNumber};
 
 #[derive(Validate)]
@@ -28,6 +30,7 @@ fn main() {
             )),
             PhoneNumberDataValidationError::String(PhoneNumberError::from(ParseError::TooShortNsn)),
             PhoneNumberDataValidationError::PhoneNumber(PhoneNumberError::DisallowedCountryCode {
+                code: PhoneNumberErrorCode,
                 allowed: vec![PhoneNumberCountry::NL],
                 value: Some(PhoneNumberCountry::GB),
             })

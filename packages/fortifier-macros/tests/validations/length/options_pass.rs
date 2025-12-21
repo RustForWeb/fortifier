@@ -1,4 +1,4 @@
-use fortifier::{LengthError, Validate, ValidationErrors};
+use fortifier::{LengthError, LengthErrorCode, Validate, ValidationErrors};
 
 #[derive(Validate)]
 struct LengthData<'a> {
@@ -24,12 +24,25 @@ fn main() {
         data.validate_sync(),
         Err(ValidationErrors::from_iter([
             LengthDataValidationError::Equal(LengthError::Equal {
+                code: LengthErrorCode,
                 equal: 2,
                 length: 1
             }),
-            LengthDataValidationError::Min(LengthError::Min { min: 1, length: 0 }),
-            LengthDataValidationError::Max(LengthError::Max { max: 4, length: 5 }),
-            LengthDataValidationError::MinMax(LengthError::Max { max: 4, length: 6 })
+            LengthDataValidationError::Min(LengthError::Min {
+                code: LengthErrorCode,
+                min: 1,
+                length: 0
+            }),
+            LengthDataValidationError::Max(LengthError::Max {
+                code: LengthErrorCode,
+                max: 4,
+                length: 5
+            }),
+            LengthDataValidationError::MinMax(LengthError::Max {
+                code: LengthErrorCode,
+                max: 4,
+                length: 6
+            })
         ]))
     );
 }

@@ -1,6 +1,6 @@
 use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet, LinkedList, VecDeque};
 
-use fortifier::{LengthError, Validate, ValidationErrors};
+use fortifier::{LengthError, LengthErrorCode, Validate, ValidationErrors};
 use indexmap::{IndexMap, IndexSet};
 
 #[derive(Validate)]
@@ -53,19 +53,71 @@ fn main() {
     assert_eq!(
         data.validate_sync(),
         Err(ValidationErrors::from_iter([
-            LengthDataValidationError::Str(LengthError::Min { min: 1, length: 0 }),
-            LengthDataValidationError::String(LengthError::Min { min: 1, length: 0 }),
-            LengthDataValidationError::Array(LengthError::Min { min: 1, length: 0 }),
-            LengthDataValidationError::Slice(LengthError::Min { min: 1, length: 0 }),
-            LengthDataValidationError::BTreeMap(LengthError::Min { min: 1, length: 0 }),
-            LengthDataValidationError::BTreeSet(LengthError::Min { min: 1, length: 0 }),
-            LengthDataValidationError::HashMap(LengthError::Min { min: 1, length: 0 }),
-            LengthDataValidationError::HashSet(LengthError::Min { min: 1, length: 0 }),
-            LengthDataValidationError::IndexMap(LengthError::Min { min: 1, length: 0 }),
-            LengthDataValidationError::IndexSet(LengthError::Min { min: 1, length: 0 }),
-            LengthDataValidationError::LinkedList(LengthError::Min { min: 1, length: 0 }),
-            LengthDataValidationError::Vec(LengthError::Min { min: 1, length: 0 }),
-            LengthDataValidationError::VecDeque(LengthError::Min { min: 1, length: 0 }),
+            LengthDataValidationError::Str(LengthError::Min {
+                code: LengthErrorCode,
+                min: 1,
+                length: 0
+            }),
+            LengthDataValidationError::String(LengthError::Min {
+                code: LengthErrorCode,
+                min: 1,
+                length: 0
+            }),
+            LengthDataValidationError::Array(LengthError::Min {
+                code: LengthErrorCode,
+                min: 1,
+                length: 0
+            }),
+            LengthDataValidationError::Slice(LengthError::Min {
+                code: LengthErrorCode,
+                min: 1,
+                length: 0
+            }),
+            LengthDataValidationError::BTreeMap(LengthError::Min {
+                code: LengthErrorCode,
+                min: 1,
+                length: 0
+            }),
+            LengthDataValidationError::BTreeSet(LengthError::Min {
+                code: LengthErrorCode,
+                min: 1,
+                length: 0
+            }),
+            LengthDataValidationError::HashMap(LengthError::Min {
+                code: LengthErrorCode,
+                min: 1,
+                length: 0
+            }),
+            LengthDataValidationError::HashSet(LengthError::Min {
+                code: LengthErrorCode,
+                min: 1,
+                length: 0
+            }),
+            LengthDataValidationError::IndexMap(LengthError::Min {
+                code: LengthErrorCode,
+                min: 1,
+                length: 0
+            }),
+            LengthDataValidationError::IndexSet(LengthError::Min {
+                code: LengthErrorCode,
+                min: 1,
+                length: 0
+            }),
+            LengthDataValidationError::LinkedList(LengthError::Min {
+                code: LengthErrorCode,
+                min: 1,
+                length: 0
+            }),
+            LengthDataValidationError::Vec(LengthError::Min {
+                code: LengthErrorCode,
+                min: 1,
+                length: 0
+            }),
+            LengthDataValidationError::VecDeque(LengthError::Min {
+                code: LengthErrorCode,
+                min: 1,
+                length: 0
+            }),
         ]))
     );
 }

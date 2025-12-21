@@ -62,7 +62,15 @@ Call the `validate_sync` method on the data structure:
 
 ```rust
 # extern crate fortifier;
-use fortifier::{EmailAddressError, LengthError, Validate, ValidationErrors};
+#
+use fortifier::{
+    EmailAddressError,
+    EmailAddressErrorCode,
+    LengthError,
+    LengthErrorCode,
+    Validate,
+    ValidationErrors,
+};
 
 #[derive(Validate)]
 struct CreateUser {
@@ -90,10 +98,13 @@ fn main() {
         data.validate_sync(),
         Err(ValidationErrors::from_iter([
             CreateUserValidationError::EmailAddress(
-                EmailAddressError::MissingSeparator {},
+                EmailAddressError::MissingSeparator {
+                    code: EmailAddressErrorCode,
+                },
             ),
             CreateUserValidationError::Name(
                 LengthError::Min {
+                    code: LengthErrorCode,
                     min: 1,
                     length: 0,
                 }
