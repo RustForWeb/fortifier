@@ -11,6 +11,10 @@ version.workspace = true
 [package.metadata.docs.rs]
 all-features = true
 
+# TODO: Remove after adding more tests.
+[package.metadata.cargo-machete]
+ignored = ["chrono", "rust_decimal", "uuid"]
+
 [lib]
 proc-macro = true
 
@@ -27,20 +31,23 @@ quote = "1.0.42"
 syn = "2.0.110"
 
 [dev-dependencies]
+chrono.workspace = true
 email_address.workspace = true
 fortifier = { workspace = true, features = [
+    "all-types",
     "all-validations",
-    "indexmap",
     "serde",
 ] }
 indexmap.workspace = true
 phonenumber.workspace = true
 pretty_assertions.workspace = true
 regex.workspace = true
+rust_decimal.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 trybuild = "1.0.114"
 url.workspace = true
+uuid.workspace = true
 
 [lints]
 workspace = true

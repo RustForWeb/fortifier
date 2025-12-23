@@ -33,7 +33,7 @@ pub enum LengthError<T> {
         equal: T,
 
         /// The actual length.
-        length: T,
+        value: T,
 
         /// The error code.
         #[cfg_attr(feature = "serde", serde(default))]
@@ -49,7 +49,7 @@ pub enum LengthError<T> {
         min: T,
 
         /// The actual length.
-        length: T,
+        value: T,
 
         /// The error code.
         #[cfg_attr(feature = "serde", serde(default))]
@@ -59,13 +59,13 @@ pub enum LengthError<T> {
         #[cfg(feature = "message")]
         message: String,
     },
-    /// Length is more than the maximum length.
+    /// Length is greater than the maximum length.
     Max {
         /// The maximum length.
         max: T,
 
         /// The length.
-        length: T,
+        value: T,
 
         /// The error code.
         #[cfg_attr(feature = "serde", serde(default))]
@@ -103,7 +103,7 @@ where
 
                 return Err(LengthError::Equal {
                     equal,
-                    length,
+                    value: length,
                     code: LengthErrorCode,
                     #[cfg(feature = "message")]
                     message,
@@ -118,7 +118,7 @@ where
 
                 return Err(LengthError::Min {
                     min,
-                    length,
+                    value: length,
                     code: LengthErrorCode,
                     #[cfg(feature = "message")]
                     message,
@@ -133,7 +133,7 @@ where
 
                 return Err(LengthError::Max {
                     max,
-                    length,
+                    value: length,
                     code: LengthErrorCode,
                     #[cfg(feature = "message")]
                     message,
@@ -330,7 +330,7 @@ mod tests {
             (*"a").validate_length(Some(2), None, None),
             Err(LengthError::Equal {
                 equal: 2,
-                length: 1,
+                value: 1,
                 code: LengthErrorCode,
                 #[cfg(feature = "message")]
                 message: "length 1 is not equal to required length 2".to_owned(),
@@ -340,7 +340,7 @@ mod tests {
             "a".validate_length(Some(2), None, None),
             Err(LengthError::Equal {
                 equal: 2,
-                length: 1,
+                value: 1,
                 code: LengthErrorCode,
                 #[cfg(feature = "message")]
                 message: "length 1 is not equal to required length 2".to_owned(),
@@ -350,7 +350,7 @@ mod tests {
             "a".to_owned().validate_length(Some(2), None, None),
             Err(LengthError::Equal {
                 equal: 2,
-                length: 1,
+                value: 1,
                 code: LengthErrorCode,
                 #[cfg(feature = "message")]
                 message: "length 1 is not equal to required length 2".to_owned(),
@@ -360,7 +360,7 @@ mod tests {
             Cow::<str>::Borrowed("a").validate_length(Some(2), None, None),
             Err(LengthError::Equal {
                 equal: 2,
-                length: 1,
+                value: 1,
                 code: LengthErrorCode,
                 #[cfg(feature = "message")]
                 message: "length 1 is not equal to required length 2".to_owned(),
@@ -370,7 +370,7 @@ mod tests {
             Cow::<str>::Owned("a".to_owned()).validate_length(Some(2), None, None),
             Err(LengthError::Equal {
                 equal: 2,
-                length: 1,
+                value: 1,
                 code: LengthErrorCode,
                 #[cfg(feature = "message")]
                 message: "length 1 is not equal to required length 2".to_owned(),
@@ -381,7 +381,7 @@ mod tests {
             Some("a").validate_length(Some(2), None, None),
             Err(LengthError::Equal {
                 equal: 2,
-                length: 1,
+                value: 1,
                 code: LengthErrorCode,
                 #[cfg(feature = "message")]
                 message: "length 1 is not equal to required length 2".to_owned(),
@@ -392,7 +392,7 @@ mod tests {
             [""; 1].validate_length(Some(2), None, None),
             Err(LengthError::Equal {
                 equal: 2,
-                length: 1,
+                value: 1,
                 code: LengthErrorCode,
                 #[cfg(feature = "message")]
                 message: "length 1 is not equal to required length 2".to_owned(),
@@ -402,7 +402,7 @@ mod tests {
             [""].validate_length(Some(2), None, None),
             Err(LengthError::Equal {
                 equal: 2,
-                length: 1,
+                value: 1,
                 code: LengthErrorCode,
                 #[cfg(feature = "message")]
                 message: "length 1 is not equal to required length 2".to_owned(),
@@ -412,7 +412,7 @@ mod tests {
             BTreeSet::from([""]).validate_length(Some(2), None, None),
             Err(LengthError::Equal {
                 equal: 2,
-                length: 1,
+                value: 1,
                 code: LengthErrorCode,
                 #[cfg(feature = "message")]
                 message: "length 1 is not equal to required length 2".to_owned(),
@@ -422,7 +422,7 @@ mod tests {
             BTreeMap::from([("", "")]).validate_length(Some(2), None, None),
             Err(LengthError::Equal {
                 equal: 2,
-                length: 1,
+                value: 1,
                 code: LengthErrorCode,
                 #[cfg(feature = "message")]
                 message: "length 1 is not equal to required length 2".to_owned(),
@@ -432,7 +432,7 @@ mod tests {
             HashSet::from([""]).validate_length(Some(2), None, None),
             Err(LengthError::Equal {
                 equal: 2,
-                length: 1,
+                value: 1,
                 code: LengthErrorCode,
                 #[cfg(feature = "message")]
                 message: "length 1 is not equal to required length 2".to_owned(),
@@ -442,7 +442,7 @@ mod tests {
             HashMap::from([("", "")]).validate_length(Some(2), None, None),
             Err(LengthError::Equal {
                 equal: 2,
-                length: 1,
+                value: 1,
                 code: LengthErrorCode,
                 #[cfg(feature = "message")]
                 message: "length 1 is not equal to required length 2".to_owned(),
@@ -452,7 +452,7 @@ mod tests {
             vec![""].validate_length(Some(2), None, None),
             Err(LengthError::Equal {
                 equal: 2,
-                length: 1,
+                value: 1,
                 code: LengthErrorCode,
                 #[cfg(feature = "message")]
                 message: "length 1 is not equal to required length 2".to_owned(),
@@ -462,7 +462,7 @@ mod tests {
             VecDeque::from([""]).validate_length(Some(2), None, None),
             Err(LengthError::Equal {
                 equal: 2,
-                length: 1,
+                value: 1,
                 code: LengthErrorCode,
                 #[cfg(feature = "message")]
                 message: "length 1 is not equal to required length 2".to_owned(),
@@ -475,7 +475,7 @@ mod tests {
                 IndexSet::from([""]).validate_length(Some(2), None, None),
                 Err(LengthError::Equal {
                     equal: 2,
-                    length: 1,
+                    value: 1,
                     code: LengthErrorCode,
                     #[cfg(feature = "message")]
                     message: "length 1 is not equal to required length 2".to_owned(),
@@ -485,7 +485,7 @@ mod tests {
                 IndexMap::from([("", "")]).validate_length(Some(2), None, None),
                 Err(LengthError::Equal {
                     equal: 2,
-                    length: 1,
+                    value: 1,
                     code: LengthErrorCode,
                     #[cfg(feature = "message")]
                     message: "length 1 is not equal to required length 2".to_owned(),
@@ -497,7 +497,7 @@ mod tests {
             (&"a").validate_length(Some(2), None, None),
             Err(LengthError::Equal {
                 equal: 2,
-                length: 1,
+                value: 1,
                 code: LengthErrorCode,
                 #[cfg(feature = "message")]
                 message: "length 1 is not equal to required length 2".to_owned(),
@@ -509,7 +509,7 @@ mod tests {
                 Box::new("a").validate_length(Some(2), None, None),
                 Err(LengthError::Equal {
                     equal: 2,
-                    length: 1,
+                    value: 1,
                     code: LengthErrorCode,
                     #[cfg(feature = "message")]
                     message: "length 1 is not equal to required length 2".to_owned(),
@@ -520,7 +520,7 @@ mod tests {
             Arc::new("a").validate_length(Some(2), None, None),
             Err(LengthError::Equal {
                 equal: 2,
-                length: 1,
+                value: 1,
                 code: LengthErrorCode,
                 #[cfg(feature = "message")]
                 message: "length 1 is not equal to required length 2".to_owned(),
@@ -530,7 +530,7 @@ mod tests {
             Rc::new("a").validate_length(Some(2), None, None),
             Err(LengthError::Equal {
                 equal: 2,
-                length: 1,
+                value: 1,
                 code: LengthErrorCode,
                 #[cfg(feature = "message")]
                 message: "length 1 is not equal to required length 2".to_owned(),
@@ -542,7 +542,7 @@ mod tests {
             cell.borrow().validate_length(Some(2), None, None),
             Err(LengthError::Equal {
                 equal: 2,
-                length: 1,
+                value: 1,
                 code: LengthErrorCode,
                 #[cfg(feature = "message")]
                 message: "length 1 is not equal to required length 2".to_owned(),
@@ -552,7 +552,7 @@ mod tests {
             cell.borrow_mut().validate_length(Some(2), None, None),
             Err(LengthError::Equal {
                 equal: 2,
-                length: 1,
+                value: 1,
                 code: LengthErrorCode,
                 #[cfg(feature = "message")]
                 message: "length 1 is not equal to required length 2".to_owned(),
@@ -566,7 +566,7 @@ mod tests {
             (*"a").validate_length(None, Some(3), None),
             Err(LengthError::Min {
                 min: 3,
-                length: 1,
+                value: 1,
                 code: LengthErrorCode,
                 #[cfg(feature = "message")]
                 message: "length 1 is less than minimum length 3".to_owned(),
@@ -576,7 +576,7 @@ mod tests {
             "a".validate_length(None, Some(3), None),
             Err(LengthError::Min {
                 min: 3,
-                length: 1,
+                value: 1,
                 code: LengthErrorCode,
                 #[cfg(feature = "message")]
                 message: "length 1 is less than minimum length 3".to_owned(),
@@ -586,7 +586,7 @@ mod tests {
             "a".to_owned().validate_length(None, Some(3), None),
             Err(LengthError::Min {
                 min: 3,
-                length: 1,
+                value: 1,
                 code: LengthErrorCode,
                 #[cfg(feature = "message")]
                 message: "length 1 is less than minimum length 3".to_owned(),
@@ -596,7 +596,7 @@ mod tests {
             Cow::<str>::Borrowed("a").validate_length(None, Some(3), None),
             Err(LengthError::Min {
                 min: 3,
-                length: 1,
+                value: 1,
                 code: LengthErrorCode,
                 #[cfg(feature = "message")]
                 message: "length 1 is less than minimum length 3".to_owned(),
@@ -606,7 +606,7 @@ mod tests {
             Cow::<str>::Owned("a".to_owned()).validate_length(None, Some(3), None),
             Err(LengthError::Min {
                 min: 3,
-                length: 1,
+                value: 1,
                 code: LengthErrorCode,
                 #[cfg(feature = "message")]
                 message: "length 1 is less than minimum length 3".to_owned(),
@@ -617,7 +617,7 @@ mod tests {
             Some("a").validate_length(None, Some(3), None),
             Err(LengthError::Min {
                 min: 3,
-                length: 1,
+                value: 1,
                 code: LengthErrorCode,
                 #[cfg(feature = "message")]
                 message: "length 1 is less than minimum length 3".to_owned(),
@@ -628,7 +628,7 @@ mod tests {
             [""; 1].validate_length(None, Some(3), None),
             Err(LengthError::Min {
                 min: 3,
-                length: 1,
+                value: 1,
                 code: LengthErrorCode,
                 #[cfg(feature = "message")]
                 message: "length 1 is less than minimum length 3".to_owned(),
@@ -638,7 +638,7 @@ mod tests {
             [""].validate_length(None, Some(3), None),
             Err(LengthError::Min {
                 min: 3,
-                length: 1,
+                value: 1,
                 code: LengthErrorCode,
                 #[cfg(feature = "message")]
                 message: "length 1 is less than minimum length 3".to_owned(),
@@ -648,7 +648,7 @@ mod tests {
             BTreeSet::from([""]).validate_length(None, Some(3), None),
             Err(LengthError::Min {
                 min: 3,
-                length: 1,
+                value: 1,
                 code: LengthErrorCode,
                 #[cfg(feature = "message")]
                 message: "length 1 is less than minimum length 3".to_owned(),
@@ -658,7 +658,7 @@ mod tests {
             BTreeMap::from([("", "")]).validate_length(None, Some(3), None),
             Err(LengthError::Min {
                 min: 3,
-                length: 1,
+                value: 1,
                 code: LengthErrorCode,
                 #[cfg(feature = "message")]
                 message: "length 1 is less than minimum length 3".to_owned(),
@@ -668,7 +668,7 @@ mod tests {
             HashSet::from([""]).validate_length(None, Some(3), None),
             Err(LengthError::Min {
                 min: 3,
-                length: 1,
+                value: 1,
                 code: LengthErrorCode,
                 #[cfg(feature = "message")]
                 message: "length 1 is less than minimum length 3".to_owned(),
@@ -678,7 +678,7 @@ mod tests {
             HashMap::from([("", "")]).validate_length(None, Some(3), None),
             Err(LengthError::Min {
                 min: 3,
-                length: 1,
+                value: 1,
                 code: LengthErrorCode,
                 #[cfg(feature = "message")]
                 message: "length 1 is less than minimum length 3".to_owned(),
@@ -688,7 +688,7 @@ mod tests {
             vec![""].validate_length(None, Some(3), None),
             Err(LengthError::Min {
                 min: 3,
-                length: 1,
+                value: 1,
                 code: LengthErrorCode,
                 #[cfg(feature = "message")]
                 message: "length 1 is less than minimum length 3".to_owned(),
@@ -698,7 +698,7 @@ mod tests {
             VecDeque::from([""]).validate_length(None, Some(3), None),
             Err(LengthError::Min {
                 min: 3,
-                length: 1,
+                value: 1,
                 code: LengthErrorCode,
                 #[cfg(feature = "message")]
                 message: "length 1 is less than minimum length 3".to_owned(),
@@ -711,7 +711,7 @@ mod tests {
                 IndexSet::from([""]).validate_length(None, Some(3), None),
                 Err(LengthError::Min {
                     min: 3,
-                    length: 1,
+                    value: 1,
                     code: LengthErrorCode,
                     #[cfg(feature = "message")]
                     message: "length 1 is less than minimum length 3".to_owned(),
@@ -721,7 +721,7 @@ mod tests {
                 IndexMap::from([("", "")]).validate_length(None, Some(3), None),
                 Err(LengthError::Min {
                     min: 3,
-                    length: 1,
+                    value: 1,
                     code: LengthErrorCode,
                     #[cfg(feature = "message")]
                     message: "length 1 is less than minimum length 3".to_owned(),
@@ -733,7 +733,7 @@ mod tests {
             (&"a").validate_length(None, Some(3), None),
             Err(LengthError::Min {
                 min: 3,
-                length: 1,
+                value: 1,
                 code: LengthErrorCode,
                 #[cfg(feature = "message")]
                 message: "length 1 is less than minimum length 3".to_owned(),
@@ -745,7 +745,7 @@ mod tests {
                 Box::new("a").validate_length(None, Some(3), None),
                 Err(LengthError::Min {
                     min: 3,
-                    length: 1,
+                    value: 1,
                     code: LengthErrorCode,
                     #[cfg(feature = "message")]
                     message: "length 1 is less than minimum length 3".to_owned(),
@@ -756,7 +756,7 @@ mod tests {
             Arc::new("a").validate_length(None, Some(3), None),
             Err(LengthError::Min {
                 min: 3,
-                length: 1,
+                value: 1,
                 code: LengthErrorCode,
                 #[cfg(feature = "message")]
                 message: "length 1 is less than minimum length 3".to_owned(),
@@ -766,7 +766,7 @@ mod tests {
             Rc::new("a").validate_length(None, Some(3), None),
             Err(LengthError::Min {
                 min: 3,
-                length: 1,
+                value: 1,
                 code: LengthErrorCode,
                 #[cfg(feature = "message")]
                 message: "length 1 is less than minimum length 3".to_owned(),
@@ -778,7 +778,7 @@ mod tests {
             cell.borrow().validate_length(None, Some(3), None),
             Err(LengthError::Min {
                 min: 3,
-                length: 1,
+                value: 1,
                 code: LengthErrorCode,
                 #[cfg(feature = "message")]
                 message: "length 1 is less than minimum length 3".to_owned(),
@@ -788,7 +788,7 @@ mod tests {
             cell.borrow_mut().validate_length(None, Some(3), None),
             Err(LengthError::Min {
                 min: 3,
-                length: 1,
+                value: 1,
                 code: LengthErrorCode,
                 #[cfg(feature = "message")]
                 message: "length 1 is less than minimum length 3".to_owned(),
@@ -802,7 +802,7 @@ mod tests {
             (*"a").validate_length(None, None, Some(0)),
             Err(LengthError::Max {
                 max: 0,
-                length: 1,
+                value: 1,
                 code: LengthErrorCode,
                 #[cfg(feature = "message")]
                 message: "length 1 is greater than maximum length 0".to_owned(),
@@ -812,7 +812,7 @@ mod tests {
             "a".validate_length(None, None, Some(0)),
             Err(LengthError::Max {
                 max: 0,
-                length: 1,
+                value: 1,
                 code: LengthErrorCode,
                 #[cfg(feature = "message")]
                 message: "length 1 is greater than maximum length 0".to_owned(),
@@ -822,7 +822,7 @@ mod tests {
             "a".to_owned().validate_length(None, None, Some(0)),
             Err(LengthError::Max {
                 max: 0,
-                length: 1,
+                value: 1,
                 code: LengthErrorCode,
                 #[cfg(feature = "message")]
                 message: "length 1 is greater than maximum length 0".to_owned(),
@@ -832,7 +832,7 @@ mod tests {
             Cow::<str>::Borrowed("a").validate_length(None, None, Some(0)),
             Err(LengthError::Max {
                 max: 0,
-                length: 1,
+                value: 1,
                 code: LengthErrorCode,
                 #[cfg(feature = "message")]
                 message: "length 1 is greater than maximum length 0".to_owned(),
@@ -842,7 +842,7 @@ mod tests {
             Cow::<str>::Owned("a".to_owned()).validate_length(None, None, Some(0)),
             Err(LengthError::Max {
                 max: 0,
-                length: 1,
+                value: 1,
                 code: LengthErrorCode,
                 #[cfg(feature = "message")]
                 message: "length 1 is greater than maximum length 0".to_owned(),
@@ -853,7 +853,7 @@ mod tests {
             Some("a").validate_length(None, None, Some(0)),
             Err(LengthError::Max {
                 max: 0,
-                length: 1,
+                value: 1,
                 code: LengthErrorCode,
                 #[cfg(feature = "message")]
                 message: "length 1 is greater than maximum length 0".to_owned(),
@@ -864,7 +864,7 @@ mod tests {
             [""; 1].validate_length(None, None, Some(0)),
             Err(LengthError::Max {
                 max: 0,
-                length: 1,
+                value: 1,
                 code: LengthErrorCode,
                 #[cfg(feature = "message")]
                 message: "length 1 is greater than maximum length 0".to_owned(),
@@ -874,7 +874,7 @@ mod tests {
             [""].validate_length(None, None, Some(0)),
             Err(LengthError::Max {
                 max: 0,
-                length: 1,
+                value: 1,
                 code: LengthErrorCode,
                 #[cfg(feature = "message")]
                 message: "length 1 is greater than maximum length 0".to_owned(),
@@ -884,7 +884,7 @@ mod tests {
             BTreeSet::from([""]).validate_length(None, None, Some(0)),
             Err(LengthError::Max {
                 max: 0,
-                length: 1,
+                value: 1,
                 code: LengthErrorCode,
                 #[cfg(feature = "message")]
                 message: "length 1 is greater than maximum length 0".to_owned(),
@@ -894,7 +894,7 @@ mod tests {
             BTreeMap::from([("", "")]).validate_length(None, None, Some(0)),
             Err(LengthError::Max {
                 max: 0,
-                length: 1,
+                value: 1,
                 code: LengthErrorCode,
                 #[cfg(feature = "message")]
                 message: "length 1 is greater than maximum length 0".to_owned(),
@@ -904,7 +904,7 @@ mod tests {
             HashSet::from([""]).validate_length(None, None, Some(0)),
             Err(LengthError::Max {
                 max: 0,
-                length: 1,
+                value: 1,
                 code: LengthErrorCode,
                 #[cfg(feature = "message")]
                 message: "length 1 is greater than maximum length 0".to_owned(),
@@ -914,7 +914,7 @@ mod tests {
             HashMap::from([("", "")]).validate_length(None, None, Some(0)),
             Err(LengthError::Max {
                 max: 0,
-                length: 1,
+                value: 1,
                 code: LengthErrorCode,
                 #[cfg(feature = "message")]
                 message: "length 1 is greater than maximum length 0".to_owned(),
@@ -924,7 +924,7 @@ mod tests {
             vec![""].validate_length(None, None, Some(0)),
             Err(LengthError::Max {
                 max: 0,
-                length: 1,
+                value: 1,
                 code: LengthErrorCode,
                 #[cfg(feature = "message")]
                 message: "length 1 is greater than maximum length 0".to_owned(),
@@ -934,7 +934,7 @@ mod tests {
             VecDeque::from([""]).validate_length(None, None, Some(0)),
             Err(LengthError::Max {
                 max: 0,
-                length: 1,
+                value: 1,
                 code: LengthErrorCode,
                 #[cfg(feature = "message")]
                 message: "length 1 is greater than maximum length 0".to_owned(),
@@ -947,7 +947,7 @@ mod tests {
                 IndexSet::from([""]).validate_length(None, None, Some(0)),
                 Err(LengthError::Max {
                     max: 0,
-                    length: 1,
+                    value: 1,
                     code: LengthErrorCode,
                     #[cfg(feature = "message")]
                     message: "length 1 is greater than maximum length 0".to_owned(),
@@ -957,7 +957,7 @@ mod tests {
                 IndexMap::from([("", "")]).validate_length(None, None, Some(0)),
                 Err(LengthError::Max {
                     max: 0,
-                    length: 1,
+                    value: 1,
                     code: LengthErrorCode,
                     #[cfg(feature = "message")]
                     message: "length 1 is greater than maximum length 0".to_owned(),
@@ -969,7 +969,7 @@ mod tests {
             (&"a").validate_length(None, None, Some(0)),
             Err(LengthError::Max {
                 max: 0,
-                length: 1,
+                value: 1,
                 code: LengthErrorCode,
                 #[cfg(feature = "message")]
                 message: "length 1 is greater than maximum length 0".to_owned(),
@@ -981,7 +981,7 @@ mod tests {
                 Box::new("a").validate_length(None, None, Some(0)),
                 Err(LengthError::Max {
                     max: 0,
-                    length: 1,
+                    value: 1,
                     code: LengthErrorCode,
                     #[cfg(feature = "message")]
                     message: "length 1 is greater than maximum length 0".to_owned(),
@@ -992,7 +992,7 @@ mod tests {
             Arc::new("a").validate_length(None, None, Some(0)),
             Err(LengthError::Max {
                 max: 0,
-                length: 1,
+                value: 1,
                 code: LengthErrorCode,
                 #[cfg(feature = "message")]
                 message: "length 1 is greater than maximum length 0".to_owned(),
@@ -1002,7 +1002,7 @@ mod tests {
             Rc::new("a").validate_length(None, None, Some(0)),
             Err(LengthError::Max {
                 max: 0,
-                length: 1,
+                value: 1,
                 code: LengthErrorCode,
                 #[cfg(feature = "message")]
                 message: "length 1 is greater than maximum length 0".to_owned(),
@@ -1014,7 +1014,7 @@ mod tests {
             cell.borrow().validate_length(None, None, Some(0)),
             Err(LengthError::Max {
                 max: 0,
-                length: 1,
+                value: 1,
                 code: LengthErrorCode,
                 #[cfg(feature = "message")]
                 message: "length 1 is greater than maximum length 0".to_owned(),
@@ -1024,7 +1024,7 @@ mod tests {
             cell.borrow_mut().validate_length(None, None, Some(0)),
             Err(LengthError::Max {
                 max: 0,
-                length: 1,
+                value: 1,
                 code: LengthErrorCode,
                 #[cfg(feature = "message")]
                 message: "length 1 is greater than maximum length 0".to_owned(),

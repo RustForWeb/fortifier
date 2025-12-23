@@ -1,6 +1,6 @@
 use proc_macro2::TokenStream;
 use quote::{format_ident, quote};
-use syn::{Expr, Ident, Result, meta::ParseNestedMeta};
+use syn::{Expr, Field, Ident, Result, meta::ParseNestedMeta};
 
 use crate::validation::{Execution, Validation};
 
@@ -11,7 +11,7 @@ pub struct PhoneNumber {
 }
 
 impl Validation for PhoneNumber {
-    fn parse(meta: &ParseNestedMeta<'_>) -> Result<Self> {
+    fn parse(_field: &Field, meta: &ParseNestedMeta<'_>) -> Result<Self> {
         let mut result = PhoneNumber::default();
 
         if !meta.input.is_empty() {

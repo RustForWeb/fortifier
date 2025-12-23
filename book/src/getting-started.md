@@ -106,7 +106,7 @@ fn main() {
                 LengthError::Min {
                     code: LengthErrorCode,
                     min: 1,
-                    length: 0,
+                    value: 0,
                 }
             ),
         ])),

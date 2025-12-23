@@ -7,7 +7,7 @@ use crate::{
     attributes::enum_attributes,
     validate::r#type::{KnownOrUnknown, should_validate_type},
     validation::{Execution, Validation},
-    validations::{Custom, EmailAddress, Length, Nested, PhoneNumber, Regex, Url},
+    validations::{Custom, EmailAddress, Length, Nested, PhoneNumber, Range, Regex, Url},
 };
 
 pub enum LiteralOrIdent {
@@ -65,36 +65,50 @@ impl<'a> ValidateField<'a> {
             if attr.path().is_ident("validate") {
                 attr.parse_nested_meta(|meta| {
                     if meta.path.is_ident("custom") {
-                        result.validations.push(Box::new(Custom::parse(&meta)?));
+                        result
+                            .validations
+                            .push(Box::new(Custom::parse(field, &meta)?));
 
                         Ok(())
                     } else if meta.path.is_ident("email_address") {
                         result
                             .validations
-                            .push(Box::new(EmailAddress::parse(&meta)?));
+                            .push(Box::new(EmailAddress::parse(field, &meta)?));
 
                         Ok(())
                     } else if meta.path.is_ident("length") {
-                        result.validations.push(Box::new(Length::parse(&meta)?));
+                        result
+                            .validations
+                            .push(Box::new(Length::parse(field, &meta)?));
 
                         Ok(())
                     } else if meta.path.is_ident("nested") {
-                        result.validations.push(Box::new(Nested::parse(&meta)?));
+                        result
+                            .validations
+                            .push(Box::new(Nested::parse(field, &meta)?));
                         skip_nested = true;
 
                         Ok(())
                     } else if meta.path.is_ident("phone_number") {
                         result
                             .validations
-                            .push(Box::new(PhoneNumber::parse(&meta)?));
+                            .push(Box::new(PhoneNumber::parse(field, &meta)?));
+
+                        Ok(())
+                    } else if meta.path.is_ident("range") {
+                        result
+                            .validations
+                            .push(Box::new(Range::parse(field, &meta)?));
 
                         Ok(())
                     } else if meta.path.is_ident("regex") {
-                        result.validations.push(Box::new(Regex::parse(&meta)?));
+                        result
+                            .validations
+                            .push(Box::new(Regex::parse(field, &meta)?));
 
                         Ok(())
                     } else if meta.path.is_ident("url") {
-                        result.validations.push(Box::new(Url::parse(&meta)?));
+                        result.validations.push(Box::new(Url::parse(field, &meta)?));
 
                         Ok(())
                     } else if meta.path.is_ident("skip") {

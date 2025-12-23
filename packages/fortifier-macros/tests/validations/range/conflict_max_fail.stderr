@@ -1,0 +1,5 @@
+error: `exclusive_max` and `max` are conflicting parameters
+ --> tests/validations/range/conflict_max_fail.rs:5:16
+  |
+5 |     #[validate(range(exclusive_max = 1, max = 2))]
+  |                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

@@ -34,7 +34,7 @@ fn main() {
                 "code": "length",
                 "subcode": "min",
                 "min": 1,
-                "length": 0
+                "value": 0
             },
             {
                 "path": "emailAddresses",

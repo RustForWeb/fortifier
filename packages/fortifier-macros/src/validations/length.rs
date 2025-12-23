@@ -1,6 +1,6 @@
 use proc_macro2::TokenStream;
 use quote::{format_ident, quote};
-use syn::{Expr, Ident, Result, meta::ParseNestedMeta};
+use syn::{Expr, Field, Ident, Result, meta::ParseNestedMeta};
 
 use crate::validation::{Execution, Validation};
 
@@ -12,7 +12,7 @@ pub struct Length {
 }
 
 impl Validation for Length {
-    fn parse(meta: &ParseNestedMeta<'_>) -> Result<Self> {
+    fn parse(_field: &Field, meta: &ParseNestedMeta<'_>) -> Result<Self> {
         let mut result = Length::default();
 
         meta.parse_nested_meta(|meta| {
