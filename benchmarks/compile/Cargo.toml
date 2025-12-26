@@ -1,6 +1,7 @@
 [package]
 name = "fortifier-benchmark-compile"
 description = "Fortifier compile time benchmark."
+publish = false
 
 authors.workspace = true
 edition.workspace = true

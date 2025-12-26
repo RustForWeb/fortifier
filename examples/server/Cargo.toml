@@ -1,6 +1,7 @@
 [package]
 name = "fortifier-example-server"
 description = "Fortifier server example."
+publish = false
 
 authors.workspace = true
 edition.workspace = true
