@@ -51,7 +51,7 @@ impl<'a> ValidateEnum<'a> {
         let error_variant_idents = self
             .variants
             .iter()
-            .map(|variant| &variant.ident)
+            .flat_map(|variant| variant.error_type().map(|_| &variant.ident))
             .collect::<Vec<_>>();
         let (error_variant_types, variant_error_types): (Vec<_>, Vec<_>) = self
             .variants
