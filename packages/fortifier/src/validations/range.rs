@@ -1,6 +1,7 @@
 use std::{
     cell::{Ref, RefMut},
-    fmt::Display,
+    error::Error,
+    fmt::{self, Debug, Display},
     rc::Rc,
     sync::Arc,
 };
@@ -87,6 +88,14 @@ pub enum RangeError<T> {
         message: String,
     },
 }
+
+impl<T: Debug> fmt::Display for RangeError<T> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{self:#?}")
+    }
+}
+
+impl<T: Debug> Error for RangeError<T> {}
 
 /// Validate a range.
 pub trait ValidateRange<T>

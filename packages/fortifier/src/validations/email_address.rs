@@ -1,6 +1,8 @@
 use std::{
     borrow::Cow,
     cell::{Ref, RefMut},
+    error::Error,
+    fmt,
     rc::Rc,
     sync::Arc,
 };
@@ -196,6 +198,14 @@ pub enum EmailAddressError {
         message: String,
     },
 }
+
+impl fmt::Display for EmailAddressError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{self:#?}")
+    }
+}
+
+impl Error for EmailAddressError {}
 
 impl From<email_address::Error> for EmailAddressError {
     fn from(value: email_address::Error) -> Self {
