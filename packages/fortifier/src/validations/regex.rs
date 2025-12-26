@@ -1,6 +1,8 @@
 use std::{
     borrow::Cow,
     cell::{Ref, RefMut},
+    error::Error,
+    fmt,
     rc::Rc,
     sync::{Arc, LazyLock},
 };
@@ -66,6 +68,14 @@ impl Default for RegexError {
         }
     }
 }
+
+impl fmt::Display for RegexError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{self:#?}")
+    }
+}
+
+impl Error for RegexError {}
 
 /// Validate a regular expression.
 pub trait ValidateRegex {

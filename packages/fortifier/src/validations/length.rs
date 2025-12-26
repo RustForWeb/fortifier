@@ -2,7 +2,8 @@ use std::{
     borrow::Cow,
     cell::{Ref, RefMut},
     collections::{BTreeMap, BTreeSet, HashMap, HashSet, LinkedList, VecDeque},
-    fmt::Display,
+    error::Error,
+    fmt::{self, Debug, Display},
     rc::Rc,
     sync::Arc,
 };
@@ -76,6 +77,14 @@ pub enum LengthError<T> {
         message: String,
     },
 }
+
+impl<T: Debug> fmt::Display for LengthError<T> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{self:#?}")
+    }
+}
+
+impl<T: Debug> Error for LengthError<T> {}
 
 /// Validate a length.
 pub trait ValidateLength<T>

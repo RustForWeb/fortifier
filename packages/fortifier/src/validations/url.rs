@@ -1,6 +1,8 @@
 use std::{
     borrow::Cow,
     cell::{Ref, RefMut},
+    error::Error,
+    fmt,
     rc::Rc,
     sync::Arc,
 };
@@ -135,6 +137,14 @@ pub enum UrlError {
         message: String,
     },
 }
+
+impl fmt::Display for UrlError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{self:#?}")
+    }
+}
+
+impl Error for UrlError {}
 
 impl From<ParseError> for UrlError {
     fn from(value: ParseError) -> Self {
