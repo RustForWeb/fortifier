@@ -1,6 +1,7 @@
 [package]
 name = "fortifier-example-basic"
 description = "Fortifier basic example."
+publish = false
 
 authors.workspace = true
 edition.workspace = true
