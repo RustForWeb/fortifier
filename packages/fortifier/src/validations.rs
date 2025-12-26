@@ -3,6 +3,7 @@ mod email_address;
 mod length;
 #[cfg(feature = "phone-number")]
 mod phone_number;
+mod range;
 #[cfg(feature = "regex")]
 mod regex;
 #[cfg(feature = "url")]
@@ -13,6 +14,7 @@ pub use email_address::*;
 pub use length::*;
 #[cfg(feature = "phone-number")]
 pub use phone_number::*;
+pub use range::*;
 #[cfg(feature = "regex")]
 pub use regex::*;
 #[cfg(feature = "url")]

@@ -1,0 +1,5 @@
+error: `exclusive_min` and `min` are conflicting parameters
+ --> tests/validations/range/conflict_min_fail.rs:5:16
+  |
+5 |     #[validate(range(exclusive_min = 1, min = 2))]
+  |                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

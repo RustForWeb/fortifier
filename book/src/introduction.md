@@ -9,6 +9,7 @@ Schema validation.
     - Email address
     - Length
     - Phone number
+    - Range
     - Regular expression
     - URL
 - Support for Serde & Utoipa

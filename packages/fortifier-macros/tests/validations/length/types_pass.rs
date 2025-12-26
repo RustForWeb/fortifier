@@ -56,67 +56,67 @@ fn main() {
             LengthDataValidationError::Str(LengthError::Min {
                 code: LengthErrorCode,
                 min: 1,
-                length: 0
+                value: 0
             }),
             LengthDataValidationError::String(LengthError::Min {
                 code: LengthErrorCode,
                 min: 1,
-                length: 0
+                value: 0
             }),
             LengthDataValidationError::Array(LengthError::Min {
                 code: LengthErrorCode,
                 min: 1,
-                length: 0
+                value: 0
             }),
             LengthDataValidationError::Slice(LengthError::Min {
                 code: LengthErrorCode,
                 min: 1,
-                length: 0
+                value: 0
             }),
             LengthDataValidationError::BTreeMap(LengthError::Min {
                 code: LengthErrorCode,
                 min: 1,
-                length: 0
+                value: 0
             }),
             LengthDataValidationError::BTreeSet(LengthError::Min {
                 code: LengthErrorCode,
                 min: 1,
-                length: 0
+                value: 0
             }),
             LengthDataValidationError::HashMap(LengthError::Min {
                 code: LengthErrorCode,
                 min: 1,
-                length: 0
+                value: 0
             }),
             LengthDataValidationError::HashSet(LengthError::Min {
                 code: LengthErrorCode,
                 min: 1,
-                length: 0
+                value: 0
             }),
             LengthDataValidationError::IndexMap(LengthError::Min {
                 code: LengthErrorCode,
                 min: 1,
-                length: 0
+                value: 0
             }),
             LengthDataValidationError::IndexSet(LengthError::Min {
                 code: LengthErrorCode,
                 min: 1,
-                length: 0
+                value: 0
             }),
             LengthDataValidationError::LinkedList(LengthError::Min {
                 code: LengthErrorCode,
                 min: 1,
-                length: 0
+                value: 0
             }),
             LengthDataValidationError::Vec(LengthError::Min {
                 code: LengthErrorCode,
                 min: 1,
-                length: 0
+                value: 0
             }),
             LengthDataValidationError::VecDeque(LengthError::Min {
                 code: LengthErrorCode,
                 min: 1,
-                length: 0
+                value: 0
             }),
         ]))
     );

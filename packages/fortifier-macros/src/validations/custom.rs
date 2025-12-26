@@ -1,6 +1,6 @@
 use proc_macro2::TokenStream;
 use quote::{ToTokens, format_ident, quote};
-use syn::{Ident, LitBool, Path, Result, Type, meta::ParseNestedMeta};
+use syn::{Field, Ident, LitBool, Path, Result, Type, meta::ParseNestedMeta};
 
 use crate::validation::{Execution, Validation};
 
@@ -11,7 +11,7 @@ pub struct Custom {
 }
 
 impl Validation for Custom {
-    fn parse(meta: &ParseNestedMeta<'_>) -> Result<Self> {
+    fn parse(_field: &Field, meta: &ParseNestedMeta<'_>) -> Result<Self> {
         let mut execution = Execution::Sync;
         let mut error_type: Option<Type> = None;
         let mut function_path: Option<Path> = None;

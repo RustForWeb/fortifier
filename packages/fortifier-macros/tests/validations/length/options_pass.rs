@@ -26,22 +26,22 @@ fn main() {
             LengthDataValidationError::Equal(LengthError::Equal {
                 code: LengthErrorCode,
                 equal: 2,
-                length: 1
+                value: 1
             }),
             LengthDataValidationError::Min(LengthError::Min {
                 code: LengthErrorCode,
                 min: 1,
-                length: 0
+                value: 0
             }),
             LengthDataValidationError::Max(LengthError::Max {
                 code: LengthErrorCode,
                 max: 4,
-                length: 5
+                value: 5
             }),
             LengthDataValidationError::MinMax(LengthError::Max {
                 code: LengthErrorCode,
                 max: 4,
-                length: 6
+                value: 6
             })
         ]))
     );

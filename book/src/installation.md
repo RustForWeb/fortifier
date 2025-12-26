@@ -17,7 +17,11 @@ cargo add fortifier
 
 ### Types
 
+- `all-types` - Enable all features below.
+- `chrono` - Support for the `DateTime`, `NaiveDate`, `NaiveDateTime`, `NaiveTime` and `TimeDelta` types from the [`chrono`](https://docs.rs/chrono/latest/chrono/) crate.
+- `decimal` - Support for the `Decimal` type from the [`rust_decimal`](https://docs.rs/rust_decimal/latest/rust_decimal/) crate.
 - `indexmap` - Support for the `IndexMap` and `IndexSet` types from the [`indexmap`](https://docs.rs/indexmap/latest/indexmap/) crate.
+- `uuid` - Support for the `Uuid` type from the [`uuid`](https://docs.rs/uuid/latest/uuid/) crate.
 
 ### Validations
 

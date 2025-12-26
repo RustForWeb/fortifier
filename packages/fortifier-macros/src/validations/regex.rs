@@ -1,6 +1,6 @@
 use proc_macro2::TokenStream;
 use quote::{format_ident, quote};
-use syn::{Expr, Ident, Result, meta::ParseNestedMeta};
+use syn::{Expr, Field, Ident, Result, meta::ParseNestedMeta};
 
 use crate::validation::{Execution, Validation};
 
@@ -9,7 +9,7 @@ pub struct Regex {
 }
 
 impl Validation for Regex {
-    fn parse(meta: &ParseNestedMeta<'_>) -> Result<Self> {
+    fn parse(_field: &Field, meta: &ParseNestedMeta<'_>) -> Result<Self> {
         let mut expression: Option<Expr> = None;
 
         if let Ok(value) = meta.value() {
