@@ -9,22 +9,25 @@ const PRIMITIVE_AND_BUILT_IN_TYPES: [&str; 18] = [
     "f32", "f64", "char", "str", "String",
 ];
 
-const INDEXED_CONTAINER_TYPES: [&str; 16] = [
+const CONTAINER_TYPES: [&str; 6] = [
     "Arc",
+    "Option",
+    "Rc",
+    "std::option::Option",
+    "std::rc::Rc",
+    "std::sync::Arc",
+];
+
+const INDEXED_CONTAINER_TYPES: [&str; 10] = [
     "BTreeSet",
     "HashSet",
     "LinkedList",
-    "Option",
-    "Rc",
     "Vec",
     "VecDeque",
     "std::collections::BTreeSet",
     "std::collections::HashSet",
     "std::collections::LinkedList",
     "std::collections::VecDeque",
-    "std::option::Option",
-    "std::rc::Rc",
-    "std::sync::Arc",
     "std::vec::Vec",
 ];
 
@@ -73,6 +76,14 @@ fn should_validate_path(path: &Path) -> Option<KnownOrUnknown<TokenStream>> {
     }
     let path_string = path_to_string(path);
     let path_string = path_string.as_str();
+
+    if CONTAINER_TYPES.contains(&path_string)
+        && let Some(segment) = path.segments.last()
+        && let PathArguments::AngleBracketed(arguments) = &segment.arguments
+        && let Some(argument) = arguments.args.first()
+    {
+        return should_validate_generic_argument(argument);
+    }
 
     if INDEXED_CONTAINER_TYPES.contains(&path_string)
         && let Some(segment) = path.segments.last()
