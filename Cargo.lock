@@ -379,21 +379,27 @@ dependencies = [
 name = "fortifier-macros"
 version = "0.1.1"
 dependencies = [
- "chrono",
  "convert_case",
+ "proc-macro-crate",
+ "proc-macro2",
+ "quote",
+ "syn 2.0.110",
+]
+
+[[package]]
+name = "fortifier-macros-tests"
+version = "0.1.1"
+dependencies = [
+ "chrono",
  "email_address",
  "fortifier",
  "indexmap",
  "phonenumber",
  "pretty_assertions",
- "proc-macro-crate",
- "proc-macro2",
- "quote",
  "regex",
  "rust_decimal",
  "serde",
  "serde_json",
- "syn 2.0.110",
  "trybuild",
  "url",
  "uuid",
