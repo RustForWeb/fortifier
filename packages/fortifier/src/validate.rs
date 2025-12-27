@@ -1,4 +1,12 @@
-use std::{collections::HashMap, error::Error, fmt::Debug, pin::Pin};
+use std::{
+    cell::{Ref, RefMut},
+    collections::HashMap,
+    error::Error,
+    fmt::Debug,
+    pin::Pin,
+    rc::Rc,
+    sync::Arc,
+};
 
 use crate::error::{IndexedValidationError, KeyedValidationError, ValidationErrors};
 
@@ -62,9 +70,43 @@ pub trait Validate: ValidateWithContext<Context = ()> {
     }
 }
 
-impl<T> ValidateWithContext for &T
+macro_rules! validate_with_deref {
+    ($type:ty) => {
+        impl<T> ValidateWithContext for $type
+        where
+            T: ValidateWithContext,
+        {
+            type Context = T::Context;
+            type Error = T::Error;
+
+            fn validate_sync_with_context(
+                &self,
+                context: &Self::Context,
+            ) -> Result<(), ValidationErrors<Self::Error>> {
+                T::validate_sync_with_context(self, context)
+            }
+
+            fn validate_async_with_context(
+                &self,
+                context: &Self::Context,
+            ) -> Pin<Box<impl Future<Output = Result<(), ValidationErrors<Self::Error>>> + Send>>
+            {
+                T::validate_async_with_context(self, context)
+            }
+        }
+    };
+}
+
+validate_with_deref!(&T);
+validate_with_deref!(Arc<T>);
+validate_with_deref!(Box<T>);
+validate_with_deref!(Rc<T>);
+validate_with_deref!(Ref<'_, T>);
+validate_with_deref!(RefMut<'_, T>);
+
+impl<T> ValidateWithContext for Option<T>
 where
-    T: ValidateWithContext,
+    T: ValidateWithContext + Send + Sync,
 {
     type Context = T::Context;
     type Error = T::Error;
@@ -73,14 +115,24 @@ where
         &self,
         context: &Self::Context,
     ) -> Result<(), ValidationErrors<Self::Error>> {
-        T::validate_sync_with_context(self, context)
+        if let Some(value) = &self {
+            T::validate_sync_with_context(value, context)
+        } else {
+            Ok(())
+        }
     }
 
     fn validate_async_with_context(
         &self,
         context: &Self::Context,
     ) -> Pin<Box<impl Future<Output = Result<(), ValidationErrors<Self::Error>>> + Send>> {
-        T::validate_async_with_context(self, context)
+        Box::pin(async move {
+            if let Some(value) = self {
+                T::validate_async_with_context(value, context).await
+            } else {
+                Ok(())
+            }
+        })
     }
 }
 
