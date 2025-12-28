@@ -1,6 +1,6 @@
 use proc_macro2::TokenStream;
 use quote::{ToTokens, format_ident, quote};
-use syn::{Field, Ident, Path, Result, meta::ParseNestedMeta};
+use syn::{Ident, Path, Result, Type, meta::ParseNestedMeta};
 
 use crate::{
     attributes::enum_field_attributes,
@@ -19,7 +19,7 @@ impl Nested {
 }
 
 impl Validation for Nested {
-    fn parse(_field: &Field, meta: &ParseNestedMeta<'_>) -> Result<Self> {
+    fn parse(_type: &Type, meta: &ParseNestedMeta<'_>) -> Result<Self> {
         let mut error_type: Option<Path> = None;
 
         meta.parse_nested_meta(|meta| {

@@ -1,14 +1,14 @@
 use proc_macro2::TokenStream;
-use quote::{ToTokens, format_ident, quote};
+use quote::{format_ident, quote};
 use syn::{DataEnum, DeriveInput, Ident, Result, Variant, Visibility};
 
 use crate::{
-    attributes::enum_attributes,
     validate::{
-        field::{LiteralOrIdent, ValidateFieldPrefix, format_error_ident},
+        error::{ErrorType, combined_error_type, format_error_ident},
+        field::{LiteralOrIdent, ValidateFieldPrefix},
         fields::ValidateFields,
     },
-    validation::Execution,
+    validation::{Execution, Validation},
 };
 
 pub struct ValidateEnum<'a> {
@@ -39,60 +39,57 @@ impl<'a> ValidateEnum<'a> {
         Ok(result)
     }
 
-    pub fn error_type(&self) -> Option<(TokenStream, TokenStream)> {
+    pub fn error_type(&self, root_error_type: Option<&ErrorType>) -> Option<ErrorType> {
         if self.variants.is_empty() {
             return None;
         }
 
-        let visibility = &self.visibility;
-        let error_ident = &self.error_ident;
-
-        let attributes = enum_attributes();
-        let error_variant_idents = self
+        let variant_error_types = self
             .variants
             .iter()
-            .flat_map(|variant| variant.error_type().map(|_| &variant.ident))
+            .flat_map(|variant| variant.error_type(root_error_type))
             .collect::<Vec<_>>();
-        let (error_variant_types, variant_error_types): (Vec<_>, Vec<_>) = self
-            .variants
-            .iter()
-            .flat_map(|variant| variant.error_type())
-            .unzip();
 
-        if error_variant_types.is_empty() {
+        if variant_error_types.is_empty() {
             return None;
         }
 
-        Some((
-            error_ident.to_token_stream(),
-            quote! {
-                #[allow(dead_code)]
-                #[derive(Debug, PartialEq)]
-                #attributes
-                #visibility enum #error_ident {
-                    #( #error_variant_idents(#error_variant_types) ),*
-                }
+        let variant_idents = variant_error_types
+            .iter()
+            .map(|ErrorType { variant_ident, .. }| variant_ident);
+        let variant_types = variant_error_types
+            .iter()
+            .map(|ErrorType { r#type, .. }| r#type);
+        let variant_definitions = variant_error_types
+            .iter()
+            .flat_map(|ErrorType { definition, .. }| definition);
 
-                #[automatically_derived]
-                impl ::std::fmt::Display for #error_ident {
-                    fn fmt(&self, f: &mut ::std::fmt::Formatter<'_>) -> ::std::fmt::Result {
-                        write!(f, "{self:#?}")
-                    }
-                }
-
-                #[automatically_derived]
-                impl ::std::error::Error for #error_ident {}
-
-                #( #variant_error_types )*
-            },
+        Some(combined_error_type(
+            self.visibility,
+            self.ident,
+            &self.error_ident,
+            variant_idents,
+            variant_types,
+            variant_definitions,
+            None,
         ))
     }
 
-    pub fn validations(&self, execution: Execution) -> TokenStream {
-        let variant_match_arms = self
-            .variants
-            .iter()
-            .map(|variant| variant.match_arm(execution));
+    pub fn validations(
+        &self,
+        execution: Execution,
+        root_type_prefix: &Ident,
+        root_error_ident: &Ident,
+        root_validations: &[Box<dyn Validation>],
+    ) -> TokenStream {
+        let variant_match_arms = self.variants.iter().map(|variant| {
+            variant.match_arm(
+                execution,
+                root_type_prefix,
+                root_error_ident,
+                root_validations,
+            )
+        });
 
         quote! {
             match &self {
@@ -130,11 +127,17 @@ impl<'a> ValidateEnumVariant<'a> {
         Ok(result)
     }
 
-    fn error_type(&self) -> Option<(TokenStream, TokenStream)> {
-        self.fields.error_type()
+    fn error_type(&self, root_error_type: Option<&ErrorType>) -> Option<ErrorType> {
+        self.fields.error_type(Some(self.ident), root_error_type)
     }
 
-    fn match_arm(&self, exeuction: Execution) -> TokenStream {
+    fn match_arm(
+        &self,
+        exeuction: Execution,
+        root_type_prefix: &Ident,
+        root_error_ident: &Ident,
+        root_validations: &[Box<dyn Validation>],
+    ) -> TokenStream {
         let enum_ident = &self.enum_ident;
         let enum_error_ident = &self.enum_error_ident;
         let ident = &self.ident;
@@ -144,8 +147,14 @@ impl<'a> ValidateEnumVariant<'a> {
         match &self.fields {
             ValidateFields::Named(fields) => {
                 let field_idents = fields.idents();
-                let validations =
-                    fields.validations(exeuction, ValidateFieldPrefix::None, &error_wrapper);
+                let validations = fields.validations(
+                    exeuction,
+                    ValidateFieldPrefix::None,
+                    &error_wrapper,
+                    root_type_prefix,
+                    root_error_ident,
+                    root_validations,
+                );
 
                 // TODO: Only destructure fields required for validation.
                 quote! {
@@ -162,8 +171,14 @@ impl<'a> ValidateEnumVariant<'a> {
                     LiteralOrIdent::Literal(literal) => format_ident!("f{literal}"),
                     LiteralOrIdent::Ident(ident) => ident.clone(),
                 });
-                let validations =
-                    fields.validations(exeuction, ValidateFieldPrefix::F, &error_wrapper);
+                let validations = fields.validations(
+                    exeuction,
+                    ValidateFieldPrefix::F,
+                    &error_wrapper,
+                    root_type_prefix,
+                    root_error_ident,
+                    root_validations,
+                );
 
                 quote! {
                     #enum_ident::#ident(
@@ -174,7 +189,14 @@ impl<'a> ValidateEnumVariant<'a> {
                 }
             }
             ValidateFields::Unit(fields) => {
-                let validations = fields.validations();
+                let validations = fields.validations(
+                    exeuction,
+                    ValidateFieldPrefix::None,
+                    &error_wrapper,
+                    root_type_prefix,
+                    root_error_ident,
+                    root_validations,
+                );
 
                 quote! {
                     #enum_ident::#ident => {

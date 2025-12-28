@@ -1,5 +1,5 @@
 use proc_macro2::TokenStream;
-use syn::{Field, Ident, Result, meta::ParseNestedMeta};
+use syn::{Ident, Result, Type, meta::ParseNestedMeta};
 
 #[derive(Clone, Copy)]
 pub enum Execution {
@@ -8,7 +8,7 @@ pub enum Execution {
 }
 
 pub trait Validation {
-    fn parse(_field: &Field, _meta: &ParseNestedMeta<'_>) -> Result<Self>
+    fn parse(_type: &Type, _meta: &ParseNestedMeta<'_>) -> Result<Self>
     where
         Self: Sized;
 

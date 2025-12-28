@@ -2,7 +2,7 @@ use proc_macro2::TokenStream;
 use quote::{ToTokens, quote};
 use syn::{GenericArgument, Path, PathArguments, Type, TypeParamBound};
 
-use crate::validate::field::format_error_ident;
+use crate::validate::error::format_error_ident;
 
 const PRIMITIVE_AND_BUILT_IN_TYPES: [&str; 18] = [
     "bool", "i8", "i16", "i32", "i64", "i128", "isize", "u8", "u16", "u32", "u64", "u128", "usize",

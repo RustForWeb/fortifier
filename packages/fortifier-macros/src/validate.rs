@@ -1,5 +1,6 @@
 mod data;
 mod r#enum;
+mod error;
 mod field;
 mod fields;
 mod r#struct;
@@ -7,25 +8,42 @@ mod r#type;
 mod r#union;
 
 use proc_macro2::TokenStream;
-use quote::{ToTokens, TokenStreamExt, quote};
-use syn::{DeriveInput, Generics, Ident, Result, Type, TypeTuple, punctuated::Punctuated};
+use quote::{ToTokens, TokenStreamExt, format_ident, quote};
+use syn::{
+    DeriveInput, Generics, Ident, Result, Type, TypeNever, TypeTuple, Visibility,
+    punctuated::Punctuated,
+};
 
-use crate::{validate::data::ValidateData, validation::Execution};
+use crate::{
+    validate::{
+        data::ValidateData,
+        error::{ErrorType, error_type, format_error_ident},
+    },
+    validation::{Execution, Validation},
+    validations::Custom,
+};
 
 pub struct Validate<'a> {
+    visibility: &'a Visibility,
     ident: &'a Ident,
     generics: &'a Generics,
+    root_error_ident: Ident,
     context_type: Option<Type>,
     data: ValidateData<'a>,
+    validations: Vec<Box<dyn Validation>>,
 }
 
 impl<'a> Validate<'a> {
     pub fn parse(input: &'a DeriveInput) -> Result<Self> {
         let mut result = Validate {
+            visibility: &input.vis,
             ident: &input.ident,
             generics: &input.generics,
+            // TODO: Make `Root` ident configurable to prevent collisions.
+            root_error_ident: format_ident!("Root"),
             context_type: None,
             data: ValidateData::parse(input)?,
+            validations: vec![],
         };
 
         for attribute in &input.attrs {
@@ -38,6 +56,16 @@ impl<'a> Validate<'a> {
                     result.context_type = Some(meta.value()?.parse()?);
 
                     Ok(())
+                } else if meta.path.is_ident("custom") {
+                    result.validations.push(Box::new(Custom::parse(
+                        // Type is never used in the custom validation, so pass an arbitrary value.
+                        &Type::Never(TypeNever {
+                            bang_token: Default::default(),
+                        }),
+                        &meta,
+                    )?));
+
+                    Ok(())
                 } else {
                     Err(meta.error("unknown parameter"))
                 }
@@ -45,6 +73,26 @@ impl<'a> Validate<'a> {
         }
 
         Ok(result)
+    }
+
+    fn error_type(&self) -> Option<ErrorType> {
+        let root_error_type = error_type(
+            self.visibility,
+            self.ident,
+            &self.root_error_ident,
+            &self.validations,
+        );
+
+        self.data.error_type(root_error_type.as_ref())
+    }
+
+    fn validations(&self, execution: Execution) -> TokenStream {
+        self.data.validations(
+            execution,
+            &format_error_ident(self.ident),
+            &self.root_error_ident,
+            &self.validations,
+        )
     }
 }
 
@@ -61,13 +109,17 @@ impl<'a> ToTokens for Validate<'a> {
             }),
         };
 
-        let (error_type, error_definition) = self
-            .data
-            .error_type()
-            .unwrap_or_else(|| (quote!(::std::convert::Infallible), TokenStream::new()));
+        let (error_type, error_definition) = if let Some(ErrorType {
+            r#type, definition, ..
+        }) = self.error_type()
+        {
+            (r#type, definition)
+        } else {
+            (quote!(::std::convert::Infallible), None)
+        };
 
-        let sync_validations = self.data.validations(Execution::Sync);
-        let async_validations = self.data.validations(Execution::Async);
+        let sync_validations = self.validations(Execution::Sync);
+        let async_validations = self.validations(Execution::Async);
 
         let no_context_impl = self.context_type.is_none().then(|| {
             quote! {

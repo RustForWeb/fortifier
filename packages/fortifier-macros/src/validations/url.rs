@@ -1,6 +1,6 @@
 use proc_macro2::TokenStream;
 use quote::{format_ident, quote};
-use syn::{Field, Ident, Result, meta::ParseNestedMeta};
+use syn::{Ident, Result, Type, meta::ParseNestedMeta};
 
 use crate::validation::{Execution, Validation};
 
@@ -8,7 +8,7 @@ use crate::validation::{Execution, Validation};
 pub struct Url {}
 
 impl Validation for Url {
-    fn parse(_field: &Field, _meta: &ParseNestedMeta<'_>) -> Result<Self> {
+    fn parse(_type: &Type, _meta: &ParseNestedMeta<'_>) -> Result<Self> {
         Ok(Url::default())
     }
 

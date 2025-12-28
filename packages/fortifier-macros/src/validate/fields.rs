@@ -1,17 +1,24 @@
+use std::iter::empty;
+
 use proc_macro2::{Literal, TokenStream};
-use quote::{ToTokens, quote};
+use quote::quote;
 use syn::{Fields, FieldsNamed, FieldsUnnamed, Ident, Result, Visibility};
 
 use crate::{
-    attributes::enum_attributes,
-    validate::field::{LiteralOrIdent, ValidateField, ValidateFieldPrefix, format_error_ident},
-    validation::Execution,
+    validate::{
+        error::{
+            ErrorType, combined_error_type, format_error_ident, format_error_ident_with_prefix,
+        },
+        field::{LiteralOrIdent, ValidateField, ValidateFieldPrefix},
+    },
+    validation::{Execution, Validation},
+    validations::{combine_validations, combine_wrapped_validations, wrap_validations},
 };
 
 pub enum ValidateFields<'a> {
     Named(ValidateNamedFields<'a>),
     Unnamed(ValidateUnnamedFields<'a>),
-    Unit(ValidateUnitFields),
+    Unit(ValidateUnitFields<'a>),
 }
 
 impl<'a> ValidateFields<'a> {
@@ -23,15 +30,21 @@ impl<'a> ValidateFields<'a> {
             Fields::Unnamed(fields) => {
                 Self::Unnamed(ValidateUnnamedFields::parse(visibility, ident, fields)?)
             }
-            Fields::Unit => Self::Unit(ValidateUnitFields::parse()?),
+            Fields::Unit => Self::Unit(ValidateUnitFields::parse(visibility, ident)?),
         })
     }
 
-    pub fn error_type(&self) -> Option<(TokenStream, TokenStream)> {
+    pub fn error_type(
+        &self,
+        error_variant_ident: Option<&Ident>,
+        root_error_type: Option<&ErrorType>,
+    ) -> Option<ErrorType> {
         match self {
-            ValidateFields::Named(named) => named.error_type(),
-            ValidateFields::Unnamed(unnamed) => unnamed.error_type(),
-            ValidateFields::Unit(unit) => unit.error_type(),
+            ValidateFields::Named(named) => named.error_type(error_variant_ident, root_error_type),
+            ValidateFields::Unnamed(unnamed) => {
+                unnamed.error_type(error_variant_ident, root_error_type)
+            }
+            ValidateFields::Unit(unit) => unit.error_type(error_variant_ident, root_error_type),
         }
     }
 
@@ -40,15 +53,35 @@ impl<'a> ValidateFields<'a> {
         execution: Execution,
         field_prefix: ValidateFieldPrefix,
         error_wrapper: &impl Fn(TokenStream) -> TokenStream,
+        root_type_prefix: &Ident,
+        root_error_ident: &Ident,
+        root_validations: &[Box<dyn Validation>],
     ) -> TokenStream {
         match self {
-            ValidateFields::Named(named) => {
-                named.validations(execution, field_prefix, error_wrapper)
-            }
-            ValidateFields::Unnamed(unnamed) => {
-                unnamed.validations(execution, field_prefix, error_wrapper)
-            }
-            ValidateFields::Unit(unit) => unit.validations(),
+            ValidateFields::Named(named) => named.validations(
+                execution,
+                field_prefix,
+                error_wrapper,
+                root_type_prefix,
+                root_error_ident,
+                root_validations,
+            ),
+            ValidateFields::Unnamed(unnamed) => unnamed.validations(
+                execution,
+                field_prefix,
+                error_wrapper,
+                root_type_prefix,
+                root_error_ident,
+                root_validations,
+            ),
+            ValidateFields::Unit(unit) => unit.validations(
+                execution,
+                field_prefix,
+                error_wrapper,
+                root_type_prefix,
+                root_error_ident,
+                root_validations,
+            ),
         }
     }
 }
@@ -91,15 +124,21 @@ impl<'a> ValidateNamedFields<'a> {
         self.fields.iter().map(|field| field.ident())
     }
 
-    fn error_type(&self) -> Option<(TokenStream, TokenStream)> {
+    fn error_type(
+        &self,
+        error_variant_ident: Option<&Ident>,
+        root_error_type: Option<&ErrorType>,
+    ) -> Option<ErrorType> {
         if self.fields.is_empty() {
             None
         } else {
             Some(error_type(
                 self.visibility,
                 &self.ident,
+                error_variant_ident,
                 &self.error_ident,
                 self.fields.iter(),
+                root_error_type,
             ))
         }
     }
@@ -109,6 +148,9 @@ impl<'a> ValidateNamedFields<'a> {
         execution: Execution,
         field_prefix: ValidateFieldPrefix,
         error_wrapper: &impl Fn(TokenStream) -> TokenStream,
+        root_type_prefix: &Ident,
+        root_error_ident: &Ident,
+        root_validations: &[Box<dyn Validation>],
     ) -> TokenStream {
         validations(
             execution,
@@ -116,6 +158,9 @@ impl<'a> ValidateNamedFields<'a> {
             &self.error_ident,
             error_wrapper,
             self.fields.iter(),
+            root_type_prefix,
+            root_error_ident,
+            root_validations,
         )
     }
 }
@@ -154,15 +199,21 @@ impl<'a> ValidateUnnamedFields<'a> {
         self.fields.iter().map(|field| field.ident())
     }
 
-    fn error_type(&self) -> Option<(TokenStream, TokenStream)> {
+    fn error_type(
+        &self,
+        error_variant_ident: Option<&Ident>,
+        root_error_type: Option<&ErrorType>,
+    ) -> Option<ErrorType> {
         if self.fields.is_empty() {
             None
         } else {
             Some(error_type(
                 self.visibility,
                 &self.ident,
+                error_variant_ident,
                 &self.error_ident,
                 self.fields.iter(),
+                root_error_type,
             ))
         }
     }
@@ -172,6 +223,9 @@ impl<'a> ValidateUnnamedFields<'a> {
         execution: Execution,
         field_prefix: ValidateFieldPrefix,
         error_wrapper: &impl Fn(TokenStream) -> TokenStream,
+        root_type_prefix: &Ident,
+        root_error_ident: &Ident,
+        root_validations: &[Box<dyn Validation>],
     ) -> TokenStream {
         validations(
             execution,
@@ -179,24 +233,71 @@ impl<'a> ValidateUnnamedFields<'a> {
             &self.error_ident,
             error_wrapper,
             self.fields.iter(),
+            root_type_prefix,
+            root_error_ident,
+            root_validations,
         )
     }
 }
 
-pub struct ValidateUnitFields {}
+pub struct ValidateUnitFields<'a> {
+    visibility: &'a Visibility,
+    ident: Ident,
+    error_ident: Ident,
+}
 
-impl ValidateUnitFields {
-    fn parse() -> Result<Self> {
-        Ok(Self {})
+impl<'a> ValidateUnitFields<'a> {
+    fn parse(visibility: &'a Visibility, ident: Ident) -> Result<Self> {
+        let error_ident = format_error_ident(&ident);
+
+        Ok(Self {
+            visibility,
+            ident,
+            error_ident,
+        })
     }
 
-    fn error_type(&self) -> Option<(TokenStream, TokenStream)> {
-        None
+    fn error_type(
+        &self,
+        error_variant_ident: Option<&Ident>,
+        root_error_type: Option<&ErrorType>,
+    ) -> Option<ErrorType> {
+        if root_error_type.is_some() {
+            Some(error_type(
+                self.visibility,
+                &self.ident,
+                error_variant_ident,
+                &self.error_ident,
+                empty(),
+                root_error_type,
+            ))
+        } else {
+            None
+        }
     }
 
-    pub fn validations(&self) -> TokenStream {
-        quote! {
-            Ok(())
+    pub fn validations(
+        &self,
+        execution: Execution,
+        field_prefix: ValidateFieldPrefix,
+        error_wrapper: &impl Fn(TokenStream) -> TokenStream,
+        root_type_prefix: &Ident,
+        root_error_ident: &Ident,
+        root_validations: &[Box<dyn Validation>],
+    ) -> TokenStream {
+        if root_validations.is_empty() {
+            quote!(Ok(()))
+        } else {
+            validations(
+                execution,
+                field_prefix,
+                &self.error_ident,
+                error_wrapper,
+                empty(),
+                root_type_prefix,
+                root_error_ident,
+                root_validations,
+            )
         }
     }
 }
@@ -204,96 +305,70 @@ impl ValidateUnitFields {
 fn error_type<'a>(
     visibility: &Visibility,
     ident: &Ident,
+    error_variant_ident: Option<&Ident>,
     error_ident: &Ident,
     fields: impl Iterator<Item = &'a ValidateField<'a>>,
-) -> (TokenStream, TokenStream) {
-    let attributes = enum_attributes();
-
-    let mut error_field_idents = vec![];
-    let mut error_field_types = vec![];
-    let mut error_field_enums = vec![];
+    root_error_type: Option<&ErrorType>,
+) -> ErrorType {
+    let mut variant_idents = vec![];
+    let mut variant_types = vec![];
+    let mut definitions = vec![];
 
     for field in fields {
-        if let Some((field_error_type, field_error_enum)) = field.error_type(ident) {
-            let field_error_ident = field.error_ident();
-
-            error_field_idents.push(field_error_ident);
-            error_field_types.push(field_error_type);
-            if let Some(error_enum) = field_error_enum {
-                error_field_enums.push(error_enum);
+        if let Some(ErrorType {
+            variant_ident,
+            r#type,
+            definition,
+        }) = field.error_type(ident)
+        {
+            variant_idents.push(variant_ident);
+            variant_types.push(r#type);
+            if let Some(definition) = definition {
+                definitions.push(definition);
             }
         }
     }
 
-    (
-        error_ident.to_token_stream(),
-        quote! {
-            #[allow(dead_code)]
-            #[derive(Debug, PartialEq)]
-            #attributes
-            #visibility enum #error_ident {
-                #( #error_field_idents(#error_field_types) ),*
-            }
-
-            #[automatically_derived]
-            impl ::std::fmt::Display for #error_ident {
-                fn fmt(&self, f: &mut ::std::fmt::Formatter<'_>) -> ::std::fmt::Result {
-                    write!(f, "{self:#?}")
-                }
-            }
-
-            #[automatically_derived]
-            impl ::std::error::Error for #error_ident {}
-
-            #( #error_field_enums )*
-        },
+    combined_error_type(
+        visibility,
+        error_variant_ident.unwrap_or(ident),
+        error_ident,
+        variant_idents.iter(),
+        variant_types.iter(),
+        definitions.iter(),
+        root_error_type,
     )
 }
 
+#[expect(clippy::too_many_arguments)]
 fn validations<'a>(
     execution: Execution,
     field_prefix: ValidateFieldPrefix,
     error_ident: &Ident,
     error_wrapper: &impl Fn(TokenStream) -> TokenStream,
     fields: impl Iterator<Item = &'a ValidateField<'a>>,
+    root_type_prefix: &Ident,
+    root_error_ident: &Ident,
+    root_validations: &[Box<dyn Validation>],
 ) -> TokenStream {
-    let error_ident = &error_ident;
+    let root_validations = wrap_validations(
+        error_ident,
+        root_error_ident,
+        error_wrapper,
+        combine_validations(
+            execution,
+            &format_error_ident_with_prefix(root_type_prefix, root_error_ident),
+            &quote!(self),
+            root_validations,
+        ),
+    );
 
-    let validations = fields
-        .flat_map(|field| {
-            let field_error_ident = field.error_ident();
-            let validations = field.validations(execution, field_prefix);
+    let validations = fields.flat_map(|field| {
+        let field_error_ident = field.error_ident();
+        let validations = field.validations(execution, field_prefix);
 
-            validations
-                .iter()
-                .map(|validation| {
-                    let error = error_wrapper(quote!(#error_ident::#field_error_ident(err)));
+        wrap_validations(error_ident, field_error_ident, error_wrapper, validations)
+    });
 
-                    quote! {
-                        if let Err(err) = #validation {
-                            errors.push(#error);
-                        }
-                    }
-                })
-                .collect::<Vec<_>>()
-        })
-        .collect::<Vec<_>>();
-
-    if validations.is_empty() {
-        quote! {
-            Ok(())
-        }
-    } else {
-        quote! {
-            let mut errors = vec![];
-
-            #(#validations)*
-
-            if !errors.is_empty() {
-                Err(errors.into())
-            } else {
-                Ok(())
-            }
-        }
-    }
+    combine_wrapped_validations(validations.chain(root_validations).collect::<Vec<_>>())
 }

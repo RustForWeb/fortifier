@@ -1,9 +1,11 @@
 use proc_macro2::TokenStream;
-use syn::{Data, DeriveInput, Result};
+use syn::{Data, DeriveInput, Ident, Result};
 
 use crate::{
-    validate::{r#enum::ValidateEnum, r#struct::ValidateStruct, union::ValidateUnion},
-    validation::Execution,
+    validate::{
+        r#enum::ValidateEnum, error::ErrorType, r#struct::ValidateStruct, union::ValidateUnion,
+    },
+    validation::{Execution, Validation},
 };
 
 pub enum ValidateData<'a> {
@@ -21,19 +23,40 @@ impl<'a> ValidateData<'a> {
         })
     }
 
-    pub fn error_type(&self) -> Option<(TokenStream, TokenStream)> {
+    pub fn error_type(&self, root_error_type: Option<&ErrorType>) -> Option<ErrorType> {
         match self {
-            ValidateData::Struct(r#struct) => r#struct.error_type(),
-            ValidateData::Enum(r#enum) => r#enum.error_type(),
+            ValidateData::Struct(r#struct) => r#struct.error_type(root_error_type),
+            ValidateData::Enum(r#enum) => r#enum.error_type(root_error_type),
             ValidateData::Union(r#union) => r#union.error_type(),
         }
     }
 
-    pub fn validations(&self, execution: Execution) -> TokenStream {
+    pub fn validations(
+        &self,
+        execution: Execution,
+        root_type_prefix: &Ident,
+        root_error_ident: &Ident,
+        root_validations: &[Box<dyn Validation>],
+    ) -> TokenStream {
         match self {
-            ValidateData::Struct(r#struct) => r#struct.validations(execution),
-            ValidateData::Enum(r#enum) => r#enum.validations(execution),
-            ValidateData::Union(r#union) => r#union.validations(execution),
+            ValidateData::Struct(r#struct) => r#struct.validations(
+                execution,
+                root_type_prefix,
+                root_error_ident,
+                root_validations,
+            ),
+            ValidateData::Enum(r#enum) => r#enum.validations(
+                execution,
+                root_type_prefix,
+                root_error_ident,
+                root_validations,
+            ),
+            ValidateData::Union(r#union) => r#union.validations(
+                execution,
+                root_type_prefix,
+                root_error_ident,
+                root_validations,
+            ),
         }
     }
 }
