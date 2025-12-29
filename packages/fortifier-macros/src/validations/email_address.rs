@@ -1,6 +1,6 @@
 use proc_macro2::TokenStream;
 use quote::{format_ident, quote};
-use syn::{Field, Ident, LitBool, LitInt, Result, meta::ParseNestedMeta};
+use syn::{Ident, LitBool, LitInt, Result, Type, meta::ParseNestedMeta};
 
 use crate::validation::{Execution, Validation};
 
@@ -21,7 +21,7 @@ impl Default for EmailAddress {
 }
 
 impl Validation for EmailAddress {
-    fn parse(_field: &Field, meta: &ParseNestedMeta<'_>) -> Result<Self> {
+    fn parse(_type: &Type, meta: &ParseNestedMeta<'_>) -> Result<Self> {
         let mut result = EmailAddress::default();
 
         if !meta.input.is_empty() {

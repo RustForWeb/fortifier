@@ -4,10 +4,14 @@ use quote::{ToTokens, format_ident, quote};
 use syn::{Error, Field, Ident, Result, Visibility};
 
 use crate::{
-    attributes::enum_attributes,
-    validate::r#type::{KnownOrUnknown, should_validate_type},
+    validate::{
+        error::{ErrorType, error_type, format_error_ident_with_prefix},
+        r#type::{KnownOrUnknown, should_validate_type},
+    },
     validation::{Execution, Validation},
-    validations::{Custom, EmailAddress, Length, Nested, PhoneNumber, Range, Regex, Url},
+    validations::{
+        Custom, EmailAddress, Length, Nested, PhoneNumber, Range, Regex, Url, combine_validations,
+    },
 };
 
 pub enum LiteralOrIdent {
@@ -67,48 +71,50 @@ impl<'a> ValidateField<'a> {
                     if meta.path.is_ident("custom") {
                         result
                             .validations
-                            .push(Box::new(Custom::parse(field, &meta)?));
+                            .push(Box::new(Custom::parse(&field.ty, &meta)?));
 
                         Ok(())
                     } else if meta.path.is_ident("email_address") {
                         result
                             .validations
-                            .push(Box::new(EmailAddress::parse(field, &meta)?));
+                            .push(Box::new(EmailAddress::parse(&field.ty, &meta)?));
 
                         Ok(())
                     } else if meta.path.is_ident("length") {
                         result
                             .validations
-                            .push(Box::new(Length::parse(field, &meta)?));
+                            .push(Box::new(Length::parse(&field.ty, &meta)?));
 
                         Ok(())
                     } else if meta.path.is_ident("nested") {
                         result
                             .validations
-                            .push(Box::new(Nested::parse(field, &meta)?));
+                            .push(Box::new(Nested::parse(&field.ty, &meta)?));
                         skip_nested = true;
 
                         Ok(())
                     } else if meta.path.is_ident("phone_number") {
                         result
                             .validations
-                            .push(Box::new(PhoneNumber::parse(field, &meta)?));
+                            .push(Box::new(PhoneNumber::parse(&field.ty, &meta)?));
 
                         Ok(())
                     } else if meta.path.is_ident("range") {
                         result
                             .validations
-                            .push(Box::new(Range::parse(field, &meta)?));
+                            .push(Box::new(Range::parse(&field.ty, &meta)?));
 
                         Ok(())
                     } else if meta.path.is_ident("regex") {
                         result
                             .validations
-                            .push(Box::new(Regex::parse(field, &meta)?));
+                            .push(Box::new(Regex::parse(&field.ty, &meta)?));
 
                         Ok(())
                     } else if meta.path.is_ident("url") {
-                        result.validations.push(Box::new(Url::parse(field, &meta)?));
+                        result
+                            .validations
+                            .push(Box::new(Url::parse(&field.ty, &meta)?));
 
                         Ok(())
                     } else if meta.path.is_ident("skip") {
@@ -123,7 +129,6 @@ impl<'a> ValidateField<'a> {
         }
 
         // TODO: Use enum/struct generics to determine if a generic field type supports nested validation.
-        // TODO: Remove the validations empty check after resolving the issue above.
         if !skip_nested
             && result.validations.is_empty()
             && let Some(nested_type) = should_validate_type(&field.ty)
@@ -149,32 +154,8 @@ impl<'a> ValidateField<'a> {
         &self.error_ident
     }
 
-    pub fn error_type(&self, ident: &Ident) -> Option<(TokenStream, Option<TokenStream>)> {
-        if self.validations.len() > 1 {
-            let attributes = enum_attributes();
-            let visibility = &self.visibility;
-            let ident = format_error_ident_with_prefix(ident, &self.error_ident);
-            let variant_ident = self.validations.iter().map(|validation| validation.ident());
-            let variant_type = self
-                .validations
-                .iter()
-                .map(|validation| validation.error_type());
-
-            Some((
-                ident.to_token_stream(),
-                Some(quote! {
-                    #[derive(Debug, PartialEq)]
-                    #attributes
-                    #visibility enum #ident {
-                        #( #variant_ident(#variant_type) ),*
-                    }
-                }),
-            ))
-        } else {
-            self.validations
-                .first()
-                .map(|validation| (validation.error_type(), None))
-        }
+    pub fn error_type(&self, ident: &Ident) -> Option<ErrorType> {
+        error_type(self.visibility, ident, &self.error_ident, &self.validations)
     }
 
     pub fn validations(
@@ -182,10 +163,9 @@ impl<'a> ValidateField<'a> {
         execution: Execution,
         field_prefix: ValidateFieldPrefix,
     ) -> Vec<TokenStream> {
-        let error_type_ident = &self.error_type_ident;
         let ident = &self.ident;
 
-        let field_expr = match field_prefix {
+        let expr = match field_prefix {
             ValidateFieldPrefix::None => self.ident.to_token_stream(),
             ValidateFieldPrefix::SelfKeyword => quote!(self.#ident),
             ValidateFieldPrefix::F => match &self.ident {
@@ -194,23 +174,7 @@ impl<'a> ValidateField<'a> {
             },
         };
 
-        self.validations
-            .iter()
-            .flat_map(|validation| {
-                let validation_ident = validation.ident();
-                let expr = validation.expr(execution, &field_expr);
-
-                expr.map(|expr| {
-                    if self.validations.len() > 1 {
-                        quote! {
-                            #expr.map_err(#error_type_ident::#validation_ident)
-                        }
-                    } else {
-                        expr
-                    }
-                })
-            })
-            .collect()
+        combine_validations(execution, &self.error_type_ident, &expr, &self.validations)
     }
 }
 
@@ -222,12 +186,4 @@ fn upper_camel_ident(ident: &Ident) -> Ident {
     } else {
         format_ident!("{}", s.to_case(Case::UpperCamel))
     }
-}
-
-pub fn format_error_ident(ident: &Ident) -> Ident {
-    format_ident!("{}ValidationError", ident)
-}
-
-pub fn format_error_ident_with_prefix(prefix: &Ident, ident: &Ident) -> Ident {
-    format_ident!("{}{}ValidationError", prefix, ident)
 }

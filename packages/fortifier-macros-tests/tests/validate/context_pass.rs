@@ -1,4 +1,5 @@
 use fortifier::{Validate, ValidateWithContext, ValidationErrors};
+use serde::{Deserialize, Serialize};
 
 struct Context {
     min: usize,
@@ -6,10 +7,20 @@ struct Context {
 }
 
 #[derive(Validate)]
-#[validate(context = Context)]
+#[validate(
+    context = Context,
+    custom(function = validate_custom, error = CustomError, context),
+)]
 struct CreateUser {
     #[validate(length(min = context.min, max = context.max))]
     name: String,
+}
+
+#[derive(Debug, Deserialize, PartialEq, Serialize)]
+struct CustomError;
+
+fn validate_custom(_value: &CreateUser, _context: &Context) -> Result<(), CustomError> {
+    Ok(())
 }
 
 fn main() -> Result<(), ValidationErrors<CreateUserValidationError>> {

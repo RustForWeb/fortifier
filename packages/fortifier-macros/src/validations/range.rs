@@ -1,6 +1,6 @@
 use proc_macro2::TokenStream;
 use quote::{format_ident, quote};
-use syn::{Expr, Field, Ident, Result, Type, meta::ParseNestedMeta};
+use syn::{Expr, Ident, Result, Type, meta::ParseNestedMeta};
 
 use crate::validation::{Execution, Validation};
 
@@ -13,9 +13,9 @@ pub struct Range {
 }
 
 impl Validation for Range {
-    fn parse(field: &Field, meta: &ParseNestedMeta<'_>) -> Result<Self> {
+    fn parse(r#type: &Type, meta: &ParseNestedMeta<'_>) -> Result<Self> {
         let mut result = Range {
-            r#type: field.ty.clone(),
+            r#type: r#type.clone(),
             min: None,
             max: None,
             exclusive_min: None,

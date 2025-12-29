@@ -1,6 +1,7 @@
 use fortifier::Validate;
 
 #[derive(Validate)]
+#[validate(custom(function = validate_custom, error = CustomError))]
 pub enum ChangeEmailAddressRelation {
     Create {
         #[validate(email_address)]
@@ -15,4 +16,11 @@ pub enum ChangeEmailAddressRelation {
     Delete {
         id: String,
     },
+}
+
+#[derive(Debug, PartialEq)]
+pub struct CustomError;
+
+fn validate_custom(_value: &ChangeEmailAddressRelation) -> Result<(), CustomError> {
+    Ok(())
 }
