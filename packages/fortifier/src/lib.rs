@@ -5,6 +5,7 @@
 mod error;
 mod error_code;
 mod integrations;
+mod types;
 mod validate;
 mod validations;
 

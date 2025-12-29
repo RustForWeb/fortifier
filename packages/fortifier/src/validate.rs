@@ -70,11 +70,42 @@ pub trait Validate: ValidateWithContext<Context = ()> {
     }
 }
 
+/// Generate an infallible validate implementation for a type.
+#[macro_export]
+macro_rules! validate_ok {
+    ($type:ty) => {
+        impl $crate::ValidateWithContext for $type {
+            type Context = ();
+            type Error = ::std::convert::Infallible;
+
+            fn validate_sync_with_context(
+                &self,
+                _context: &Self::Context,
+            ) -> Result<(), $crate::ValidationErrors<Self::Error>> {
+                Ok(())
+            }
+
+            fn validate_async_with_context(
+                &self,
+                _context: &Self::Context,
+            ) -> ::std::pin::Pin<
+                Box<impl Future<Output = Result<(), $crate::ValidationErrors<Self::Error>>> + Send>,
+            > {
+                Box::pin(async { Ok(()) })
+            }
+        }
+
+        impl $crate::Validate for $type {}
+    };
+}
+
+/// Generate a dereference validate implementation for a type.
+#[macro_export]
 macro_rules! validate_with_deref {
     ($type:ty) => {
-        impl<T> ValidateWithContext for $type
+        impl<T> $crate::ValidateWithContext for $type
         where
-            T: ValidateWithContext,
+            T: $crate::ValidateWithContext,
         {
             type Context = T::Context;
             type Error = T::Error;
@@ -82,15 +113,16 @@ macro_rules! validate_with_deref {
             fn validate_sync_with_context(
                 &self,
                 context: &Self::Context,
-            ) -> Result<(), ValidationErrors<Self::Error>> {
+            ) -> Result<(), $crate::ValidationErrors<Self::Error>> {
                 T::validate_sync_with_context(self, context)
             }
 
             fn validate_async_with_context(
                 &self,
                 context: &Self::Context,
-            ) -> Pin<Box<impl Future<Output = Result<(), ValidationErrors<Self::Error>>> + Send>>
-            {
+            ) -> ::std::pin::Pin<
+                Box<impl Future<Output = Result<(), $crate::ValidationErrors<Self::Error>>> + Send>,
+            > {
                 T::validate_async_with_context(self, context)
             }
         }
