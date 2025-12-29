@@ -1,6 +1,6 @@
 use proc_macro2::TokenStream;
 use quote::{format_ident, quote};
-use syn::{DataEnum, DeriveInput, Ident, Result, Variant, Visibility};
+use syn::{DataEnum, DeriveInput, Generics, Ident, Result, Variant, Visibility};
 
 use crate::{
     validate::{
@@ -30,6 +30,7 @@ impl<'a> ValidateEnum<'a> {
         for variant in &data.variants {
             result.variants.push(ValidateEnumVariant::parse(
                 &input.vis,
+                &input.generics,
                 result.ident,
                 result.error_ident.clone(),
                 variant,
@@ -109,6 +110,7 @@ pub struct ValidateEnumVariant<'a> {
 impl<'a> ValidateEnumVariant<'a> {
     pub fn parse(
         visibility: &'a Visibility,
+        generics: &'a Generics,
         enum_ident: &'a Ident,
         enum_error_ident: Ident,
         variant: &'a Variant,
@@ -119,6 +121,7 @@ impl<'a> ValidateEnumVariant<'a> {
             ident: &variant.ident,
             fields: ValidateFields::parse(
                 visibility,
+                generics,
                 format_ident!("{}{}", enum_ident, variant.ident),
                 &variant.fields,
             )?,

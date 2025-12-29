@@ -2,7 +2,7 @@ use std::iter::empty;
 
 use proc_macro2::{Literal, TokenStream};
 use quote::quote;
-use syn::{Fields, FieldsNamed, FieldsUnnamed, Ident, Result, Visibility};
+use syn::{Fields, FieldsNamed, FieldsUnnamed, Generics, Ident, Result, Visibility};
 
 use crate::{
     validate::{
@@ -22,14 +22,19 @@ pub enum ValidateFields<'a> {
 }
 
 impl<'a> ValidateFields<'a> {
-    pub fn parse(visibility: &'a Visibility, ident: Ident, fields: &'a Fields) -> Result<Self> {
+    pub fn parse(
+        visibility: &'a Visibility,
+        generics: &'a Generics,
+        ident: Ident,
+        fields: &'a Fields,
+    ) -> Result<Self> {
         Ok(match fields {
-            Fields::Named(fields) => {
-                Self::Named(ValidateNamedFields::parse(visibility, ident, fields)?)
-            }
-            Fields::Unnamed(fields) => {
-                Self::Unnamed(ValidateUnnamedFields::parse(visibility, ident, fields)?)
-            }
+            Fields::Named(fields) => Self::Named(ValidateNamedFields::parse(
+                visibility, generics, ident, fields,
+            )?),
+            Fields::Unnamed(fields) => Self::Unnamed(ValidateUnnamedFields::parse(
+                visibility, generics, ident, fields,
+            )?),
             Fields::Unit => Self::Unit(ValidateUnitFields::parse(visibility, ident)?),
         })
     }
@@ -94,7 +99,12 @@ pub struct ValidateNamedFields<'a> {
 }
 
 impl<'a> ValidateNamedFields<'a> {
-    fn parse(visibility: &'a Visibility, ident: Ident, fields: &'a FieldsNamed) -> Result<Self> {
+    fn parse(
+        visibility: &'a Visibility,
+        generics: &'a Generics,
+        ident: Ident,
+        fields: &'a FieldsNamed,
+    ) -> Result<Self> {
         let error_ident = format_error_ident(&ident);
 
         let mut result = Self {
@@ -111,6 +121,7 @@ impl<'a> ValidateNamedFields<'a> {
 
             result.fields.push(ValidateField::parse(
                 visibility,
+                generics,
                 &result.ident,
                 LiteralOrIdent::Ident(field_ident.clone()),
                 field,
@@ -173,7 +184,12 @@ pub struct ValidateUnnamedFields<'a> {
 }
 
 impl<'a> ValidateUnnamedFields<'a> {
-    fn parse(visibility: &'a Visibility, ident: Ident, fields: &'a FieldsUnnamed) -> Result<Self> {
+    fn parse(
+        visibility: &'a Visibility,
+        generics: &'a Generics,
+        ident: Ident,
+        fields: &'a FieldsUnnamed,
+    ) -> Result<Self> {
         let error_ident = format_error_ident(&ident);
 
         let mut result = Self {
@@ -186,6 +202,7 @@ impl<'a> ValidateUnnamedFields<'a> {
         for (index, field) in fields.unnamed.iter().enumerate() {
             result.fields.push(ValidateField::parse(
                 visibility,
+                generics,
                 &result.ident,
                 LiteralOrIdent::Literal(Literal::usize_unsuffixed(index)),
                 field,

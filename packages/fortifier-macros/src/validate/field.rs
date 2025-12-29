@@ -1,7 +1,7 @@
 use convert_case::{Case, Casing};
 use proc_macro2::{Literal, TokenStream};
 use quote::{ToTokens, format_ident, quote};
-use syn::{Error, Field, Ident, Result, Visibility};
+use syn::{Error, Field, Generics, Ident, Result, Visibility};
 
 use crate::{
     validate::{
@@ -46,6 +46,7 @@ pub struct ValidateField<'a> {
 impl<'a> ValidateField<'a> {
     pub fn parse(
         visibility: &'a Visibility,
+        generics: &'a Generics,
         type_prefix: &Ident,
         ident: LiteralOrIdent,
         field: &Field,
@@ -128,10 +129,9 @@ impl<'a> ValidateField<'a> {
             }
         }
 
-        // TODO: Use enum/struct generics to determine if a generic field type supports nested validation.
         if !skip_nested
             && result.validations.is_empty()
-            && let Some(nested_type) = should_validate_type(&field.ty)
+            && let Some(nested_type) = should_validate_type(generics, &field.ty)
         {
             if let KnownOrUnknown::Known(nested_type) = nested_type {
                 result.validations.push(Box::new(Nested::new(nested_type)));

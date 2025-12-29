@@ -13,7 +13,12 @@ pub struct ValidateStruct<'a> {
 impl<'a> ValidateStruct<'a> {
     pub fn parse(input: &'a DeriveInput, data: &'a DataStruct) -> Result<Self> {
         Ok(ValidateStruct {
-            fields: ValidateFields::parse(&input.vis, input.ident.clone(), &data.fields)?,
+            fields: ValidateFields::parse(
+                &input.vis,
+                &input.generics,
+                input.ident.clone(),
+                &data.fields,
+            )?,
         })
     }
 
