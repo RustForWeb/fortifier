@@ -157,6 +157,77 @@ const KEYED_CONTAINER_TYPES: [&str; 6] = [
     "std::collections::HashMap",
 ];
 
+/// Ecosystem types.
+///
+/// De facto standard types.
+const ECOSYSTEM_TYPES: [&str; 65] = [
+    "Date",
+    "DateTime",
+    "Days",
+    "Decimal",
+    "Duration",
+    "FixedI8",
+    "FixedI16",
+    "FixedI32",
+    "FixedI64",
+    "FixedI128",
+    "FixedU8",
+    "FixedU16",
+    "FixedU32",
+    "FixedU64",
+    "FixedU128",
+    "Month",
+    "Months",
+    "NaiveDate",
+    "NaiveDateTime",
+    "NaiveTime",
+    "OffsetDateTime",
+    "OrderedFloat",
+    "PrimitiveDateTime",
+    "Regex",
+    "Time",
+    "TimeDelta",
+    "UtcDateTime",
+    "Uuid",
+    "Weekday",
+    "WeekdaySet",
+    "chrono::Date",
+    "chrono::DateTime",
+    "chrono::Days",
+    "chrono::Duration",
+    "chrono::Month",
+    "chrono::Months",
+    "chrono::NaiveDate",
+    "chrono::NaiveDateTime",
+    "chrono::NaiveTime",
+    "chrono::TimeDelta",
+    "chrono::Weekday",
+    "chrono::WeekdaySet",
+    "fancy_regex::Regex",
+    "fixed::FixedI8",
+    "fixed::FixedI16",
+    "fixed::FixedI32",
+    "fixed::FixedI64",
+    "fixed::FixedI128",
+    "fixed::FixedU8",
+    "fixed::FixedU16",
+    "fixed::FixedU32",
+    "fixed::FixedU64",
+    "fixed::FixedU128",
+    "ordered_float::OrderedFloat",
+    "regex::Regex",
+    "rust_decimal::Decimal",
+    "time::Date",
+    "time::Duration",
+    "time::Month",
+    "time::OffsetDateTime",
+    "time::PrimitiveDateTime",
+    "time::Time",
+    "time::UtcDateTime",
+    "time::Weekday",
+    "uuid::Uuid",
+];
+
 fn path_to_string(path: &Path) -> String {
     path.segments
         .iter()
@@ -227,10 +298,6 @@ fn should_validate_path(generics: &Generics, path: &Path) -> Option<KnownOrUnkno
     let path_string = path_to_string(path);
     let path_string = path_string.as_str();
 
-    if BUILT_IN_TYPES.contains(&path_string) {
-        return None;
-    }
-
     if CONTAINER_TYPES.contains(&path_string)
         && let Some(segment) = path.segments.last()
         && let PathArguments::AngleBracketed(arguments) = &segment.arguments
@@ -263,6 +330,10 @@ fn should_validate_path(generics: &Generics, path: &Path) -> Option<KnownOrUnkno
             .iter()
             .all(|arg| should_validate_generic_argument(generics, arg).is_some())
     {
+        return None;
+    }
+
+    if BUILT_IN_TYPES.contains(&path_string) || ECOSYSTEM_TYPES.contains(&path_string) {
         return None;
     }
 
