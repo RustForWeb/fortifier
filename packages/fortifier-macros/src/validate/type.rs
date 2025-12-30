@@ -167,7 +167,10 @@ fn path_to_string(path: &Path) -> String {
 
 fn is_validate_path(path: &Path) -> bool {
     let path_string = path_to_string(path);
-    path_string == "Validate" || path_string == "fortifier::Validate"
+    path_string == "Validate"
+        || path_string == "ValidateWithContext"
+        || path_string == "fortifier::Validate"
+        || path_string == "fortifier::ValidateWithContext"
 }
 
 fn should_validate_generic_argument(
@@ -274,7 +277,7 @@ fn should_validate_path(generics: &Generics, path: &Path) -> Option<KnownOrUnkno
                     .skip(path.segments.len() - 1)
                     .map(|segment| PathSegment {
                         ident: format_error_ident(&segment.ident),
-                        arguments: segment.arguments.clone(),
+                        arguments: PathArguments::None,
                     }),
             ),
     );
@@ -282,9 +285,22 @@ fn should_validate_path(generics: &Generics, path: &Path) -> Option<KnownOrUnkno
     Some(KnownOrUnknown::Known(path.to_token_stream()))
 }
 
+#[derive(Debug, PartialEq)]
 pub enum KnownOrUnknown<T> {
     Known(T),
     Unknown,
+}
+
+impl<T> KnownOrUnknown<T> {
+    pub fn map<F, U>(self, f: F) -> KnownOrUnknown<U>
+    where
+        F: FnOnce(T) -> U,
+    {
+        match self {
+            KnownOrUnknown::Known(value) => KnownOrUnknown::Known(f(value)),
+            KnownOrUnknown::Unknown => KnownOrUnknown::Unknown,
+        }
+    }
 }
 
 pub fn should_validate_type(
@@ -292,12 +308,19 @@ pub fn should_validate_type(
     r#type: &Type,
 ) -> Option<KnownOrUnknown<TokenStream>> {
     match r#type {
-        Type::Array(r#type) => should_validate_type(generics, &r#type.elem),
+        Type::Array(r#type) => {
+            should_validate_type(generics, &r#type.elem).map(|error_type| {
+                error_type.map(|error_type| quote!(::fortifier::IndexedValidationError<#error_type>))
+            })
+        },
         Type::BareFn(_) => None,
         Type::Group(r#type) => should_validate_type(generics, &r#type.elem),
-        Type::ImplTrait(r#type) => r#type.bounds.iter().any(
-            |bound| matches!(bound, TypeParamBound::Trait(bound) if is_validate_path(&bound.path)),
-        ).then_some(KnownOrUnknown::Unknown),
+        Type::ImplTrait(r#type) => {
+            r#type.bounds
+                .iter()
+                .any(|bound| matches!(bound, TypeParamBound::Trait(bound) if is_validate_path(&bound.path)))
+                .then_some(KnownOrUnknown::Unknown)
+        },
         Type::Infer(_) => Some(KnownOrUnknown::Unknown),
         Type::Macro(_) => Some(KnownOrUnknown::Unknown),
         Type::Never(_) => None,
@@ -305,7 +328,11 @@ pub fn should_validate_type(
         Type::Path(r#type) => should_validate_path(generics, &r#type.path),
         Type::Ptr(r#type) => should_validate_type(generics, &r#type.elem),
         Type::Reference(r#type) => should_validate_type(generics,&r#type.elem),
-        Type::Slice(r#type) => should_validate_type(generics, &r#type.elem),
+        Type::Slice(r#type) => {
+            should_validate_type(generics, &r#type.elem).map(|error_type| {
+                error_type.map(|error_type| quote!(::fortifier::IndexedValidationError<#error_type>))
+            })
+        },
         Type::TraitObject(r#type) => should_validate_type_param_bounds(r#type.bounds.iter()),
         Type::Tuple(r#type) => {
             (!r#type.elems.is_empty() && r#type.elems.iter().all(|r#type| should_validate_type(generics, r#type).is_some())).then_some(KnownOrUnknown::Unknown)
@@ -321,155 +348,419 @@ mod tests {
     use quote::quote;
     use syn::{GenericParam, Generics, punctuated::Punctuated};
 
+    use crate::validate::r#type::KnownOrUnknown;
+
     use super::should_validate_type;
 
-    fn validate(tokens: TokenStream) -> bool {
-        should_validate_type(
-            &Generics::default(),
-            &syn::parse2(tokens).expect("valid type"),
-        )
-        .is_some()
+    fn validate(tokens: TokenStream) -> Option<KnownOrUnknown<String>> {
+        validate_with_generics(tokens, Generics::default())
     }
 
-    fn validate_with_generics(tokens: TokenStream, generics: Generics) -> bool {
-        should_validate_type(&generics, &syn::parse2(tokens).expect("valid type")).is_some()
+    fn validate_with_generics(
+        tokens: TokenStream,
+        generics: Generics,
+    ) -> Option<KnownOrUnknown<String>> {
+        should_validate_type(&generics, &syn::parse2(tokens).expect("valid type"))
+            .map(|value| value.map(|value| value.to_string().replace(' ', "")))
     }
 
     #[test]
     fn should_validate() {
-        assert!(validate(quote!(&T)));
-        assert!(validate(quote!(T)));
+        // TODO: Keyed error types.
 
-        assert!(validate(quote!((T, T))));
-        assert!(validate(quote!((A, B, C))));
+        assert_eq!(
+            validate(quote!(&T)),
+            Some(KnownOrUnknown::Known("TValidationError".to_owned()))
+        );
+        assert_eq!(
+            validate(quote!(T)),
+            Some(KnownOrUnknown::Known("TValidationError".to_owned()))
+        );
+        assert_eq!(
+            validate(quote!(T<usize>)),
+            Some(KnownOrUnknown::Known("TValidationError".to_owned()))
+        );
+        assert_eq!(
+            validate(quote!(T<u8, u8>)),
+            Some(KnownOrUnknown::Known("TValidationError".to_owned()))
+        );
 
-        assert!(validate(quote!([T])));
-        assert!(validate(quote!([T; 3])));
-        assert!(validate(quote!([&T])));
-        assert!(validate(quote!([&T; 3])));
-        assert!(validate(quote!(&[T])));
-        assert!(validate(quote!(&[T; 3])));
+        assert_eq!(validate(quote!((T, T))), Some(KnownOrUnknown::Unknown));
+        assert_eq!(validate(quote!((A, B, C))), Some(KnownOrUnknown::Unknown));
 
-        assert!(validate(quote!(Arc<T>)));
-        assert!(validate(quote!(BTreeSet<T>)));
-        assert!(validate(quote!(BTreeMap<K, V>)));
-        assert!(validate(quote!(HashSet<T>)));
-        assert!(validate(quote!(HashMap<K, V>)));
-        assert!(validate(quote!(LinkedList<T>)));
-        assert!(validate(quote!(Option<T>)));
-        assert!(validate(quote!(Option<Option<T>>)));
-        assert!(validate(quote!(Rc<T>)));
-        assert!(validate(quote!(Vec<T>)));
-        assert!(validate(quote!(VecDeque<T>)));
+        assert_eq!(
+            validate(quote!([T])),
+            Some(KnownOrUnknown::Known(
+                "::fortifier::IndexedValidationError<TValidationError>".to_owned()
+            ))
+        );
+        assert_eq!(
+            validate(quote!([T; 3])),
+            Some(KnownOrUnknown::Known(
+                "::fortifier::IndexedValidationError<TValidationError>".to_owned()
+            ))
+        );
+        assert_eq!(
+            validate(quote!([&T])),
+            Some(KnownOrUnknown::Known(
+                "::fortifier::IndexedValidationError<TValidationError>".to_owned()
+            ))
+        );
+        assert_eq!(
+            validate(quote!([&T; 3])),
+            Some(KnownOrUnknown::Known(
+                "::fortifier::IndexedValidationError<TValidationError>".to_owned()
+            ))
+        );
+        assert_eq!(
+            validate(quote!(&[T])),
+            Some(KnownOrUnknown::Known(
+                "::fortifier::IndexedValidationError<TValidationError>".to_owned()
+            ))
+        );
+        assert_eq!(
+            validate(quote!(&[T; 3])),
+            Some(KnownOrUnknown::Known(
+                "::fortifier::IndexedValidationError<TValidationError>".to_owned()
+            ))
+        );
 
-        assert!(validate(quote!(impl Validate)));
-        assert!(validate(quote!(impl fortifier::Validate)));
-        assert!(validate(quote!(dyn Validate)));
-        assert!(validate(quote!(dyn ::fortifier::Validate)));
+        assert_eq!(
+            validate(quote!(Arc<T>)),
+            Some(KnownOrUnknown::Known("TValidationError".to_owned()))
+        );
+        assert_eq!(
+            validate(quote!(BTreeSet<T>)),
+            Some(KnownOrUnknown::Known(
+                "::fortifier::IndexedValidationError<TValidationError>".to_owned()
+            ))
+        );
+        // assert_eq!(
+        //     validate(quote!(BTreeMap<K, V>)),
+        //     Some(KnownOrUnknown::Known(
+        //         "::fortifier::KeyedValidationError<K, TValidationError>".to_owned()
+        //     ))
+        // );
+        assert_eq!(
+            validate(quote!(IndexSet<T>)),
+            Some(KnownOrUnknown::Known(
+                "::fortifier::IndexedValidationError<TValidationError>".to_owned()
+            ))
+        );
+        // assert_eq!(
+        //     validate(quote!(IndexMap<K, V>)),
+        //     Some(KnownOrUnknown::Known(
+        //         "::fortifier::KeyedValidationError<K, TValidationError>".to_owned()
+        //     ))
+        // );
+        assert_eq!(
+            validate(quote!(HashSet<T>)),
+            Some(KnownOrUnknown::Known(
+                "::fortifier::IndexedValidationError<TValidationError>".to_owned()
+            ))
+        );
+        // assert_eq!(
+        //     validate(quote!(HashMap<K, V>)),
+        //     Some(KnownOrUnknown::Known(
+        //         "::fortifier::KeyedValidationError<K, TValidationError>".to_owned()
+        //     ))
+        // );
+        assert_eq!(
+            validate(quote!(LinkedList<T>)),
+            Some(KnownOrUnknown::Known(
+                "::fortifier::IndexedValidationError<TValidationError>".to_owned()
+            ))
+        );
+        assert_eq!(
+            validate(quote!(Option<T>)),
+            Some(KnownOrUnknown::Known("TValidationError".to_owned()))
+        );
+        assert_eq!(
+            validate(quote!(Option<Option<T>>)),
+            Some(KnownOrUnknown::Known("TValidationError".to_owned()))
+        );
+        assert_eq!(
+            validate(quote!(Rc<T>)),
+            Some(KnownOrUnknown::Known("TValidationError".to_owned()))
+        );
+        assert_eq!(
+            validate(quote!(Vec<T>)),
+            Some(KnownOrUnknown::Known(
+                "::fortifier::IndexedValidationError<TValidationError>".to_owned()
+            ))
+        );
+        assert_eq!(
+            validate(quote!(VecDeque<T>)),
+            Some(KnownOrUnknown::Known(
+                "::fortifier::IndexedValidationError<TValidationError>".to_owned()
+            ))
+        );
+
+        assert_eq!(
+            validate(quote!(impl Validate)),
+            Some(KnownOrUnknown::Unknown)
+        );
+        assert_eq!(
+            validate(quote!(impl ValidateWithContext)),
+            Some(KnownOrUnknown::Unknown)
+        );
+        assert_eq!(
+            validate(quote!(impl ValidateWithContext<Context = ()>)),
+            Some(KnownOrUnknown::Unknown)
+        );
+        assert_eq!(
+            validate(quote!(impl fortifier::Validate)),
+            Some(KnownOrUnknown::Unknown)
+        );
+        assert_eq!(
+            validate(quote!(impl fortifier::ValidateWithContext)),
+            Some(KnownOrUnknown::Unknown)
+        );
+        assert_eq!(
+            validate(quote!(impl fortifier::ValidateWithContext<Context = ()>)),
+            Some(KnownOrUnknown::Unknown)
+        );
+        assert_eq!(
+            validate(quote!(dyn Validate)),
+            Some(KnownOrUnknown::Unknown)
+        );
+        assert_eq!(
+            validate(quote!(dyn ValidateWithContext)),
+            Some(KnownOrUnknown::Unknown)
+        );
+        assert_eq!(
+            validate(quote!(dyn ValidateWithContext<Context = ()>)),
+            Some(KnownOrUnknown::Unknown)
+        );
+        assert_eq!(
+            validate(quote!(dyn ::fortifier::Validate)),
+            Some(KnownOrUnknown::Unknown)
+        );
+        assert_eq!(
+            validate(quote!(dyn ::fortifier::ValidateWithContext)),
+            Some(KnownOrUnknown::Unknown)
+        );
+        assert_eq!(
+            validate(quote!(dyn ::fortifier::ValidateWithContext<Context = ()>)),
+            Some(KnownOrUnknown::Unknown)
+        );
     }
 
     #[test]
     fn should_not_validate() {
-        assert!(!validate(quote!(bool)));
-        assert!(!validate(quote!(i8)));
-        assert!(!validate(quote!(i16)));
-        assert!(!validate(quote!(i32)));
-        assert!(!validate(quote!(i64)));
-        assert!(!validate(quote!(i128)));
-        assert!(!validate(quote!(isize)));
-        assert!(!validate(quote!(u8)));
-        assert!(!validate(quote!(u16)));
-        assert!(!validate(quote!(u32)));
-        assert!(!validate(quote!(u64)));
-        assert!(!validate(quote!(u128)));
-        assert!(!validate(quote!(usize)));
-        assert!(!validate(quote!(f32)));
-        assert!(!validate(quote!(f64)));
-        assert!(!validate(quote!(char)));
-        assert!(!validate(quote!(&str)));
-        assert!(!validate(quote!(String)));
+        assert_eq!(validate(quote!(bool)), None);
+        assert_eq!(validate(quote!(i8)), None);
+        assert_eq!(validate(quote!(i16)), None);
+        assert_eq!(validate(quote!(i32)), None);
+        assert_eq!(validate(quote!(i64)), None);
+        assert_eq!(validate(quote!(i128)), None);
+        assert_eq!(validate(quote!(isize)), None);
+        assert_eq!(validate(quote!(u8)), None);
+        assert_eq!(validate(quote!(u16)), None);
+        assert_eq!(validate(quote!(u32)), None);
+        assert_eq!(validate(quote!(u64)), None);
+        assert_eq!(validate(quote!(u128)), None);
+        assert_eq!(validate(quote!(usize)), None);
+        assert_eq!(validate(quote!(f32)), None);
+        assert_eq!(validate(quote!(f64)), None);
+        assert_eq!(validate(quote!(char)), None);
+        assert_eq!(validate(quote!(&str)), None);
+        assert_eq!(validate(quote!(String)), None);
 
-        assert!(!validate(quote!(())));
-        assert!(!validate(quote!((bool, bool))));
-        assert!(!validate(quote!((usize, usize, usize))));
-        assert!(!validate(quote!((usize, &str))));
+        assert_eq!(validate(quote!(())), None);
+        assert_eq!(validate(quote!((bool, bool))), None);
+        assert_eq!(validate(quote!((usize, usize, usize))), None);
+        assert_eq!(validate(quote!((usize, &str))), None);
 
-        assert!(!validate(quote!([isize])));
-        assert!(!validate(quote!([&str; 3])));
-        assert!(!validate(quote!(&[isize])));
-        assert!(!validate(quote!(&[&str; 3])));
+        assert_eq!(validate(quote!([isize])), None);
+        assert_eq!(validate(quote!([&str; 3])), None);
+        assert_eq!(validate(quote!(&[isize])), None);
+        assert_eq!(validate(quote!(&[&str; 3])), None);
 
-        assert!(!validate(quote!(Arc<&str>)));
-        assert!(!validate(quote!(BTreeSet<usize>)));
-        assert!(!validate(quote!(BTreeMap<usize, &str>)));
-        assert!(!validate(quote!(HashSet<&str>)));
-        assert!(!validate(quote!(HashMap<&str, &str>)));
-        assert!(!validate(quote!(LinkedList<char>)));
-        assert!(!validate(quote!(Option<char>)));
-        assert!(!validate(quote!(Option<Option<String>>)));
-        assert!(!validate(quote!(Rc<&str>)));
-        assert!(!validate(quote!(Vec<usize>)));
-        assert!(!validate(quote!(VecDeque<String>)));
+        assert_eq!(validate(quote!(Arc<&str>)), None);
+        assert_eq!(validate(quote!(BTreeSet<usize>)), None);
+        assert_eq!(validate(quote!(BTreeMap<usize, &str>)), None);
+        assert_eq!(validate(quote!(IndexSet<&str>)), None);
+        assert_eq!(validate(quote!(IndexMap<&str, &str>)), None);
+        assert_eq!(validate(quote!(HashSet<&str>)), None);
+        assert_eq!(validate(quote!(HashMap<&str, &str>)), None);
+        assert_eq!(validate(quote!(LinkedList<char>)), None);
+        assert_eq!(validate(quote!(Option<char>)), None);
+        assert_eq!(validate(quote!(Option<Option<String>>)), None);
+        assert_eq!(validate(quote!(Rc<&str>)), None);
+        assert_eq!(validate(quote!(Vec<usize>)), None);
+        assert_eq!(validate(quote!(VecDeque<String>)), None);
 
-        assert!(!validate(quote!(impl Serialize)));
-        assert!(!validate(quote!(dyn Serialize)));
+        assert_eq!(validate(quote!(impl Serialize)), None);
+        assert_eq!(validate(quote!(dyn Serialize)), None);
     }
 
     #[test]
     fn should_validate_with_generics() {
-        assert!(validate_with_generics(
-            quote!(T),
-            Generics {
-                lt_token: Default::default(),
-                params: Punctuated::from_iter([
-                    syn::parse2::<GenericParam>(quote!(T: Validate)).expect("valid generic param")
-                ]),
-                gt_token: Default::default(),
-                where_clause: None
-            }
-        ));
+        // TODO: Output error type as `<T as ValidateWithContext>::Error` if possible.
 
-        assert!(validate_with_generics(
-            quote!(T),
-            Generics {
-                lt_token: Default::default(),
-                params: Punctuated::from_iter([
-                    syn::parse2::<GenericParam>(quote!(T)).expect("valid generic param")
-                ]),
-                gt_token: Default::default(),
-                where_clause: Some(
-                    syn::parse2(quote!(where T: Validate)).expect("valid where clause")
-                )
-            }
-        ));
+        assert_eq!(
+            validate_with_generics(
+                quote!(T),
+                Generics {
+                    lt_token: Default::default(),
+                    params: Punctuated::from_iter([syn::parse2::<GenericParam>(
+                        quote!(T: Validate)
+                    )
+                    .expect("valid generic param")]),
+                    gt_token: Default::default(),
+                    where_clause: None
+                }
+            ),
+            Some(KnownOrUnknown::Unknown)
+        );
+        assert_eq!(
+            validate_with_generics(
+                quote!([T]),
+                Generics {
+                    lt_token: Default::default(),
+                    params: Punctuated::from_iter([syn::parse2::<GenericParam>(
+                        quote!(T: Validate)
+                    )
+                    .expect("valid generic param")]),
+                    gt_token: Default::default(),
+                    where_clause: None
+                }
+            ),
+            Some(KnownOrUnknown::Unknown)
+        );
+        assert_eq!(
+            validate_with_generics(
+                quote!(T),
+                Generics {
+                    lt_token: Default::default(),
+                    params: Punctuated::from_iter([syn::parse2::<GenericParam>(
+                        quote!(T: ValidateWithContext)
+                    )
+                    .expect("valid generic param")]),
+                    gt_token: Default::default(),
+                    where_clause: None
+                }
+            ),
+            Some(KnownOrUnknown::Unknown)
+        );
+        assert_eq!(
+            validate_with_generics(
+                quote!(T),
+                Generics {
+                    lt_token: Default::default(),
+                    params: Punctuated::from_iter([syn::parse2::<GenericParam>(
+                        quote!(T: ValidateWithContext<Context = ()>)
+                    )
+                    .expect("valid generic param")]),
+                    gt_token: Default::default(),
+                    where_clause: None
+                }
+            ),
+            Some(KnownOrUnknown::Unknown)
+        );
+
+        assert_eq!(
+            validate_with_generics(
+                quote!(T),
+                Generics {
+                    lt_token: Default::default(),
+                    params: Punctuated::from_iter([
+                        syn::parse2::<GenericParam>(quote!(T)).expect("valid generic param")
+                    ]),
+                    gt_token: Default::default(),
+                    where_clause: Some(
+                        syn::parse2(quote!(where T: Validate)).expect("valid where clause")
+                    )
+                }
+            ),
+            Some(KnownOrUnknown::Unknown)
+        );
+        assert_eq!(
+            validate_with_generics(
+                quote!([T]),
+                Generics {
+                    lt_token: Default::default(),
+                    params: Punctuated::from_iter([
+                        syn::parse2::<GenericParam>(quote!(T)).expect("valid generic param")
+                    ]),
+                    gt_token: Default::default(),
+                    where_clause: Some(
+                        syn::parse2(quote!(where T: Validate)).expect("valid where clause")
+                    )
+                }
+            ),
+            Some(KnownOrUnknown::Unknown)
+        );
+        assert_eq!(
+            validate_with_generics(
+                quote!(T),
+                Generics {
+                    lt_token: Default::default(),
+                    params: Punctuated::from_iter([
+                        syn::parse2::<GenericParam>(quote!(T)).expect("valid generic param")
+                    ]),
+                    gt_token: Default::default(),
+                    where_clause: Some(
+                        syn::parse2(quote!(where T: ValidateWithContext))
+                            .expect("valid where clause")
+                    )
+                }
+            ),
+            Some(KnownOrUnknown::Unknown)
+        );
+        assert_eq!(
+            validate_with_generics(
+                quote!(T),
+                Generics {
+                    lt_token: Default::default(),
+                    params: Punctuated::from_iter([
+                        syn::parse2::<GenericParam>(quote!(T)).expect("valid generic param")
+                    ]),
+                    gt_token: Default::default(),
+                    where_clause: Some(
+                        syn::parse2(quote!(where T: ValidateWithContext<Context = ()>))
+                            .expect("valid where clause")
+                    )
+                }
+            ),
+            Some(KnownOrUnknown::Unknown)
+        );
     }
 
     #[test]
     fn should_not_validate_with_generics() {
-        assert!(!validate_with_generics(
-            quote!(T),
-            Generics {
-                lt_token: Default::default(),
-                params: Punctuated::from_iter([
-                    syn::parse2::<GenericParam>(quote!(T: PartialEq)).expect("valid generic param")
-                ]),
-                gt_token: Default::default(),
-                where_clause: None
-            }
-        ));
+        assert_eq!(
+            validate_with_generics(
+                quote!(T),
+                Generics {
+                    lt_token: Default::default(),
+                    params: Punctuated::from_iter([syn::parse2::<GenericParam>(
+                        quote!(T: Serialize)
+                    )
+                    .expect("valid generic param")]),
+                    gt_token: Default::default(),
+                    where_clause: None
+                }
+            ),
+            None
+        );
 
-        assert!(!validate_with_generics(
-            quote!(T),
-            Generics {
-                lt_token: Default::default(),
-                params: Punctuated::from_iter([
-                    syn::parse2::<GenericParam>(quote!(T)).expect("valid generic param")
-                ]),
-                gt_token: Default::default(),
-                where_clause: Some(
-                    syn::parse2(quote!(where T: PartialEq)).expect("valid where clause")
-                )
-            }
-        ));
+        assert_eq!(
+            validate_with_generics(
+                quote!(T),
+                Generics {
+                    lt_token: Default::default(),
+                    params: Punctuated::from_iter([
+                        syn::parse2::<GenericParam>(quote!(T)).expect("valid generic param")
+                    ]),
+                    gt_token: Default::default(),
+                    where_clause: Some(
+                        syn::parse2(quote!(where T: Serialize)).expect("valid where clause")
+                    )
+                }
+            ),
+            None
+        );
     }
 }
