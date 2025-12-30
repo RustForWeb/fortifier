@@ -1,8 +1,11 @@
 use proc_macro2::TokenStream;
 use quote::{ToTokens, format_ident, quote};
-use syn::{Ident, Visibility};
+use syn::{GenericArgument, Generics, Ident, Visibility};
 
-use crate::{attributes::enum_attributes, validation::Validation};
+use crate::{
+    attributes::enum_attributes, validate::generics::filter_generics_by_generic_arguments,
+    validation::Validation,
+};
 
 pub fn format_error_ident(ident: &Ident) -> Ident {
     format_ident!("{}ValidationError", ident)
@@ -15,6 +18,7 @@ pub fn format_error_ident_with_prefix(prefix: &Ident, ident: &Ident) -> Ident {
 pub struct ErrorType {
     pub variant_ident: Ident,
     pub r#type: TokenStream,
+    pub generic_arguments: Vec<GenericArgument>,
     pub definition: Option<TokenStream>,
 }
 
@@ -29,10 +33,15 @@ pub fn error_type(
         let ident = format_error_ident_with_prefix(prefix, error_ident);
         let variant_ident = validations.iter().map(|validation| validation.ident());
         let variant_type = validations.iter().map(|validation| validation.error_type());
+        let generic_arguments = validations
+            .iter()
+            .flat_map(|validation| validation.error_generic_arguments())
+            .collect();
 
         Some(ErrorType {
             variant_ident: error_ident.clone(),
             r#type: ident.to_token_stream(),
+            generic_arguments,
             definition: Some(quote! {
                 #[derive(Debug, PartialEq)]
                 #attributes
@@ -45,60 +54,87 @@ pub fn error_type(
         validations.first().map(|validation| ErrorType {
             variant_ident: error_ident.clone(),
             r#type: validation.error_type(),
+            generic_arguments: validation.error_generic_arguments(),
             definition: None,
         })
     }
 }
 
-pub fn combined_error_type<'a>(
+#[allow(clippy::panic)]
+pub fn combined_error_type(
     visibility: &Visibility,
-    error_variant_ident: &Ident,
-    error_ident: &Ident,
-    error_field_idents: impl Iterator<Item = &'a Ident>,
-    error_field_types: impl Iterator<Item = &'a TokenStream>,
-    error_definitions: impl Iterator<Item = &'a TokenStream>,
+    generics: &Generics,
+    variant_ident: &Ident,
+    ident: &Ident,
+    error_types: Vec<ErrorType>,
     root_error_type: Option<&ErrorType>,
-) -> ErrorType {
-    let attributes = enum_attributes();
-    let root_error_field = root_error_type.as_ref().map(
-        |ErrorType {
-             variant_ident,
-             r#type,
-             ..
-         }| {
-            quote! {
-                #variant_ident(#r#type),
-            }
-        },
-    );
-    let root_error_definition =
-        root_error_type.and_then(|ErrorType { definition, .. }| definition.as_ref());
+) -> Option<ErrorType> {
+    if error_types.is_empty() && root_error_type.is_none() {
+        return None;
+    }
 
-    ErrorType {
-        variant_ident: error_variant_ident.clone(),
-        r#type: error_ident.to_token_stream(),
+    let attributes = enum_attributes();
+
+    let variant_idents = root_error_type
+        .into_iter()
+        .map(|error_type| &error_type.variant_ident)
+        .chain(
+            error_types
+                .iter()
+                .map(|error_type| &error_type.variant_ident),
+        );
+
+    let variant_types = root_error_type
+        .into_iter()
+        .map(|error_type| &error_type.r#type)
+        .chain(error_types.iter().map(|error_type| &error_type.r#type));
+
+    let definitions = root_error_type
+        .into_iter()
+        .flat_map(|error_type| &error_type.definition)
+        .chain(
+            error_types
+                .iter()
+                .flat_map(|error_type| &error_type.definition),
+        );
+
+    let generic_arguments = root_error_type
+        .into_iter()
+        .flat_map(|error_type| &error_type.generic_arguments)
+        .chain(
+            error_types
+                .iter()
+                .flat_map(|error_type| &error_type.generic_arguments),
+        )
+        .cloned()
+        .collect::<Vec<_>>();
+
+    let generics = filter_generics_by_generic_arguments(generics, &generic_arguments);
+    let (impl_generics, type_generics, where_clause) = generics.split_for_impl();
+
+    Some(ErrorType {
+        variant_ident: variant_ident.clone(),
+        r#type: quote!(#ident #type_generics),
+        generic_arguments,
         definition: Some(quote! {
             #[allow(dead_code)]
             #[derive(Debug, PartialEq)]
             #attributes
-            #visibility enum #error_ident {
-                #root_error_field
-                #( #error_field_idents(#error_field_types) ),*
+            #visibility enum #ident #type_generics #where_clause {
+                #( #variant_idents(#variant_types) ),*
             }
 
             #[automatically_derived]
-            impl ::std::fmt::Display for #error_ident {
+            impl #impl_generics ::std::fmt::Display for #ident #type_generics #where_clause {
                 fn fmt(&self, f: &mut ::std::fmt::Formatter<'_>) -> ::std::fmt::Result {
                     write!(f, "{self:#?}")
                 }
             }
 
             #[automatically_derived]
-            impl ::std::error::Error for #error_ident {}
+            impl #impl_generics ::std::error::Error for #ident #type_generics #where_clause {}
 
-            #root_error_definition
-
-            #( #error_definitions )*
+            #( #definitions )*
         }),
-    }
+    })
 }

@@ -1,9 +1,9 @@
-use convert_case::{Case, Casing};
 use proc_macro2::{Literal, TokenStream};
 use quote::{ToTokens, format_ident, quote};
 use syn::{Error, Field, Generics, Ident, Result, Visibility};
 
 use crate::{
+    util::upper_camel_ident,
     validate::{
         error::{ErrorType, error_type, format_error_ident_with_prefix},
         r#type::{KnownOrUnknown, should_validate_type},
@@ -134,7 +134,9 @@ impl<'a> ValidateField<'a> {
             && let Some(nested_type) = should_validate_type(generics, &field.ty)
         {
             if let KnownOrUnknown::Known(nested_type) = nested_type {
-                result.validations.push(Box::new(Nested::new(nested_type)));
+                result
+                    .validations
+                    .push(Box::new(Nested::new(syn::parse2(nested_type)?)));
             } else {
                 return Err(Error::new_spanned(
                     field,
@@ -175,15 +177,5 @@ impl<'a> ValidateField<'a> {
         };
 
         combine_validations(execution, &self.error_type_ident, &expr, &self.validations)
-    }
-}
-
-fn upper_camel_ident(ident: &Ident) -> Ident {
-    let s = ident.to_string();
-
-    if s.starts_with("r#") {
-        format_ident!("{}", (&s[2..]).to_case(Case::UpperCamel))
-    } else {
-        format_ident!("{}", s.to_case(Case::UpperCamel))
     }
 }

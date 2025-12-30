@@ -361,6 +361,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "fortifier-example-generics"
+version = "0.2.1"
+dependencies = [
+ "fortifier",
+]
+
+[[package]]
 name = "fortifier-example-server"
 version = "0.2.1"
 dependencies = [

@@ -1,20 +1,25 @@
 use proc_macro2::TokenStream;
 use quote::{ToTokens, format_ident, quote};
-use syn::{Ident, LitBool, Path, Result, Type, meta::ParseNestedMeta};
+use syn::{GenericArgument, Ident, LitBool, Path, Result, Type, TypePath, meta::ParseNestedMeta};
 
-use crate::validation::{Execution, Validation};
+use crate::{
+    util::{generic_arguments, upper_camel_ident},
+    validation::{Execution, Validation},
+};
 
 pub struct Custom {
+    name: Ident,
     execution: Execution,
-    error_type: Type,
+    error_type: TypePath,
     function_path: Path,
     context: bool,
 }
 
 impl Validation for Custom {
     fn parse(_type: &Type, meta: &ParseNestedMeta<'_>) -> Result<Self> {
+        let mut name = None;
         let mut execution = Execution::Sync;
-        let mut error_type: Option<Type> = None;
+        let mut error_type: Option<TypePath> = None;
         let mut function_path: Option<Path> = None;
         let mut context = false;
 
@@ -49,6 +54,11 @@ impl Validation for Custom {
                 function_path = Some(meta.value()?.parse()?);
 
                 Ok(())
+            } else if meta.path.is_ident("name") {
+                let ident = meta.value()?.parse()?;
+                name = Some(upper_camel_ident(&ident));
+
+                Ok(())
             } else {
                 Err(meta.error("unknown parameter"))
             }
@@ -61,7 +71,13 @@ impl Validation for Custom {
             return Err(meta.error("missing function parameter"));
         };
 
+        let name = name.unwrap_or_else(|| {
+            // TODO: Determine default ident from function or error type.
+            format_ident!("Custom")
+        });
+
         Ok(Custom {
+            name,
             execution,
             error_type,
             function_path,
@@ -70,12 +86,15 @@ impl Validation for Custom {
     }
 
     fn ident(&self) -> Ident {
-        // TODO: Determine ident from function or error type.
-        format_ident!("Custom")
+        self.name.clone()
     }
 
     fn error_type(&self) -> TokenStream {
         self.error_type.to_token_stream()
+    }
+
+    fn error_generic_arguments(&self) -> Vec<GenericArgument> {
+        generic_arguments(&self.error_type)
     }
 
     fn expr(&self, execution: Execution, expr: &TokenStream) -> Option<TokenStream> {

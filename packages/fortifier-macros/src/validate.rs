@@ -3,6 +3,7 @@ mod r#enum;
 mod error;
 mod field;
 mod fields;
+mod generics;
 mod r#struct;
 mod r#type;
 mod r#union;
