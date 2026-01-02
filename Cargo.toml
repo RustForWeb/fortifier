@@ -7,7 +7,7 @@ authors = ["Rust for Web <info@rustforweb.org>"]
 edition = "2024"
 license = "MIT"
 repository = "https://github.com/RustForWeb/fortifier"
-version = "0.2.1"
+version = "0.2.2"
 
 [workspace.dependencies]
 chrono = "0.4.42"
