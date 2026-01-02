@@ -60,7 +60,6 @@ pub fn error_type(
     }
 }
 
-#[allow(clippy::panic)]
 pub fn combined_error_type(
     visibility: &Visibility,
     generics: &Generics,
