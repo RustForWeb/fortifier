@@ -154,11 +154,11 @@ fn path_equals_path(a: &Path, b: &Path) -> bool {
 fn path_argument_equals_path_argument(a: &PathArguments, b: &PathArguments) -> bool {
     match (a, b) {
         (PathArguments::None, PathArguments::None) => true,
-        (PathArguments::AngleBracketed(a), PathArguments::AngleBracketed(b)) => {
-            todo!("path arguments angle bracketed {a:#?} == {b:#?}")
+        (PathArguments::AngleBracketed(_a), PathArguments::AngleBracketed(_b)) => {
+            todo!("path argument equals path arguments angle bracketed")
         }
-        (PathArguments::Parenthesized(a), PathArguments::Parenthesized(b)) => {
-            todo!("path arguments parenthesized {a:#?} == {b:#?}")
+        (PathArguments::Parenthesized(_a), PathArguments::Parenthesized(_b)) => {
+            todo!("path argument equals path arguments parenthesized")
         }
         _ => false,
     }
