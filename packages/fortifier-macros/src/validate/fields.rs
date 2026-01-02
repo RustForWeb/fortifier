@@ -35,7 +35,7 @@ impl<'a> ValidateFields<'a> {
             Fields::Unnamed(fields) => Self::Unnamed(ValidateUnnamedFields::parse(
                 visibility, generics, ident, fields,
             )?),
-            Fields::Unit => Self::Unit(ValidateUnitFields::parse(visibility, ident)?),
+            Fields::Unit => Self::Unit(ValidateUnitFields::parse(visibility, generics, ident)?),
         })
     }
 
@@ -93,6 +93,7 @@ impl<'a> ValidateFields<'a> {
 
 pub struct ValidateNamedFields<'a> {
     visibility: &'a Visibility,
+    generics: &'a Generics,
     ident: Ident,
     error_ident: Ident,
     fields: Vec<ValidateField<'a>>,
@@ -109,6 +110,7 @@ impl<'a> ValidateNamedFields<'a> {
 
         let mut result = Self {
             visibility,
+            generics,
             ident,
             error_ident,
             fields: Vec::with_capacity(fields.named.len()),
@@ -140,18 +142,15 @@ impl<'a> ValidateNamedFields<'a> {
         error_variant_ident: Option<&Ident>,
         root_error_type: Option<&ErrorType>,
     ) -> Option<ErrorType> {
-        if self.fields.is_empty() {
-            None
-        } else {
-            Some(error_type(
-                self.visibility,
-                &self.ident,
-                error_variant_ident,
-                &self.error_ident,
-                self.fields.iter(),
-                root_error_type,
-            ))
-        }
+        error_type(
+            self.visibility,
+            self.generics,
+            &self.ident,
+            error_variant_ident,
+            &self.error_ident,
+            self.fields.iter(),
+            root_error_type,
+        )
     }
 
     pub fn validations(
@@ -178,6 +177,7 @@ impl<'a> ValidateNamedFields<'a> {
 
 pub struct ValidateUnnamedFields<'a> {
     visibility: &'a Visibility,
+    generics: &'a Generics,
     ident: Ident,
     error_ident: Ident,
     fields: Vec<ValidateField<'a>>,
@@ -194,6 +194,7 @@ impl<'a> ValidateUnnamedFields<'a> {
 
         let mut result = Self {
             visibility,
+            generics,
             ident,
             error_ident,
             fields: Vec::with_capacity(fields.unnamed.len()),
@@ -221,18 +222,15 @@ impl<'a> ValidateUnnamedFields<'a> {
         error_variant_ident: Option<&Ident>,
         root_error_type: Option<&ErrorType>,
     ) -> Option<ErrorType> {
-        if self.fields.is_empty() {
-            None
-        } else {
-            Some(error_type(
-                self.visibility,
-                &self.ident,
-                error_variant_ident,
-                &self.error_ident,
-                self.fields.iter(),
-                root_error_type,
-            ))
-        }
+        error_type(
+            self.visibility,
+            self.generics,
+            &self.ident,
+            error_variant_ident,
+            &self.error_ident,
+            self.fields.iter(),
+            root_error_type,
+        )
     }
 
     pub fn validations(
@@ -259,16 +257,18 @@ impl<'a> ValidateUnnamedFields<'a> {
 
 pub struct ValidateUnitFields<'a> {
     visibility: &'a Visibility,
+    generics: &'a Generics,
     ident: Ident,
     error_ident: Ident,
 }
 
 impl<'a> ValidateUnitFields<'a> {
-    fn parse(visibility: &'a Visibility, ident: Ident) -> Result<Self> {
+    fn parse(visibility: &'a Visibility, generics: &'a Generics, ident: Ident) -> Result<Self> {
         let error_ident = format_error_ident(&ident);
 
         Ok(Self {
             visibility,
+            generics,
             ident,
             error_ident,
         })
@@ -279,18 +279,15 @@ impl<'a> ValidateUnitFields<'a> {
         error_variant_ident: Option<&Ident>,
         root_error_type: Option<&ErrorType>,
     ) -> Option<ErrorType> {
-        if root_error_type.is_some() {
-            Some(error_type(
-                self.visibility,
-                &self.ident,
-                error_variant_ident,
-                &self.error_ident,
-                empty(),
-                root_error_type,
-            ))
-        } else {
-            None
-        }
+        error_type(
+            self.visibility,
+            self.generics,
+            &self.ident,
+            error_variant_ident,
+            &self.error_ident,
+            empty(),
+            root_error_type,
+        )
     }
 
     pub fn validations(
@@ -321,38 +318,21 @@ impl<'a> ValidateUnitFields<'a> {
 
 fn error_type<'a>(
     visibility: &Visibility,
+    generics: &Generics,
     ident: &Ident,
     error_variant_ident: Option<&Ident>,
     error_ident: &Ident,
     fields: impl Iterator<Item = &'a ValidateField<'a>>,
     root_error_type: Option<&ErrorType>,
-) -> ErrorType {
-    let mut variant_idents = vec![];
-    let mut variant_types = vec![];
-    let mut definitions = vec![];
-
-    for field in fields {
-        if let Some(ErrorType {
-            variant_ident,
-            r#type,
-            definition,
-        }) = field.error_type(ident)
-        {
-            variant_idents.push(variant_ident);
-            variant_types.push(r#type);
-            if let Some(definition) = definition {
-                definitions.push(definition);
-            }
-        }
-    }
+) -> Option<ErrorType> {
+    let error_types = fields.flat_map(|field| field.error_type(ident)).collect();
 
     combined_error_type(
         visibility,
+        generics,
         error_variant_ident.unwrap_or(ident),
         error_ident,
-        variant_idents.iter(),
-        variant_types.iter(),
-        definitions.iter(),
+        error_types,
         root_error_type,
     )
 }

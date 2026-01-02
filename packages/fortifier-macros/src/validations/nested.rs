@@ -1,26 +1,26 @@
 use proc_macro2::TokenStream;
-use quote::{ToTokens, format_ident, quote};
-use syn::{Ident, Path, Result, Type, meta::ParseNestedMeta};
+use quote::{format_ident, quote};
+use syn::{GenericArgument, Ident, Result, Type, TypePath, meta::ParseNestedMeta};
 
 use crate::{
     attributes::enum_field_attributes,
+    util::generic_arguments,
     validation::{Execution, Validation},
 };
 
-#[derive(Default)]
 pub struct Nested {
-    error_type: TokenStream,
+    error_type: TypePath,
 }
 
 impl Nested {
-    pub fn new(error_type: TokenStream) -> Self {
+    pub fn new(error_type: TypePath) -> Self {
         Self { error_type }
     }
 }
 
 impl Validation for Nested {
     fn parse(_type: &Type, meta: &ParseNestedMeta<'_>) -> Result<Self> {
-        let mut error_type: Option<Path> = None;
+        let mut error_type: Option<TypePath> = None;
 
         meta.parse_nested_meta(|meta| {
             if meta.path.is_ident("error_type") {
@@ -36,9 +36,7 @@ impl Validation for Nested {
             return Err(meta.error("missing `error_type` parameter"));
         };
 
-        Ok(Nested {
-            error_type: error_type.to_token_stream(),
-        })
+        Ok(Nested { error_type })
     }
 
     fn ident(&self) -> Ident {
@@ -50,6 +48,10 @@ impl Validation for Nested {
         let attributes = enum_field_attributes();
 
         quote!(#attributes ::fortifier::ValidationErrors<#error_type>)
+    }
+
+    fn error_generic_arguments(&self) -> Vec<GenericArgument> {
+        generic_arguments(&self.error_type)
     }
 
     fn expr(&self, execution: Execution, expr: &TokenStream) -> Option<TokenStream> {

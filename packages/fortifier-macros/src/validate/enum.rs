@@ -13,6 +13,7 @@ use crate::{
 
 pub struct ValidateEnum<'a> {
     visibility: &'a Visibility,
+    generics: &'a Generics,
     ident: &'a Ident,
     error_ident: Ident,
     variants: Vec<ValidateEnumVariant<'a>>,
@@ -22,6 +23,7 @@ impl<'a> ValidateEnum<'a> {
     pub fn parse(input: &'a DeriveInput, data: &'a DataEnum) -> Result<Self> {
         let mut result = ValidateEnum {
             visibility: &input.vis,
+            generics: &input.generics,
             ident: &input.ident,
             error_ident: format_error_ident(&input.ident),
             variants: Vec::with_capacity(data.variants.len()),
@@ -41,39 +43,20 @@ impl<'a> ValidateEnum<'a> {
     }
 
     pub fn error_type(&self, root_error_type: Option<&ErrorType>) -> Option<ErrorType> {
-        if self.variants.is_empty() {
-            return None;
-        }
-
         let variant_error_types = self
             .variants
             .iter()
             .flat_map(|variant| variant.error_type(root_error_type))
-            .collect::<Vec<_>>();
+            .collect();
 
-        if variant_error_types.is_empty() {
-            return None;
-        }
-
-        let variant_idents = variant_error_types
-            .iter()
-            .map(|ErrorType { variant_ident, .. }| variant_ident);
-        let variant_types = variant_error_types
-            .iter()
-            .map(|ErrorType { r#type, .. }| r#type);
-        let variant_definitions = variant_error_types
-            .iter()
-            .flat_map(|ErrorType { definition, .. }| definition);
-
-        Some(combined_error_type(
+        combined_error_type(
             self.visibility,
+            self.generics,
             self.ident,
             &self.error_ident,
-            variant_idents,
-            variant_types,
-            variant_definitions,
+            variant_error_types,
             None,
-        ))
+        )
     }
 
     pub fn validations(

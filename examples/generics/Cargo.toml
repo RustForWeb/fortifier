@@ -1,0 +1,16 @@
+[package]
+name = "fortifier-example-generics"
+description = "Fortifier generics example."
+publish = false
+
+authors.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+version.workspace = true
+
+[dependencies]
+fortifier.workspace = true
+
+[lints]
+workspace = true
