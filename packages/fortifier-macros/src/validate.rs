@@ -116,7 +116,14 @@ impl<'a> ToTokens for Validate<'a> {
         {
             (r#type, definition)
         } else {
-            (quote!(::std::convert::Infallible), None)
+            let error_ident = format_error_ident(self.ident);
+
+            (
+                error_ident.to_token_stream(),
+                Some(quote! {
+                    type #error_ident = ::std::convert::Infallible;
+                }),
+            )
         };
 
         let sync_validations = self.validations(Execution::Sync);
