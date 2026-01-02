@@ -116,12 +116,13 @@ impl<'a> ToTokens for Validate<'a> {
         {
             (r#type, definition)
         } else {
+            let visibility = &self.visibility;
             let error_ident = format_error_ident(self.ident);
 
             (
                 error_ident.to_token_stream(),
                 Some(quote! {
-                    type #error_ident = ::std::convert::Infallible;
+                    #visibility type #error_ident = ::std::convert::Infallible;
                 }),
             )
         };
