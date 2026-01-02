@@ -326,7 +326,7 @@ dependencies = [
 
 [[package]]
 name = "fortifier"
-version = "0.2.2"
+version = "0.2.3"
 dependencies = [
  "chrono",
  "email_address",
@@ -345,7 +345,7 @@ dependencies = [
 
 [[package]]
 name = "fortifier-benchmark-compile"
-version = "0.2.2"
+version = "0.2.3"
 dependencies = [
  "fortifier",
  "validator",
@@ -353,7 +353,7 @@ dependencies = [
 
 [[package]]
 name = "fortifier-example-basic"
-version = "0.2.2"
+version = "0.2.3"
 dependencies = [
  "fortifier",
  "regex",
@@ -362,14 +362,14 @@ dependencies = [
 
 [[package]]
 name = "fortifier-example-generics"
-version = "0.2.2"
+version = "0.2.3"
 dependencies = [
  "fortifier",
 ]
 
 [[package]]
 name = "fortifier-example-server"
-version = "0.2.2"
+version = "0.2.3"
 dependencies = [
  "axum",
  "fortifier",
@@ -384,7 +384,7 @@ dependencies = [
 
 [[package]]
 name = "fortifier-macros"
-version = "0.2.2"
+version = "0.2.3"
 dependencies = [
  "convert_case",
  "proc-macro-crate",
@@ -395,7 +395,7 @@ dependencies = [
 
 [[package]]
 name = "fortifier-macros-tests"
-version = "0.2.2"
+version = "0.2.3"
 dependencies = [
  "chrono",
  "email_address",
