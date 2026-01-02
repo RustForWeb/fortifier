@@ -1,6 +1,6 @@
 use syn::{
-    ConstParam, GenericArgument, GenericParam, Generics, Lifetime, Path, PathArguments, Type,
-    TypeParam, WhereClause, WherePredicate, punctuated::Punctuated,
+    ConstParam, GenericArgument, GenericParam, Generics, Ident, Lifetime, Path, PathArguments,
+    Type, TypeParam, WhereClause, WherePredicate, punctuated::Punctuated,
 };
 
 pub fn filter_generics_by_generic_arguments(
@@ -62,7 +62,7 @@ fn lifetime_matches_argument(lifetime: &Lifetime, argument: &GenericArgument) ->
 fn type_matches_argument(r#type: &Type, argument: &GenericArgument) -> bool {
     match argument {
         GenericArgument::Lifetime(_) => false,
-        GenericArgument::Type(argument_type) => type_includes_type(argument_type, r#type),
+        GenericArgument::Type(argument_type) => type_equals_type(r#type, argument_type),
         GenericArgument::Const(_expr) => todo!("type matches generic argument const"),
         GenericArgument::AssocType(_assoc_type) => {
             todo!("type matches generic argument assoc type")
@@ -77,10 +77,10 @@ fn type_matches_argument(r#type: &Type, argument: &GenericArgument) -> bool {
     }
 }
 
-fn type_param_matches_argument(_param: &TypeParam, argument: &GenericArgument) -> bool {
+fn type_param_matches_argument(param: &TypeParam, argument: &GenericArgument) -> bool {
     match argument {
         GenericArgument::Lifetime(_) => false,
-        GenericArgument::Type(r#type) => type_matches_argument(r#type, argument),
+        GenericArgument::Type(r#type) => type_matches_ident(r#type, &param.ident),
         GenericArgument::Const(_expr) => todo!("type param matches generic argument const"),
         GenericArgument::AssocType(_assoc_type) => {
             todo!("type param matches generic argument assoc type")
@@ -109,16 +109,28 @@ fn const_param_matches_argument(_param: &ConstParam, argument: &GenericArgument)
         GenericArgument::Constraint(_constraint) => {
             todo!("gconst param matches eneric argument constraint")
         }
-        _ => todo!(),
+        _ => false,
     }
 }
 
-fn type_includes_type(haystack: &Type, needle: &Type) -> bool {
-    if type_equals_type(haystack, needle) {
-        true
-    } else {
-        // TODO: Recurse to check if haystack contains needle.
-        false
+fn type_matches_ident(r#type: &Type, ident: &Ident) -> bool {
+    match r#type {
+        Type::Array(_) => false,
+        Type::BareFn(_) => false,
+        Type::Group(r#type) => type_matches_ident(&r#type.elem, ident),
+        Type::ImplTrait(_) => false,
+        Type::Infer(_) => false,
+        Type::Macro(_) => false,
+        Type::Never(_) => false,
+        Type::Paren(r#type) => type_matches_ident(&r#type.elem, ident),
+        Type::Path(r#type) => r#type.path.is_ident(ident),
+        Type::Ptr(r#type) => type_matches_ident(&r#type.elem, ident),
+        Type::Reference(r#type) => type_matches_ident(&r#type.elem, ident),
+        Type::Slice(_) => false,
+        Type::TraitObject(_) => false,
+        Type::Tuple(_) => false,
+        Type::Verbatim(_) => false,
+        _ => false,
     }
 }
 
