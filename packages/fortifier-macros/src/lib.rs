@@ -2,7 +2,8 @@
 
 //! Fortifier macros.
 
-mod attributes;
+mod generics;
+mod integrations;
 mod util;
 mod validate;
 mod validation;

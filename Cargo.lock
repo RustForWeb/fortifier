@@ -365,6 +365,8 @@ name = "fortifier-example-generics"
 version = "0.2.4"
 dependencies = [
  "fortifier",
+ "serde",
+ "uuid",
 ]
 
 [[package]]

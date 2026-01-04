@@ -3,7 +3,6 @@ mod r#enum;
 mod error;
 mod field;
 mod fields;
-mod generics;
 mod r#struct;
 mod r#type;
 mod r#union;
@@ -110,21 +109,41 @@ impl<'a> ToTokens for Validate<'a> {
             }),
         };
 
-        let (error_type, error_definition) = if let Some(ErrorType {
-            r#type, definition, ..
+        let (error_type, where_predicates, error_definition) = if let Some(ErrorType {
+            r#type,
+            where_predicates,
+            definition,
+            ..
         }) = self.error_type()
         {
-            (r#type, definition)
+            (r#type, where_predicates, definition)
         } else {
             let visibility = &self.visibility;
             let error_ident = format_error_ident(self.ident);
 
             (
                 error_ident.to_token_stream(),
+                vec![],
                 Some(quote! {
                     #visibility type #error_ident = ::std::convert::Infallible;
                 }),
             )
+        };
+
+        let where_clause = if let Some(where_clause) = where_clause {
+            if where_clause.predicates.trailing_punct() {
+                quote! {
+                    #where_clause #( #where_predicates ),*
+                }
+            } else {
+                quote! {
+                    #where_clause, #( #where_predicates ),*
+                }
+            }
+        } else {
+            quote! {
+                where #( #where_predicates ),*
+            }
         };
 
         let sync_validations = self.validations(Execution::Sync);

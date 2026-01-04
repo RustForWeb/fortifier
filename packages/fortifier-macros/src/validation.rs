@@ -1,5 +1,7 @@
 use proc_macro2::TokenStream;
-use syn::{GenericArgument, Ident, Result, Type, meta::ParseNestedMeta};
+use syn::{Ident, Result, Type, meta::ParseNestedMeta};
+
+use crate::generics::Generic;
 
 #[derive(Clone, Copy)]
 pub enum Execution {
@@ -16,7 +18,9 @@ pub trait Validation {
 
     fn error_type(&self) -> TokenStream;
 
-    fn error_generic_arguments(&self) -> Vec<GenericArgument>;
+    fn error_generics(&self) -> Vec<Generic>;
+
+    fn error_where_predicates(&self) -> Vec<TokenStream>;
 
     fn expr(&self, execution: Execution, expr: &TokenStream) -> Option<TokenStream>;
 }

@@ -1,8 +1,11 @@
 use proc_macro2::TokenStream;
 use quote::{format_ident, quote};
-use syn::{Expr, GenericArgument, Ident, Result, Type, meta::ParseNestedMeta};
+use syn::{Expr, Ident, Result, Type, meta::ParseNestedMeta};
 
-use crate::validation::{Execution, Validation};
+use crate::{
+    generics::Generic,
+    validation::{Execution, Validation},
+};
 
 pub struct Regex {
     expression: Expr,
@@ -41,7 +44,11 @@ impl Validation for Regex {
         quote!(::fortifier::RegexError)
     }
 
-    fn error_generic_arguments(&self) -> Vec<GenericArgument> {
+    fn error_generics(&self) -> Vec<Generic> {
+        vec![]
+    }
+
+    fn error_where_predicates(&self) -> Vec<TokenStream> {
         vec![]
     }
 

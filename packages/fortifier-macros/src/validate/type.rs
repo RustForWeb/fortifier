@@ -1,11 +1,11 @@
 use proc_macro2::TokenStream;
 use quote::{ToTokens, quote};
 use syn::{
-    GenericArgument, Generics, Path, PathArguments, PathSegment, Type, TypeParamBound,
-    WherePredicate, punctuated::Punctuated, token::PathSep,
+    GenericArgument, GenericParam, Generics, Path, PathArguments, PathSegment, Type, TypeParam,
+    TypeParamBound, WherePredicate, punctuated::Punctuated, token::PathSep,
 };
 
-use crate::validate::error::format_error_ident;
+use crate::{integrations::where_predicate, validate::error::format_error_ident};
 
 /// Primitive and built-in types.
 ///
@@ -228,6 +228,22 @@ const ECOSYSTEM_TYPES: [&str; 65] = [
     "uuid::Uuid",
 ];
 
+pub struct ValidateResult {
+    pub error_type: KnownOrUnknown<TokenStream>,
+    pub generic_params: Vec<GenericParam>,
+    pub where_predicates: Vec<TokenStream>,
+}
+
+impl ValidateResult {
+    fn unknown() -> Self {
+        Self {
+            error_type: KnownOrUnknown::Unknown,
+            generic_params: vec![],
+            where_predicates: vec![],
+        }
+    }
+}
+
 fn path_to_string(path: &Path) -> String {
     path.segments
         .iter()
@@ -247,51 +263,71 @@ fn is_validate_path(path: &Path) -> bool {
 fn should_validate_generic_argument(
     generics: &Generics,
     arg: &GenericArgument,
-) -> Option<KnownOrUnknown<TokenStream>> {
+) -> Option<ValidateResult> {
     match arg {
-        GenericArgument::Lifetime(_) => Some(KnownOrUnknown::Unknown),
+        GenericArgument::Lifetime(_) => Some(ValidateResult::unknown()),
         GenericArgument::Type(r#type) => should_validate_type(generics, r#type),
         // TODO: Const.
-        GenericArgument::Const(_expr) => Some(KnownOrUnknown::Unknown),
+        GenericArgument::Const(_expr) => Some(ValidateResult::unknown()),
         // TODO: Associated type.
-        GenericArgument::AssocType(_assoc_type) => Some(KnownOrUnknown::Unknown),
+        GenericArgument::AssocType(_assoc_type) => Some(ValidateResult::unknown()),
         // TODO: Associated const.
-        GenericArgument::AssocConst(_assoc_const) => Some(KnownOrUnknown::Unknown),
+        GenericArgument::AssocConst(_assoc_const) => Some(ValidateResult::unknown()),
         // TODO: Constraint.
-        GenericArgument::Constraint(_constraint) => Some(KnownOrUnknown::Unknown),
-        _ => Some(KnownOrUnknown::Unknown),
+        GenericArgument::Constraint(_constraint) => Some(ValidateResult::unknown()),
+        _ => Some(ValidateResult::unknown()),
     }
 }
 
 fn should_validate_type_param_bounds<'a>(
     mut bounds: impl Iterator<Item = &'a TypeParamBound>,
-) -> Option<KnownOrUnknown<TokenStream>> {
+    param: Option<&TypeParam>,
+) -> Option<ValidateResult> {
     bounds
         .any(|bound| matches!(bound, TypeParamBound::Trait(bound) if is_validate_path(&bound.path)))
-        .then_some(KnownOrUnknown::Unknown)
+        .then(|| {
+            if let Some(param) = param {
+                let ident = &param.ident;
+
+                let error_type = quote!(<#ident as ::fortifier::ValidateWithContext>::Error);
+
+                ValidateResult {
+                    error_type: KnownOrUnknown::Known(error_type.clone()),
+                    generic_params: vec![GenericParam::Type(param.clone())],
+                    where_predicates: vec![where_predicate(error_type)],
+                }
+            } else {
+                ValidateResult::unknown()
+            }
+        })
 }
 
-fn should_validate_path(generics: &Generics, path: &Path) -> Option<KnownOrUnknown<TokenStream>> {
+fn should_validate_path(generics: &Generics, path: &Path) -> Option<ValidateResult> {
     if let Some(ident) = path.get_ident() {
         if PRIMITIVE_AND_BUILT_IN_TYPES.contains(&ident.to_string().as_str()) {
             return None;
         }
 
         if let Some(param) = generics.type_params().find(|param| param.ident == *ident) {
-            return should_validate_type_param_bounds(param.bounds.iter()).or_else(|| {
-                generics.where_clause.as_ref().and_then(|where_clause| {
-                    where_clause.predicates.iter().find_map(|predicate| {
-                        if let WherePredicate::Type(predicate) = predicate
-                            && let Type::Path(predicate_type) = &predicate.bounded_ty
-                            && predicate_type.path.is_ident(ident)
-                        {
-                            should_validate_type_param_bounds(predicate.bounds.iter())
-                        } else {
-                            None
-                        }
+            return should_validate_type_param_bounds(param.bounds.iter(), Some(param)).or_else(
+                || {
+                    generics.where_clause.as_ref().and_then(|where_clause| {
+                        where_clause.predicates.iter().find_map(|predicate| {
+                            if let WherePredicate::Type(predicate) = predicate
+                                && let Type::Path(predicate_type) = &predicate.bounded_ty
+                                && predicate_type.path.is_ident(ident)
+                            {
+                                should_validate_type_param_bounds(
+                                    predicate.bounds.iter(),
+                                    Some(param),
+                                )
+                            } else {
+                                None
+                            }
+                        })
                     })
-                })
-            });
+                },
+            );
         }
     }
 
@@ -311,13 +347,15 @@ fn should_validate_path(generics: &Generics, path: &Path) -> Option<KnownOrUnkno
         && let PathArguments::AngleBracketed(arguments) = &segment.arguments
         && let Some(argument) = arguments.args.first()
     {
-        return should_validate_generic_argument(generics, argument).map(|error_type| {
-            match error_type {
-                KnownOrUnknown::Known(error_type) => {
-                    KnownOrUnknown::Known(quote!(::fortifier::IndexedValidationError<#error_type>))
-                }
-                KnownOrUnknown::Unknown => KnownOrUnknown::Unknown,
+        return should_validate_generic_argument(generics, argument).map(|mut result| match result
+            .error_type
+        {
+            KnownOrUnknown::Known(error_type) => {
+                result.error_type =
+                    KnownOrUnknown::Known(quote!(::fortifier::IndexedValidationError<#error_type>));
+                result
             }
+            KnownOrUnknown::Unknown => result,
         });
     }
 
@@ -353,7 +391,11 @@ fn should_validate_path(generics: &Generics, path: &Path) -> Option<KnownOrUnkno
             ),
     );
 
-    Some(KnownOrUnknown::Known(path.to_token_stream()))
+    Some(ValidateResult {
+        error_type: KnownOrUnknown::Known(path.to_token_stream()),
+        generic_params: vec![],
+        where_predicates: vec![],
+    })
 }
 
 #[derive(Debug, PartialEq)]
@@ -374,14 +416,12 @@ impl<T> KnownOrUnknown<T> {
     }
 }
 
-pub fn should_validate_type(
-    generics: &Generics,
-    r#type: &Type,
-) -> Option<KnownOrUnknown<TokenStream>> {
+pub fn should_validate_type(generics: &Generics, r#type: &Type) -> Option<ValidateResult> {
     match r#type {
         Type::Array(r#type) => {
-            should_validate_type(generics, &r#type.elem).map(|error_type| {
-                error_type.map(|error_type| quote!(::fortifier::IndexedValidationError<#error_type>))
+            should_validate_type(generics, &r#type.elem).map(|mut result| {
+                result.error_type = result.error_type.map(|error_type| quote!(::fortifier::IndexedValidationError<#error_type>));
+                result
             })
         },
         Type::BareFn(_) => None,
@@ -390,23 +430,28 @@ pub fn should_validate_type(
             r#type.bounds
                 .iter()
                 .any(|bound| matches!(bound, TypeParamBound::Trait(bound) if is_validate_path(&bound.path)))
-                .then_some(KnownOrUnknown::Unknown)
+                .then_some(ValidateResult::unknown())
         },
-        Type::Infer(_) => Some(KnownOrUnknown::Unknown),
-        Type::Macro(_) => Some(KnownOrUnknown::Unknown),
+        Type::Infer(_) => Some(ValidateResult::unknown()),
+        Type::Macro(_) => Some(ValidateResult::unknown()),
         Type::Never(_) => None,
         Type::Paren(r#type) => should_validate_type(generics, &r#type.elem),
         Type::Path(r#type) => should_validate_path(generics, &r#type.path),
         Type::Ptr(r#type) => should_validate_type(generics, &r#type.elem),
         Type::Reference(r#type) => should_validate_type(generics,&r#type.elem),
         Type::Slice(r#type) => {
-            should_validate_type(generics, &r#type.elem).map(|error_type| {
-                error_type.map(|error_type| quote!(::fortifier::IndexedValidationError<#error_type>))
+            should_validate_type(generics, &r#type.elem).map(|mut result| {
+               result.error_type = result.error_type.map(|error_type| quote!(::fortifier::IndexedValidationError<#error_type>));
+               result
             })
         },
-        Type::TraitObject(r#type) => should_validate_type_param_bounds(r#type.bounds.iter()),
+        Type::TraitObject(r#type) => should_validate_type_param_bounds( r#type.bounds.iter(), None),
         Type::Tuple(r#type) => {
-            (!r#type.elems.is_empty() && r#type.elems.iter().all(|r#type| should_validate_type(generics, r#type).is_some())).then_some(KnownOrUnknown::Unknown)
+            (!r#type.elems.is_empty() &&
+                r#type.elems
+                    .iter()
+                    .all(|r#type| should_validate_type(generics, r#type).is_some()))
+                    .then_some(ValidateResult::unknown())
         }
         Type::Verbatim(_) => None,
         _ => None,
@@ -415,6 +460,7 @@ pub fn should_validate_type(
 
 #[cfg(test)]
 mod tests {
+
     use proc_macro2::TokenStream;
     use quote::quote;
     use syn::{GenericParam, Generics, punctuated::Punctuated};
@@ -431,8 +477,21 @@ mod tests {
         tokens: TokenStream,
         generics: Generics,
     ) -> Option<KnownOrUnknown<String>> {
-        should_validate_type(&generics, &syn::parse2(tokens).expect("valid type"))
-            .map(|value| value.map(|value| value.to_string().replace(' ', "")))
+        should_validate_type(&generics, &syn::parse2(tokens).expect("valid type")).map(|result| {
+            result.error_type.map(|error_type| {
+                error_type
+                    .to_string()
+                    .replace(":: ", "::")
+                    .replace(" ::", "::")
+                    .replace(" as::", " as ::")
+                    .replace("< ", "<")
+                    .replace(" <", "<")
+                    .replace("> ", ">")
+                    .replace(" >", ">")
+                    .trim()
+                    .to_string()
+            })
+        })
     }
 
     #[test]
@@ -668,8 +727,6 @@ mod tests {
 
     #[test]
     fn should_validate_with_generics() {
-        // TODO: Output error type as `<T as ValidateWithContext>::Error` if possible.
-
         assert_eq!(
             validate_with_generics(
                 quote!(T),
@@ -683,7 +740,9 @@ mod tests {
                     where_clause: None
                 }
             ),
-            Some(KnownOrUnknown::Unknown)
+            Some(KnownOrUnknown::Known(
+                "<T as ::fortifier::ValidateWithContext>::Error".to_owned()
+            ))
         );
         assert_eq!(
             validate_with_generics(
@@ -698,7 +757,9 @@ mod tests {
                     where_clause: None
                 }
             ),
-            Some(KnownOrUnknown::Unknown)
+            Some(KnownOrUnknown::Known(
+                "::fortifier::IndexedValidationError<<T as ::fortifier::ValidateWithContext>::Error>".to_owned()
+            ))
         );
         assert_eq!(
             validate_with_generics(
@@ -713,7 +774,9 @@ mod tests {
                     where_clause: None
                 }
             ),
-            Some(KnownOrUnknown::Unknown)
+            Some(KnownOrUnknown::Known(
+                "<T as ::fortifier::ValidateWithContext>::Error".to_owned()
+            ))
         );
         assert_eq!(
             validate_with_generics(
@@ -728,7 +791,9 @@ mod tests {
                     where_clause: None
                 }
             ),
-            Some(KnownOrUnknown::Unknown)
+            Some(KnownOrUnknown::Known(
+                "<T as ::fortifier::ValidateWithContext>::Error".to_owned()
+            ))
         );
 
         assert_eq!(
@@ -745,7 +810,9 @@ mod tests {
                     )
                 }
             ),
-            Some(KnownOrUnknown::Unknown)
+            Some(KnownOrUnknown::Known(
+                "<T as ::fortifier::ValidateWithContext>::Error".to_owned()
+            ))
         );
         assert_eq!(
             validate_with_generics(
@@ -761,7 +828,9 @@ mod tests {
                     )
                 }
             ),
-            Some(KnownOrUnknown::Unknown)
+            Some(KnownOrUnknown::Known(
+                "::fortifier::IndexedValidationError<<T as ::fortifier::ValidateWithContext>::Error>".to_owned()
+            ))
         );
         assert_eq!(
             validate_with_generics(
@@ -778,7 +847,9 @@ mod tests {
                     )
                 }
             ),
-            Some(KnownOrUnknown::Unknown)
+            Some(KnownOrUnknown::Known(
+                "<T as ::fortifier::ValidateWithContext>::Error".to_owned()
+            ))
         );
         assert_eq!(
             validate_with_generics(
@@ -795,7 +866,9 @@ mod tests {
                     )
                 }
             ),
-            Some(KnownOrUnknown::Unknown)
+            Some(KnownOrUnknown::Known(
+                "<T as ::fortifier::ValidateWithContext>::Error".to_owned()
+            ))
         );
     }
 
