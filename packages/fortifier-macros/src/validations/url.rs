@@ -1,8 +1,11 @@
 use proc_macro2::TokenStream;
 use quote::{format_ident, quote};
-use syn::{GenericArgument, Ident, Result, Type, meta::ParseNestedMeta};
+use syn::{Ident, Result, Type, meta::ParseNestedMeta};
 
-use crate::validation::{Execution, Validation};
+use crate::{
+    generics::Generic,
+    validation::{Execution, Validation},
+};
 
 #[derive(Default)]
 pub struct Url {}
@@ -20,7 +23,11 @@ impl Validation for Url {
         quote!(::fortifier::UrlError)
     }
 
-    fn error_generic_arguments(&self) -> Vec<GenericArgument> {
+    fn error_generics(&self) -> Vec<Generic> {
+        vec![]
+    }
+
+    fn error_where_predicates(&self) -> Vec<TokenStream> {
         vec![]
     }
 

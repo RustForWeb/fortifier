@@ -16,7 +16,7 @@ pub trait ValidateWithContext {
     type Context: Send + Sync;
 
     /// Validation error.
-    type Error: Error;
+    type Error: Error + Send + Sync;
 
     /// Validate schema using all validators with context.
     fn validate_with_context(

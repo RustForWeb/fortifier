@@ -1,26 +1,64 @@
 use syn::{
     ConstParam, GenericArgument, GenericParam, Generics, Ident, Lifetime, Path, PathArguments,
-    Type, TypeParam, WhereClause, WherePredicate, punctuated::Punctuated,
+    Type, TypeParam, TypePath, WhereClause, WherePredicate, punctuated::Punctuated,
 };
 
-pub fn filter_generics_by_generic_arguments(
-    generics: &Generics,
-    arguments: &[GenericArgument],
-) -> Generics {
+#[derive(Clone)]
+pub enum Generic {
+    Argument(GenericArgument),
+    Param(GenericParam),
+}
+
+pub fn generic_arguments(r#type: &TypePath) -> Vec<Generic> {
+    if let Some(segment) = r#type.path.segments.last()
+        && let PathArguments::AngleBracketed(arguments) = &segment.arguments
+    {
+        arguments
+            .args
+            .iter()
+            .cloned()
+            .map(Generic::Argument)
+            .collect()
+    } else {
+        vec![]
+    }
+}
+
+pub fn filter_generics(generics: &Generics, arguments_or_params: &[Generic]) -> Generics {
+    let generic_arguments = arguments_or_params.iter().filter_map(|generic| {
+        if let Generic::Argument(argument) = generic {
+            Some(argument)
+        } else {
+            None
+        }
+    });
+    let generic_params = arguments_or_params.iter().filter_map(|generic| {
+        if let Generic::Param(param) = generic {
+            Some(param)
+        } else {
+            None
+        }
+    });
+
     let params = Punctuated::from_iter(
         generics
             .params
             .iter()
-            .filter(|param| match param {
-                GenericParam::Lifetime(param) => arguments
-                    .iter()
-                    .any(|argument| lifetime_matches_argument(&param.lifetime, argument)),
-                GenericParam::Type(param) => arguments
-                    .iter()
-                    .any(|argument| type_param_matches_argument(param, argument)),
-                GenericParam::Const(param) => arguments
-                    .iter()
-                    .any(|argument| const_param_matches_argument(param, argument)),
+            .filter(|param| {
+                generic_params
+                    .clone()
+                    .any(|generic_param| generic_param_equals_generic_param(generic_param, param))
+                    || match param {
+                        GenericParam::Lifetime(param) => generic_arguments
+                            .clone()
+                            .any(|argument| lifetime_matches_argument(&param.lifetime, argument)),
+                        GenericParam::Type(param) => generic_arguments
+                            .clone()
+                            .any(|argument| type_param_matches_argument(param, argument)),
+                        GenericParam::Const(param) => generic_arguments
+                            .clone()
+                            .any(|argument| const_param_matches_argument(param, argument)),
+                    }
             })
             .cloned(),
     );
@@ -35,12 +73,22 @@ pub fn filter_generics_by_generic_arguments(
                     .predicates
                     .iter()
                     .filter(|predicate| match predicate {
-                        WherePredicate::Lifetime(predicate) => arguments.iter().any(|argument| {
-                            lifetime_matches_argument(&predicate.lifetime, argument)
-                        }),
-                        WherePredicate::Type(predicate) => arguments
-                            .iter()
-                            .any(|argument| type_matches_argument(&predicate.bounded_ty, argument)),
+                        WherePredicate::Lifetime(predicate) => {
+                            generic_params
+                                .clone()
+                                .any(|param| lifetime_matches_param(&predicate.lifetime, param))
+                                || generic_arguments.clone().any(|argument| {
+                                    lifetime_matches_argument(&predicate.lifetime, argument)
+                                })
+                        }
+                        WherePredicate::Type(predicate) => {
+                            generic_params
+                                .clone()
+                                .any(|param| type_matches_param(&predicate.bounded_ty, param))
+                                || generic_arguments.clone().any(|argument| {
+                                    type_matches_argument(&predicate.bounded_ty, argument)
+                                })
+                        }
                         _ => false,
                     })
                     .cloned(),
@@ -59,6 +107,10 @@ fn lifetime_matches_argument(lifetime: &Lifetime, argument: &GenericArgument) ->
     matches!(argument, GenericArgument::Lifetime(argument_lifetime) if argument_lifetime.ident == lifetime.ident)
 }
 
+fn lifetime_matches_param(lifetime: &Lifetime, param: &GenericParam) -> bool {
+    matches!(param, GenericParam::Lifetime(param) if param.lifetime.ident == lifetime.ident)
+}
+
 fn type_matches_argument(r#type: &Type, argument: &GenericArgument) -> bool {
     match argument {
         GenericArgument::Lifetime(_) => false,
@@ -74,6 +126,14 @@ fn type_matches_argument(r#type: &Type, argument: &GenericArgument) -> bool {
             todo!("type matches generic argument constraint")
         }
         _ => false,
+    }
+}
+
+fn type_matches_param(r#type: &Type, param: &GenericParam) -> bool {
+    match param {
+        GenericParam::Lifetime(_) => false,
+        GenericParam::Type(param_type) => type_matches_ident(r#type, &param_type.ident),
+        GenericParam::Const(_expr) => false,
     }
 }
 
@@ -172,6 +232,17 @@ fn path_argument_equals_path_argument(a: &PathArguments, b: &PathArguments) -> b
         (PathArguments::Parenthesized(_a), PathArguments::Parenthesized(_b)) => {
             todo!("path argument equals path arguments parenthesized")
         }
+        _ => false,
+    }
+}
+
+fn generic_param_equals_generic_param(a: &GenericParam, b: &GenericParam) -> bool {
+    match (a, b) {
+        (GenericParam::Lifetime(a), GenericParam::Lifetime(b)) => {
+            a.lifetime.ident == b.lifetime.ident
+        }
+        (GenericParam::Type(a), GenericParam::Type(b)) => a.ident == b.ident,
+        (GenericParam::Const(a), GenericParam::Const(b)) => a.ident == b.ident,
         _ => false,
     }
 }

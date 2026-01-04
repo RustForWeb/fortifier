@@ -1,9 +1,10 @@
 use proc_macro2::TokenStream;
 use quote::{ToTokens, format_ident, quote};
-use syn::{GenericArgument, Ident, LitBool, Path, Result, Type, TypePath, meta::ParseNestedMeta};
+use syn::{Ident, LitBool, Path, Result, Type, TypePath, meta::ParseNestedMeta};
 
 use crate::{
-    util::{generic_arguments, upper_camel_ident},
+    generics::{Generic, generic_arguments},
+    util::upper_camel_ident,
     validation::{Execution, Validation},
 };
 
@@ -93,8 +94,12 @@ impl Validation for Custom {
         self.error_type.to_token_stream()
     }
 
-    fn error_generic_arguments(&self) -> Vec<GenericArgument> {
+    fn error_generics(&self) -> Vec<Generic> {
         generic_arguments(&self.error_type)
+    }
+
+    fn error_where_predicates(&self) -> Vec<TokenStream> {
+        vec![]
     }
 
     fn expr(&self, execution: Execution, expr: &TokenStream) -> Option<TokenStream> {

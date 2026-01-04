@@ -10,7 +10,9 @@ repository.workspace = true
 version.workspace = true
 
 [dependencies]
-fortifier.workspace = true
+fortifier = { workspace = true, features = ["email-address", "serde"] }
+serde = { workspace = true, features = ["derive"] }
+uuid = { workspace = true, features = ["serde"] }
 
 [lints]
 workspace = true

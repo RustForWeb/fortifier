@@ -56,3 +56,24 @@ pub fn enum_field_attributes() -> TokenStream {
         #( #attributes )*
     }
 }
+
+pub fn where_predicate(error_type: TokenStream) -> TokenStream {
+    #[allow(unused_mut)]
+    let mut lifetimes = TokenStream::new();
+    #[allow(unused_mut)]
+    let mut traits = TokenStream::new();
+
+    #[cfg(feature = "serde")]
+    {
+        use proc_macro_crate::crate_name;
+
+        if crate_name("serde").is_ok() {
+            lifetimes = quote!(for<'fde>);
+            traits = quote!(+ ::serde::Deserialize<'fde> + ::serde::Serialize);
+        }
+    }
+
+    quote! {
+        #lifetimes #error_type: Debug + PartialEq #traits
+    }
+}

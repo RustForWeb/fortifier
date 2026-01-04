@@ -1,44 +1,32 @@
-use std::fmt::Debug;
+mod action;
+mod bounds;
 
 use fortifier::{Validate, ValidationErrors};
+use uuid::Uuid;
 
-#[derive(Validate)]
-#[validate(custom(function = validate_min_max, error = BoundsMinMaxError<T>))]
-struct Bounds<T>
-where
-    T: Clone + Debug + PartialEq + PartialOrd,
-{
-    min: Option<T>,
-    max: Option<T>,
-}
-
-#[derive(Debug, PartialEq)]
-struct BoundsMinMaxError<T>
-where
-    T: Debug + PartialEq,
-{
-    min: T,
-    max: T,
-}
-
-fn validate_min_max<T>(value: &Bounds<T>) -> Result<(), BoundsMinMaxError<T>>
-where
-    T: Clone + Debug + PartialEq + PartialOrd,
-{
-    if let Some(min) = &value.min
-        && let Some(max) = &value.max
-        && min > max
-    {
-        Err(BoundsMinMaxError {
-            min: min.clone(),
-            max: max.clone(),
-        })
-    } else {
-        Ok(())
-    }
-}
+use crate::{
+    action::{CreateOrUpdateUser, CreateUser, UpdateUser},
+    bounds::{Bounds, BoundsMinMaxError, BoundsValidationError},
+};
 
 fn main() {
+    let data = CreateOrUpdateUser::Create {
+        data: CreateUser {
+            email: "amy.pond@example.com".to_owned(),
+        },
+    };
+
+    assert!(data.validate_sync().is_ok());
+
+    let data = CreateOrUpdateUser::Update {
+        id: Uuid::nil(),
+        data: UpdateUser {
+            email: Some("amy.pond@example.com".to_owned()),
+        },
+    };
+
+    assert!(data.validate_sync().is_ok());
+
     let bounds = Bounds {
         min: Some(1),
         max: Some(10),

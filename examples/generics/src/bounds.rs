@@ -1,25 +1,25 @@
 use std::fmt::Debug;
 
-use fortifier::{Validate, ValidationErrors};
+use fortifier::Validate;
 use serde::{Deserialize, Serialize};
 
-#[derive(Validate)]
+#[derive(Deserialize, Serialize, Validate)]
 #[validate(custom(function = validate_min_max, error = BoundsMinMaxError<T>))]
-struct Bounds<T>
+pub struct Bounds<T>
 where
     T: Clone + Debug + PartialEq + PartialOrd + Send + Sync,
 {
-    min: Option<T>,
-    max: Option<T>,
+    pub min: Option<T>,
+    pub max: Option<T>,
 }
 
 #[derive(Debug, Deserialize, PartialEq, Serialize)]
-struct BoundsMinMaxError<T>
+pub struct BoundsMinMaxError<T>
 where
-    T: Debug + PartialEq + Send + Sync,
+    T: Debug + PartialEq,
 {
-    min: T,
-    max: T,
+    pub min: T,
+    pub max: T,
 }
 
 fn validate_min_max<T>(value: &Bounds<T>) -> Result<(), BoundsMinMaxError<T>>
@@ -37,25 +37,4 @@ where
     } else {
         Ok(())
     }
-}
-
-fn main() {
-    let bounds = Bounds {
-        min: Some(1),
-        max: Some(10),
-    };
-
-    assert_eq!(bounds.validate_sync(), Ok(()));
-
-    let bounds = Bounds {
-        min: Some(11),
-        max: Some(10),
-    };
-
-    assert_eq!(
-        bounds.validate_sync(),
-        Err(ValidationErrors::from_iter([BoundsValidationError::Root(
-            BoundsMinMaxError { min: 11, max: 10 }
-        )]))
-    );
 }

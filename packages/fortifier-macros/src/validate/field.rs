@@ -133,10 +133,12 @@ impl<'a> ValidateField<'a> {
             && result.validations.is_empty()
             && let Some(nested_type) = should_validate_type(generics, &field.ty)
         {
-            if let KnownOrUnknown::Known(nested_type) = nested_type {
-                result
-                    .validations
-                    .push(Box::new(Nested::new(syn::parse2(nested_type)?)));
+            if let KnownOrUnknown::Known(error_type) = nested_type.error_type {
+                result.validations.push(Box::new(Nested::new(
+                    syn::parse2(error_type)?,
+                    nested_type.generic_params,
+                    nested_type.where_predicates,
+                )));
             } else {
                 return Err(Error::new_spanned(
                     field,
