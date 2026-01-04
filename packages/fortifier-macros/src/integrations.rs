@@ -74,6 +74,6 @@ pub fn where_predicate(error_type: TokenStream) -> TokenStream {
     }
 
     quote! {
-        #lifetimes #error_type: Debug + PartialEq #traits
+        #lifetimes #error_type: ::std::fmt::Debug + PartialEq #traits
     }
 }
