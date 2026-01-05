@@ -59,7 +59,7 @@ pub fn enum_field_attributes() -> TokenStream {
 
 pub fn where_predicate(error_type: TokenStream) -> TokenStream {
     #[allow(unused_mut)]
-    let mut lifetimes = TokenStream::new();
+    let mut lifetime = TokenStream::new();
     #[allow(unused_mut)]
     let mut traits = TokenStream::new();
 
@@ -68,12 +68,20 @@ pub fn where_predicate(error_type: TokenStream) -> TokenStream {
         use proc_macro_crate::crate_name;
 
         if crate_name("serde").is_ok() {
-            lifetimes = quote!(for<'fde>);
-            traits = quote!(+ ::serde::Deserialize<'fde> + ::serde::Serialize);
+            lifetime = quote!(for<'fde>);
+            traits = quote!(#traits + ::serde::Deserialize<'fde> + ::serde::Serialize);
+        }
+    }
+    #[cfg(feature = "utoipa")]
+    {
+        use proc_macro_crate::crate_name;
+
+        if crate_name("utoipa").is_ok() {
+            traits = quote!(#traits + ::utoipa::ToSchema);
         }
     }
 
     quote! {
-        #lifetimes #error_type: ::std::fmt::Debug + PartialEq #traits
+        #lifetime #error_type: ::std::fmt::Debug + PartialEq #traits
     }
 }
