@@ -328,6 +328,7 @@ dependencies = [
 name = "fortifier"
 version = "0.2.8"
 dependencies = [
+ "cfg-if",
  "chrono",
  "email_address",
  "fortifier-macros",

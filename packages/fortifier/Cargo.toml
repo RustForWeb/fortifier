@@ -48,6 +48,7 @@ utoipa = { workspace = true, optional = true }
 uuid = { workspace = true, optional = true }
 
 [dev-dependencies]
+cfg-if = "1.0.4"
 pretty_assertions.workspace = true
 rust_decimal = { workspace = true, features = ["macros"] }
 serde_json.workspace = true
