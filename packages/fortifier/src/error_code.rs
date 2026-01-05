@@ -1,6 +1,46 @@
+#[cfg(all(feature = "serde", feature = "utoipa"))]
 /// Implement an error code.
 #[macro_export]
 macro_rules! error_code {
+    ($name:ident, $code:literal) => {
+        $crate::error_code_base!($name, $code);
+        $crate::error_code_serde!($name, $code);
+        $crate::error_code_utoipa!($name, $code);
+    };
+}
+
+#[cfg(all(feature = "serde", not(feature = "utoipa")))]
+/// Implement an error code.
+#[macro_export]
+macro_rules! error_code {
+    ($name:ident, $code:literal) => {
+        $crate::error_code_base!($name, $code);
+        $crate::error_code_serde!($name, $code);
+    };
+}
+
+#[cfg(all(not(feature = "serde"), feature = "utoipa"))]
+/// Implement an error code.
+#[macro_export]
+macro_rules! error_code {
+    ($name:ident, $code:literal) => {
+        $crate::error_code_base!($name, $code);
+        $crate::error_code_utoipa!($name, $code);
+    };
+}
+
+#[cfg(all(not(feature = "serde"), not(feature = "utoipa")))]
+/// Implement an error code.
+#[macro_export]
+macro_rules! error_code {
+    ($name:ident, $code:literal) => {
+        $crate::error_code_base!($name, $code);
+    };
+}
+
+/// Implement an error code.
+#[macro_export]
+macro_rules! error_code_base {
     ($name:ident, $code:literal) => {
         const CODE: &str = $code;
 
@@ -27,20 +67,25 @@ macro_rules! error_code {
                 ::std::fmt::Debug::fmt(&**self, f)
             }
         }
+    };
+}
 
-        #[cfg(feature = "serde")]
+/// Implement [`serde`] traits for an error code.
+#[cfg(feature = "serde")]
+#[macro_export]
+macro_rules! error_code_serde {
+    ($name:ident, $code:literal) => {
         impl<'de> ::serde::Deserialize<'de> for $name {
             fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
             where
                 D: ::serde::Deserializer<'de>,
             {
                 deserializer
-                    .deserialize_any($crate::integrations::serde::MustBeStrVisitor(CODE))
+                    .deserialize_any($crate::serde::MustBeStrVisitor(CODE))
                     .map(|()| Self)
             }
         }
 
-        #[cfg(feature = "serde")]
         impl ::serde::Serialize for $name {
             fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
             where
@@ -49,8 +94,14 @@ macro_rules! error_code {
                 serializer.serialize_str(CODE)
             }
         }
+    };
+}
 
-        #[cfg(feature = "utoipa")]
+/// Implement [`utoipa`] traits for an error code.
+#[cfg(feature = "utoipa")]
+#[macro_export]
+macro_rules! error_code_utoipa {
+    ($name:ident, $code:literal) => {
         impl ::utoipa::PartialSchema for $name {
             fn schema() -> ::utoipa::openapi::RefOr<::utoipa::openapi::schema::Schema> {
                 ::utoipa::openapi::schema::ObjectBuilder::new()
@@ -61,7 +112,6 @@ macro_rules! error_code {
             }
         }
 
-        #[cfg(feature = "utoipa")]
         impl ::utoipa::ToSchema for $name {}
     };
 }

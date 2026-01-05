@@ -1,28 +1,31 @@
 use proc_macro2::TokenStream;
 use quote::{ToTokens, format_ident, quote};
-use syn::{Ident, LitBool, Path, Result, Type, TypePath, meta::ParseNestedMeta};
+use syn::{Ident, LitBool, LitInt, Path, Result, Type, TypePath, meta::ParseNestedMeta};
 
 use crate::{
     generics::{Generic, generic_arguments},
-    util::upper_camel_ident,
+    util::{count_options, upper_camel_ident},
     validation::{Execution, Validation},
 };
 
 pub struct Custom {
+    r#type: Type,
     name: Ident,
-    execution: Execution,
     error_type: TypePath,
     function_path: Path,
+    execution: Execution,
     context: bool,
+    max_options: usize,
 }
 
 impl Validation for Custom {
-    fn parse(_type: &Type, meta: &ParseNestedMeta<'_>) -> Result<Self> {
+    fn parse(r#type: &Type, meta: &ParseNestedMeta<'_>) -> Result<Self> {
         let mut name = None;
-        let mut execution = Execution::Sync;
         let mut error_type: Option<TypePath> = None;
         let mut function_path: Option<Path> = None;
+        let mut execution = Execution::Sync;
         let mut context = false;
+        let mut max_options = 0;
 
         meta.parse_nested_meta(|meta| {
             if meta.path.is_ident("async") {
@@ -55,6 +58,15 @@ impl Validation for Custom {
                 function_path = Some(meta.value()?.parse()?);
 
                 Ok(())
+            } else if meta.path.is_ident("options") {
+                if let Ok(value) = meta.value() {
+                    let lit: LitInt = value.parse()?;
+                    max_options = lit.base10_parse::<usize>()?;
+                } else {
+                    max_options = usize::MAX;
+                }
+
+                Ok(())
             } else if meta.path.is_ident("name") {
                 let ident = meta.value()?.parse()?;
                 name = Some(upper_camel_ident(&ident));
@@ -78,11 +90,13 @@ impl Validation for Custom {
         });
 
         Ok(Custom {
+            r#type: r#type.clone(),
             name,
-            execution,
             error_type,
             function_path,
+            execution,
             context,
+            max_options,
         })
     }
 
@@ -103,24 +117,53 @@ impl Validation for Custom {
     }
 
     fn expr(&self, execution: Execution, expr: &TokenStream) -> Option<TokenStream> {
-        let context_expr = self.context.then(|| quote!(, &context));
-
         match (execution, self.execution) {
-            (Execution::Sync, Execution::Sync) => {
-                let function_path = &self.function_path;
-
-                Some(quote! {
-                    #function_path(&#expr #context_expr)
-                })
-            }
-            (Execution::Async, Execution::Async) => {
-                let function_path = &self.function_path;
-
-                Some(quote! {
-                    #function_path(&#expr #context_expr).await
-                })
-            }
+            (Execution::Sync, Execution::Sync) => Some(wrapper(
+                &self.r#type,
+                &self.function_path,
+                expr,
+                self.context,
+                self.max_options,
+                None,
+            )),
+            (Execution::Async, Execution::Async) => Some(wrapper(
+                &self.r#type,
+                &self.function_path,
+                expr,
+                self.context,
+                self.max_options,
+                Some(quote!(.await)),
+            )),
             _ => None,
+        }
+    }
+}
+
+fn wrapper(
+    r#type: &Type,
+    function_path: &Path,
+    expr: &TokenStream,
+    context: bool,
+    max_options: usize,
+    suffix: Option<TokenStream>,
+) -> TokenStream {
+    let context_expr = context.then(|| quote!(, &context));
+
+    let count = count_options(r#type);
+    let remove_count = count.saturating_sub(max_options);
+
+    if remove_count > 0 {
+        let mut wrapper = quote!(value);
+        for _ in 0..remove_count {
+            wrapper = quote!(Some(#wrapper));
+        }
+
+        quote! {
+            { if let #wrapper = &#expr { #function_path(value #context_expr) #suffix} else { Ok(())} }
+        }
+    } else {
+        quote! {
+            #function_path(&#expr #context_expr) #suffix
         }
     }
 }
