@@ -5,7 +5,9 @@ use syn::{
     TypeParamBound, WherePredicate, punctuated::Punctuated, token::PathSep,
 };
 
-use crate::{integrations::where_predicate, validate::error::format_error_ident};
+use crate::{
+    integrations::where_predicate, util::path_to_string, validate::error::format_error_ident,
+};
 
 /// Primitive and built-in types.
 ///
@@ -242,14 +244,6 @@ impl ValidateResult {
             where_predicates: vec![],
         }
     }
-}
-
-fn path_to_string(path: &Path) -> String {
-    path.segments
-        .iter()
-        .map(|segment| segment.ident.to_string())
-        .collect::<Vec<_>>()
-        .join("::")
 }
 
 fn is_validate_path(path: &Path) -> bool {
