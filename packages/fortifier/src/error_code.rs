@@ -2,10 +2,10 @@
 /// Implement an error code.
 #[macro_export]
 macro_rules! error_code {
-    ($name:ident, $code:literal) => {
-        $crate::error_code_base!($name, $code);
-        $crate::error_code_serde!($name, $code);
-        $crate::error_code_utoipa!($name, $code);
+    ($name:ident, $code_name:ident, $code:literal) => {
+        $crate::error_code_base!($name, $code_name, $code);
+        $crate::error_code_serde!($name, $code_name, $code);
+        $crate::error_code_utoipa!($name, $code_name, $code);
     };
 }
 
@@ -13,9 +13,9 @@ macro_rules! error_code {
 /// Implement an error code.
 #[macro_export]
 macro_rules! error_code {
-    ($name:ident, $code:literal) => {
-        $crate::error_code_base!($name, $code);
-        $crate::error_code_serde!($name, $code);
+    ($name:ident, $code_name:ident, $code:literal) => {
+        $crate::error_code_base!($name, $code_name, $code);
+        $crate::error_code_serde!($name, $code_name, $code);
     };
 }
 
@@ -23,9 +23,9 @@ macro_rules! error_code {
 /// Implement an error code.
 #[macro_export]
 macro_rules! error_code {
-    ($name:ident, $code:literal) => {
-        $crate::error_code_base!($name, $code);
-        $crate::error_code_utoipa!($name, $code);
+    ($name:ident, $code_name:ident, $code:literal) => {
+        $crate::error_code_base!($name, $code_name, $code);
+        $crate::error_code_utoipa!($name, $code_name, $code);
     };
 }
 
@@ -33,16 +33,16 @@ macro_rules! error_code {
 /// Implement an error code.
 #[macro_export]
 macro_rules! error_code {
-    ($name:ident, $code:literal) => {
-        $crate::error_code_base!($name, $code);
+    ($name:ident, $code_name:ident, $code:literal) => {
+        $crate::error_code_base!($name, $code_name, $code);
     };
 }
 
 /// Implement an error code.
 #[macro_export]
 macro_rules! error_code_base {
-    ($name:ident, $code:literal) => {
-        const CODE: &str = $code;
+    ($name:ident, $code_name:ident, $code:literal) => {
+        const $code_name: &str = $code;
 
         /// Email address error code.
         #[derive(Eq, PartialEq)]
@@ -58,7 +58,7 @@ macro_rules! error_code_base {
             type Target = str;
 
             fn deref(&self) -> &Self::Target {
-                CODE
+                $code_name
             }
         }
 
@@ -74,14 +74,14 @@ macro_rules! error_code_base {
 #[cfg(feature = "serde")]
 #[macro_export]
 macro_rules! error_code_serde {
-    ($name:ident, $code:literal) => {
+    ($name:ident, $code_name:ident, $code:literal) => {
         impl<'de> ::serde::Deserialize<'de> for $name {
             fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
             where
                 D: ::serde::Deserializer<'de>,
             {
                 deserializer
-                    .deserialize_any($crate::serde::MustBeStrVisitor(CODE))
+                    .deserialize_any($crate::serde::MustBeStrVisitor($code_name))
                     .map(|()| Self)
             }
         }
@@ -91,7 +91,7 @@ macro_rules! error_code_serde {
             where
                 S: ::serde::Serializer,
             {
-                serializer.serialize_str(CODE)
+                serializer.serialize_str($code_name)
             }
         }
     };
@@ -101,12 +101,12 @@ macro_rules! error_code_serde {
 #[cfg(feature = "utoipa")]
 #[macro_export]
 macro_rules! error_code_utoipa {
-    ($name:ident, $code:literal) => {
+    ($name:ident, $code_name:ident, $code:literal) => {
         impl ::utoipa::PartialSchema for $name {
             fn schema() -> ::utoipa::openapi::RefOr<::utoipa::openapi::schema::Schema> {
                 ::utoipa::openapi::schema::ObjectBuilder::new()
                     .schema_type(::utoipa::openapi::schema::Type::String)
-                    .enum_values(Some([CODE]))
+                    .enum_values(Some([$code_name]))
                     .build()
                     .into()
             }

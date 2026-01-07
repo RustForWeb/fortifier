@@ -8,7 +8,7 @@ use std::{
 
 use crate::error_code;
 
-error_code!(RangeErrorCode, "range");
+error_code!(RangeErrorCode, RANGE_ERROR_CODE, "range");
 
 /// Range validation error.
 #[derive(Debug, Eq, PartialEq)]
