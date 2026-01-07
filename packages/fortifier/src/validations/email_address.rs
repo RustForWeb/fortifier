@@ -12,7 +12,11 @@ pub use email_address::Options as EmailAddressOptions;
 
 use crate::error_code;
 
-error_code!(EmailAddressErrorCode, "emailAddress");
+error_code!(
+    EmailAddressErrorCode,
+    EMAIL_ADDRESS_ERROR_CODE,
+    "emailAddress"
+);
 
 /// Email validation error.
 #[derive(Debug, Eq, PartialEq)]

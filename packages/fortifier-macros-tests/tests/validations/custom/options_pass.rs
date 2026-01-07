@@ -35,7 +35,7 @@ struct CustomData<'a> {
     strip_to_two_options_from_three: Option<Option<Option<&'a str>>>,
 }
 
-error_code!(CustomErrorCode, "custom");
+error_code!(CustomErrorCode, CUSTOM_ERROR_CODE, "custom");
 
 #[derive(Debug, Deserialize, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]

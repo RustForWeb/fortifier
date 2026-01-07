@@ -38,7 +38,7 @@ where
     }
 }
 
-error_code!(RegexErrorCode, "regex");
+error_code!(RegexErrorCode, REGEX_ERROR_CODE, "regex");
 
 /// Regular expression validation error.
 #[derive(Debug, Eq, PartialEq)]

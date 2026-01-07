@@ -11,7 +11,7 @@ use url::{ParseError, Url};
 
 use crate::error_code;
 
-error_code!(UrlErrorCode, "url");
+error_code!(UrlErrorCode, URL_ERROR_CODE, "url");
 
 /// URL validation error.
 #[derive(Debug, Eq, PartialEq)]

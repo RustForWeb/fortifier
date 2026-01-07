@@ -13,7 +13,7 @@ use indexmap::{IndexMap, IndexSet};
 
 use crate::error_code;
 
-error_code!(LengthErrorCode, "length");
+error_code!(LengthErrorCode, LENGTH_ERROR_CODE, "length");
 
 /// Length validation error.
 #[derive(Debug, Eq, PartialEq)]

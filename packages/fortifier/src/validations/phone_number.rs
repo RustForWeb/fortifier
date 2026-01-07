@@ -12,7 +12,7 @@ use phonenumber::{ParseError, PhoneNumber};
 
 use crate::error_code;
 
-error_code!(PhoneNumberErrorCode, "phoneNumber");
+error_code!(PhoneNumberErrorCode, PHONE_NUMBER_ERROR_CODE, "phoneNumber");
 
 /// Phone number validation error.
 #[derive(Debug, Eq, PartialEq)]
