@@ -22,7 +22,9 @@ pub fn path_to_string(path: &Path) -> String {
 
 pub fn is_option_path(path: &Path) -> bool {
     let path_string = path_to_string(path);
-    path_string == "Option" || path_string == "std::option::Option"
+    path_string == "Option"
+        || path_string == "option::Option"
+        || path_string == "std::option::Option"
 }
 
 pub fn count_options(r#type: &Type) -> usize {
@@ -36,5 +38,19 @@ pub fn count_options(r#type: &Type) -> usize {
         1 + count_options(argument_type)
     } else {
         0
+    }
+}
+
+pub fn strip_options(r#type: &Type) -> &Type {
+    if let Type::Path(r#type) = r#type
+        && let Some(segment) = r#type.path.segments.last()
+        && let PathArguments::AngleBracketed(arguments) = &segment.arguments
+        && arguments.args.len() == 1
+        && is_option_path(&r#type.path)
+        && let Some(GenericArgument::Type(argument_type)) = arguments.args.first()
+    {
+        strip_options(argument_type)
+    } else {
+        r#type
     }
 }
