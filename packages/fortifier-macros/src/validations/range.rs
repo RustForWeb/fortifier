@@ -4,6 +4,7 @@ use syn::{Expr, Ident, Result, Type, meta::ParseNestedMeta};
 
 use crate::{
     generics::Generic,
+    util::strip_options,
     validation::{Execution, Validation},
 };
 
@@ -66,7 +67,7 @@ impl Validation for Range {
     }
 
     fn error_type(&self) -> TokenStream {
-        let r#type = &self.r#type;
+        let r#type = strip_options(&self.r#type);
 
         quote!(::fortifier::RangeError<#r#type>)
     }

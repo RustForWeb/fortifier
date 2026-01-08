@@ -18,6 +18,11 @@ struct RangeData {
     exclusive_min_max: usize,
     #[validate(range(min = 1, exclusive_max = 7))]
     min_exclusive_max: usize,
+
+    #[validate(range(min = 1))]
+    one_option: Option<usize>,
+    #[validate(range(min = 1))]
+    two_options: Option<Option<usize>>,
 }
 
 fn main() {
@@ -30,6 +35,9 @@ fn main() {
         exclusive_min_exclusive_max: 1,
         exclusive_min_max: 2,
         min_exclusive_max: 2,
+
+        one_option: Some(1),
+        two_options: Some(Some(1)),
     };
 
     assert_eq!(
