@@ -7,10 +7,19 @@ error[E0277]: the trait bound `str: AsRegex` is not satisfied
 5 |     #[validate(regex = "abc")]
   |                        ^^^^^ the trait `AsRegex` is not implemented for `str`
   |
-  = help: the following other types implement trait `AsRegex`:
-            &T
-            LazyLock<regex::regex::string::Regex>
-            regex::regex::string::Regex
+help: the following other types implement trait `AsRegex`
+ --> $WORKSPACE/packages/fortifier/src/validations/regex.rs
+  |
+  |   impl AsRegex for Regex {
+  |   ^^^^^^^^^^^^^^^^^^^^^^ `regex::regex::string::Regex`
+...
+  |   impl AsRegex for LazyLock<Regex> {
+  |   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ `LazyLock<regex::regex::string::Regex>`
+...
+  | / impl<T> AsRegex for &T
+  | | where
+  | |     T: AsRegex,
+  | |_______________^ `&T`
   = note: required for `&str` to implement `AsRegex`
 note: required by a bound in `validate_regex`
  --> $WORKSPACE/packages/fortifier/src/validations/regex.rs
@@ -27,10 +36,19 @@ error[E0277]: the trait bound `&str: AsRegex` is not satisfied
 5 |     #[validate(regex = "abc")]
   |                        ^^^^^ the trait `Sized` is not implemented for `str`
   |
-  = help: the following other types implement trait `AsRegex`:
-            &T
-            LazyLock<regex::regex::string::Regex>
-            regex::regex::string::Regex
+help: the following other types implement trait `AsRegex`
+ --> $WORKSPACE/packages/fortifier/src/validations/regex.rs
+  |
+  |   impl AsRegex for Regex {
+  |   ^^^^^^^^^^^^^^^^^^^^^^ `regex::regex::string::Regex`
+...
+  |   impl AsRegex for LazyLock<Regex> {
+  |   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ `LazyLock<regex::regex::string::Regex>`
+...
+  | / impl<T> AsRegex for &T
+  | | where
+  | |     T: AsRegex,
+  | |_______________^ `&T`
   = note: required for `&str` to implement `AsRegex`
 note: required by a bound in `validate_regex`
  --> $WORKSPACE/packages/fortifier/src/validations/regex.rs
