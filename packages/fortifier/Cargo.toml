@@ -26,16 +26,18 @@ regex = ["dep:regex"]
 serde = [
     "dep:serde",
     "chrono?/serde",
+    "constant-string/serde",
     "email_address?/serde_support",
     "fortifier-macros?/serde",
     "uuid?/serde",
 ]
 url = ["dep:url"]
-utoipa = ["dep:utoipa", "fortifier-macros?/utoipa"]
+utoipa = ["dep:utoipa", "constant-string/utoipa", "fortifier-macros?/utoipa"]
 uuid = ["dep:uuid"]
 
 [dependencies]
 chrono = { workspace = true, optional = true }
+constant-string.workspace = true
 email_address = { workspace = true, default-features = false, optional = true }
 fortifier-macros = { workspace = true, optional = true }
 indexmap = { workspace = true, optional = true }

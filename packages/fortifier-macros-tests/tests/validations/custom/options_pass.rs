@@ -1,4 +1,5 @@
-use fortifier::{Validate, error_code};
+use constant_string::constant_string;
+use fortifier::Validate;
 use serde::{Deserialize, Serialize};
 
 #[derive(Deserialize, Serialize, Validate)]
@@ -35,7 +36,7 @@ struct CustomData<'a> {
     strip_to_two_options_from_three: Option<Option<Option<&'a str>>>,
 }
 
-error_code!(CustomErrorCode, CUSTOM_ERROR_CODE, "custom");
+constant_string!(CustomErrorCode, CUSTOM_ERROR_CODE, "custom");
 
 #[derive(Debug, Deserialize, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]

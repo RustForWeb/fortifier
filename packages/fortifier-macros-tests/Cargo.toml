@@ -20,6 +20,7 @@ ignored = ["chrono", "rust_decimal", "uuid"]
 
 [dev-dependencies]
 chrono.workspace = true
+constant-string.workspace = true
 email_address.workspace = true
 fortifier = { workspace = true, features = [
     "all-types",

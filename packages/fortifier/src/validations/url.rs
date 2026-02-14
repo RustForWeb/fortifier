@@ -7,11 +7,10 @@ use std::{
     sync::Arc,
 };
 
+use constant_string::constant_string;
 use url::{ParseError, Url};
 
-use crate::error_code;
-
-error_code!(UrlErrorCode, URL_ERROR_CODE, "url");
+constant_string!(UrlErrorCode, URL_ERROR_CODE, "url");
 
 /// URL validation error.
 #[derive(Debug, Eq, PartialEq)]
