@@ -7,9 +7,8 @@ use std::{
     sync::{Arc, LazyLock},
 };
 
+use constant_string::constant_string;
 use regex::Regex;
-
-use crate::error_code;
 
 /// Convert to a regular expression.
 pub trait AsRegex {
@@ -38,7 +37,7 @@ where
     }
 }
 
-error_code!(RegexErrorCode, REGEX_ERROR_CODE, "regex");
+constant_string!(RegexErrorCode, REGEX_ERROR_CODE, "regex");
 
 /// Regular expression validation error.
 #[derive(Debug, Eq, PartialEq)]

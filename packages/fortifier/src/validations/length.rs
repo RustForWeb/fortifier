@@ -8,12 +8,11 @@ use std::{
     sync::Arc,
 };
 
+use constant_string::constant_string;
 #[cfg(feature = "indexmap")]
 use indexmap::{IndexMap, IndexSet};
 
-use crate::error_code;
-
-error_code!(LengthErrorCode, LENGTH_ERROR_CODE, "length");
+constant_string!(LengthErrorCode, LENGTH_ERROR_CODE, "length");
 
 /// Length validation error.
 #[derive(Debug, Eq, PartialEq)]

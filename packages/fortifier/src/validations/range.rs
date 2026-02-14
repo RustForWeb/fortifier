@@ -6,9 +6,9 @@ use std::{
     sync::Arc,
 };
 
-use crate::error_code;
+use constant_string::constant_string;
 
-error_code!(RangeErrorCode, RANGE_ERROR_CODE, "range");
+constant_string!(RangeErrorCode, RANGE_ERROR_CODE, "range");
 
 /// Range validation error.
 #[derive(Debug, Eq, PartialEq)]

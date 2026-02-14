@@ -7,12 +7,11 @@ use std::{
     sync::Arc,
 };
 
+use constant_string::constant_string;
 pub use phonenumber::country::Id as PhoneNumberCountry;
 use phonenumber::{ParseError, PhoneNumber};
 
-use crate::error_code;
-
-error_code!(PhoneNumberErrorCode, PHONE_NUMBER_ERROR_CODE, "phoneNumber");
+constant_string!(PhoneNumberErrorCode, PHONE_NUMBER_ERROR_CODE, "phoneNumber");
 
 /// Phone number validation error.
 #[derive(Debug, Eq, PartialEq)]

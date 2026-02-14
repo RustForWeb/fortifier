@@ -7,12 +7,11 @@ use std::{
     sync::Arc,
 };
 
+use constant_string::constant_string;
 use email_address::EmailAddress;
 pub use email_address::Options as EmailAddressOptions;
 
-use crate::error_code;
-
-error_code!(
+constant_string!(
     EmailAddressErrorCode,
     EMAIL_ADDRESS_ERROR_CODE,
     "emailAddress"

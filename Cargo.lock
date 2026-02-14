@@ -175,9 +175,9 @@ dependencies = [
 
 [[package]]
 name = "bytes"
-version = "1.11.0"
+version = "1.11.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b35204fbdc0b3f4446b89fc1ac2cf84a8a68971995d0bf2e925ec7cd960f9cb3"
+checksum = "1e748733b7cbc798e1434b6ac524f0c1ff2ab456fe201501e6497c8417a4fc33"
 
 [[package]]
 name = "cc"
@@ -213,6 +213,16 @@ dependencies = [
  "serde",
  "wasm-bindgen",
  "windows-link",
+]
+
+[[package]]
+name = "constant-string"
+version = "0.0.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ff33a2f7482fb56d66e3f53cb8b8f776283291bb71bcdc8d73974291a800af10"
+dependencies = [
+ "serde",
+ "utoipa",
 ]
 
 [[package]]
@@ -330,6 +340,7 @@ version = "0.2.11"
 dependencies = [
  "cfg-if",
  "chrono",
+ "constant-string",
  "email_address",
  "fortifier-macros",
  "indexmap",
@@ -401,6 +412,7 @@ name = "fortifier-macros-tests"
 version = "0.2.11"
 dependencies = [
  "chrono",
+ "constant-string",
  "email_address",
  "fortifier",
  "indexmap",
@@ -1762,7 +1774,7 @@ version = "0.1.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c2a7b1c03c876122aa43f3020e6c3c3ee5c05081c9a00739faf7503aeba10d22"
 dependencies = [
- "windows-sys 0.60.2",
+ "windows-sys 0.61.2",
 ]
 
 [[package]]
