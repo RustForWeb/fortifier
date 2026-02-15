@@ -25,10 +25,8 @@ fn main() {
     assert_eq!(
         data.validate_sync(),
         Err(ValidationErrors::from_iter([
-            PhoneNumberDataValidationError::Str(PhoneNumberError::from(
-                ParseError::InvalidCountryCode
-            )),
-            PhoneNumberDataValidationError::String(PhoneNumberError::from(ParseError::TooShortNsn)),
+            PhoneNumberDataValidationError::Str(PhoneNumberError::from(ParseError::NoNumber)),
+            PhoneNumberDataValidationError::String(PhoneNumberError::from(ParseError::NoNumber)),
             PhoneNumberDataValidationError::PhoneNumber(PhoneNumberError::DisallowedCountryCode {
                 code: PhoneNumberErrorCode,
                 allowed: vec![PhoneNumberCountry::NL],
