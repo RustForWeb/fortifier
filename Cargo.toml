@@ -11,7 +11,7 @@ version = "0.2.11"
 
 [workspace.dependencies]
 chrono = "0.4.42"
-constant-string = "0.0.5"
+constant-string = "1.0.1"
 email_address = { version = "0.2.9", default-features = false }
 fortifier = { path = "./packages/fortifier", version = "0.2.0" }
 fortifier-macros = { path = "./packages/fortifier-macros", version = "0.2.0" }

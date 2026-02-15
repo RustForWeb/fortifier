@@ -33,6 +33,7 @@ pub enum RangeError<T> {
 
         /// The error code.
         #[cfg_attr(feature = "serde", serde(default))]
+        #[cfg_attr(feature = "utoipa", schema(inline))]
         code: RangeErrorCode,
 
         /// A human-readable error message.
@@ -49,6 +50,7 @@ pub enum RangeError<T> {
 
         /// The error code.
         #[cfg_attr(feature = "serde", serde(default))]
+        #[cfg_attr(feature = "utoipa", schema(inline))]
         code: RangeErrorCode,
 
         /// A human-readable error message.
@@ -65,6 +67,7 @@ pub enum RangeError<T> {
 
         /// The error code.
         #[cfg_attr(feature = "serde", serde(default))]
+        #[cfg_attr(feature = "utoipa", schema(inline))]
         code: RangeErrorCode,
 
         /// A human-readable error message.
@@ -81,6 +84,7 @@ pub enum RangeError<T> {
 
         /// The error code.
         #[cfg_attr(feature = "serde", serde(default))]
+        #[cfg_attr(feature = "utoipa", schema(inline))]
         code: RangeErrorCode,
 
         /// A human-readable error message.
