@@ -29,6 +29,7 @@ pub enum UrlError {
     EmptyHost {
         /// The error code.
         #[cfg_attr(feature = "serde", serde(default))]
+        #[cfg_attr(feature = "utoipa", schema(inline))]
         code: UrlErrorCode,
 
         /// A human-readable error message.
@@ -39,6 +40,7 @@ pub enum UrlError {
     IdnaError {
         /// The error code.
         #[cfg_attr(feature = "serde", serde(default))]
+        #[cfg_attr(feature = "utoipa", schema(inline))]
         code: UrlErrorCode,
 
         /// A human-readable error message.
@@ -49,6 +51,7 @@ pub enum UrlError {
     InvalidPort {
         /// The error code.
         #[cfg_attr(feature = "serde", serde(default))]
+        #[cfg_attr(feature = "utoipa", schema(inline))]
         code: UrlErrorCode,
 
         /// A human-readable error message.
@@ -59,6 +62,7 @@ pub enum UrlError {
     InvalidIpv4Address {
         /// The error code.
         #[cfg_attr(feature = "serde", serde(default))]
+        #[cfg_attr(feature = "utoipa", schema(inline))]
         code: UrlErrorCode,
 
         /// A human-readable error message.
@@ -69,6 +73,7 @@ pub enum UrlError {
     InvalidIpv6Address {
         /// The error code.
         #[cfg_attr(feature = "serde", serde(default))]
+        #[cfg_attr(feature = "utoipa", schema(inline))]
         code: UrlErrorCode,
 
         /// A human-readable error message.
@@ -79,6 +84,7 @@ pub enum UrlError {
     InvalidDomainCharacter {
         /// The error code.
         #[cfg_attr(feature = "serde", serde(default))]
+        #[cfg_attr(feature = "utoipa", schema(inline))]
         code: UrlErrorCode,
 
         /// A human-readable error message.
@@ -89,6 +95,7 @@ pub enum UrlError {
     RelativeUrlWithoutBase {
         /// The error code.
         #[cfg_attr(feature = "serde", serde(default))]
+        #[cfg_attr(feature = "utoipa", schema(inline))]
         code: UrlErrorCode,
 
         /// A human-readable error message.
@@ -99,6 +106,7 @@ pub enum UrlError {
     RelativeUrlWithCannotBeABaseBase {
         /// The error code.
         #[cfg_attr(feature = "serde", serde(default))]
+        #[cfg_attr(feature = "utoipa", schema(inline))]
         code: UrlErrorCode,
 
         /// A human-readable error message.
@@ -109,6 +117,7 @@ pub enum UrlError {
     SetHostOnCannotBeABaseUrl {
         /// The error code.
         #[cfg_attr(feature = "serde", serde(default))]
+        #[cfg_attr(feature = "utoipa", schema(inline))]
         code: UrlErrorCode,
 
         /// A human-readable error message.
@@ -119,6 +128,7 @@ pub enum UrlError {
     Overflow {
         /// The error code.
         #[cfg_attr(feature = "serde", serde(default))]
+        #[cfg_attr(feature = "utoipa", schema(inline))]
         code: UrlErrorCode,
 
         /// A human-readable error message.
@@ -129,6 +139,7 @@ pub enum UrlError {
     Unknown {
         /// The error code.
         #[cfg_attr(feature = "serde", serde(default))]
+        #[cfg_attr(feature = "utoipa", schema(inline))]
         code: UrlErrorCode,
 
         /// A human-readable error message.
