@@ -365,58 +365,58 @@ mod tests {
     fn invalid_error() {
         assert_eq!(
             (*"+44").validate_phone_number(None, None),
-            Err(PhoneNumberError::from(ParseError::TooShortNsn))
+            Err(PhoneNumberError::from(ParseError::NoNumber))
         );
         assert_eq!(
             "+44".validate_phone_number(None, None),
-            Err(PhoneNumberError::from(ParseError::TooShortNsn))
+            Err(PhoneNumberError::from(ParseError::NoNumber))
         );
         assert_eq!(
             "+44".to_owned().validate_phone_number(None, None),
-            Err(PhoneNumberError::from(ParseError::TooShortNsn))
+            Err(PhoneNumberError::from(ParseError::NoNumber))
         );
         assert_eq!(
             Cow::<str>::Borrowed("+44").validate_phone_number(None, None),
-            Err(PhoneNumberError::from(ParseError::TooShortNsn))
+            Err(PhoneNumberError::from(ParseError::NoNumber))
         );
         assert_eq!(
             Cow::<str>::Owned("+44".to_owned()).validate_phone_number(None, None),
-            Err(PhoneNumberError::from(ParseError::TooShortNsn))
+            Err(PhoneNumberError::from(ParseError::NoNumber))
         );
 
         assert_eq!(
             Some("+44").validate_phone_number(None, None),
-            Err(PhoneNumberError::from(ParseError::TooShortNsn))
+            Err(PhoneNumberError::from(ParseError::NoNumber))
         );
 
         assert_eq!(
             (&"+44").validate_phone_number(None, None),
-            Err(PhoneNumberError::from(ParseError::TooShortNsn))
+            Err(PhoneNumberError::from(ParseError::NoNumber))
         );
         #[expect(unused_allocation)]
         {
             assert_eq!(
                 Box::new("+44").validate_phone_number(None, None),
-                Err(PhoneNumberError::from(ParseError::TooShortNsn))
+                Err(PhoneNumberError::from(ParseError::NoNumber))
             );
         }
         assert_eq!(
             Arc::new("+44").validate_phone_number(None, None),
-            Err(PhoneNumberError::from(ParseError::TooShortNsn))
+            Err(PhoneNumberError::from(ParseError::NoNumber))
         );
         assert_eq!(
             Rc::new("+44").validate_phone_number(None, None),
-            Err(PhoneNumberError::from(ParseError::TooShortNsn))
+            Err(PhoneNumberError::from(ParseError::NoNumber))
         );
 
         let cell = RefCell::new("+44");
         assert_eq!(
             cell.borrow().validate_phone_number(None, None),
-            Err(PhoneNumberError::from(ParseError::TooShortNsn))
+            Err(PhoneNumberError::from(ParseError::NoNumber))
         );
         assert_eq!(
             cell.borrow_mut().validate_phone_number(None, None),
-            Err(PhoneNumberError::from(ParseError::TooShortNsn))
+            Err(PhoneNumberError::from(ParseError::NoNumber))
         );
     }
 

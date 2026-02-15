@@ -27,7 +27,7 @@ fn main() {
                 ParseError::TooLong
             )),
             PhoneNumberDataValidationError::DefaultCountry(PhoneNumberError::from(
-                ParseError::TooShortNsn
+                ParseError::NoNumber
             )),
             PhoneNumberDataValidationError::AllowedCountries(
                 PhoneNumberError::DisallowedCountryCode {
