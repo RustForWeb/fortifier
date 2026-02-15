@@ -3,8 +3,8 @@ all-features = true
 
 [advisories]
 ignore = [
+    { id = "RUSTSEC-2023-0089", reason = "No maintained version available for `atomic-polyfill`." },
     { id = "RUSTSEC-2024-0436", reason = "No maintained version available for `paste`." },
-    { id = "RUSTSEC-2025-0141", reason = "No maintained version available for `bincode`." },
 ]
 
 [bans]
