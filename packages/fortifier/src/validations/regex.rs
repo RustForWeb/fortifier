@@ -50,7 +50,7 @@ constant_string!(RegexErrorCode, REGEX_ERROR_CODE, "regex");
 pub struct RegexError {
     /// The error code.
     #[cfg_attr(feature = "serde", serde(default))]
-    #[cfg_attr(feature = "utoipa", schema(inline))]
+    #[cfg_attr(feature = "utoipa", schema(inline, required))]
     code: RegexErrorCode,
 
     /// A human-readable error message.

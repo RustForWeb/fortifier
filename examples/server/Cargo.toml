@@ -11,13 +11,7 @@ version.workspace = true
 
 [dependencies]
 axum = "0.8.7"
-fortifier = { workspace = true, features = [
-    "email-address",
-    "regex",
-    "serde",
-    "url",
-    "utoipa",
-] }
+fortifier = { workspace = true, features = ["email-address", "regex", "serde", "url", "utoipa"] }
 serde = { workspace = true, features = ["derive"] }
 thiserror = "2.0.17"
 tokio = { workspace = true, features = ["macros", "rt-multi-thread"] }

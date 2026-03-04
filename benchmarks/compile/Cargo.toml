@@ -17,11 +17,7 @@ structs-10-fields-10 = []
 validator = ["dep:validator"]
 
 [dependencies]
-fortifier = { workspace = true, features = [
-    "email-address",
-    "serde",
-    "url",
-], optional = true }
+fortifier = { workspace = true, features = ["email-address", "serde", "url"], optional = true }
 validator = { version = "0.20.0", features = ["derive"], optional = true }
 
 [lints]

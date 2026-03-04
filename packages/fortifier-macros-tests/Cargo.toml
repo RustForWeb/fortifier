@@ -22,11 +22,7 @@ ignored = ["chrono", "rust_decimal", "uuid"]
 chrono.workspace = true
 constant-string.workspace = true
 email_address.workspace = true
-fortifier = { workspace = true, features = [
-    "all-types",
-    "all-validations",
-    "serde",
-] }
+fortifier = { workspace = true, features = ["all-types", "all-validations", "serde"] }
 indexmap.workspace = true
 phonenumber.workspace = true
 pretty_assertions.workspace = true
