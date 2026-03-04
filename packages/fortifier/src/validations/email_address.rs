@@ -34,7 +34,7 @@ pub enum EmailAddressError {
     InvalidCharacter {
         /// The error code.
         #[cfg_attr(feature = "serde", serde(default))]
-        #[cfg_attr(feature = "utoipa", schema(inline))]
+        #[cfg_attr(feature = "utoipa", schema(inline, required))]
         code: EmailAddressErrorCode,
 
         /// A human-readable error message.
@@ -45,7 +45,7 @@ pub enum EmailAddressError {
     MissingSeparator {
         /// The error code.
         #[cfg_attr(feature = "serde", serde(default))]
-        #[cfg_attr(feature = "utoipa", schema(inline))]
+        #[cfg_attr(feature = "utoipa", schema(inline, required))]
         code: EmailAddressErrorCode,
 
         /// A human-readable error message.
@@ -56,7 +56,7 @@ pub enum EmailAddressError {
     LocalPartEmpty {
         /// The error code.
         #[cfg_attr(feature = "serde", serde(default))]
-        #[cfg_attr(feature = "utoipa", schema(inline))]
+        #[cfg_attr(feature = "utoipa", schema(inline, required))]
         code: EmailAddressErrorCode,
 
         /// A human-readable error message.
@@ -67,7 +67,7 @@ pub enum EmailAddressError {
     LocalPartTooLong {
         /// The error code.
         #[cfg_attr(feature = "serde", serde(default))]
-        #[cfg_attr(feature = "utoipa", schema(inline))]
+        #[cfg_attr(feature = "utoipa", schema(inline, required))]
         code: EmailAddressErrorCode,
 
         /// A human-readable error message.
@@ -78,7 +78,7 @@ pub enum EmailAddressError {
     DomainEmpty {
         /// The error code.
         #[cfg_attr(feature = "serde", serde(default))]
-        #[cfg_attr(feature = "utoipa", schema(inline))]
+        #[cfg_attr(feature = "utoipa", schema(inline, required))]
         code: EmailAddressErrorCode,
 
         /// A human-readable error message.
@@ -89,7 +89,7 @@ pub enum EmailAddressError {
     DomainTooLong {
         /// The error code.
         #[cfg_attr(feature = "serde", serde(default))]
-        #[cfg_attr(feature = "utoipa", schema(inline))]
+        #[cfg_attr(feature = "utoipa", schema(inline, required))]
         code: EmailAddressErrorCode,
 
         /// A human-readable error message.
@@ -100,7 +100,7 @@ pub enum EmailAddressError {
     SubDomainEmpty {
         /// The error code.
         #[cfg_attr(feature = "serde", serde(default))]
-        #[cfg_attr(feature = "utoipa", schema(inline))]
+        #[cfg_attr(feature = "utoipa", schema(inline, required))]
         code: EmailAddressErrorCode,
 
         /// A human-readable error message.
@@ -111,7 +111,7 @@ pub enum EmailAddressError {
     SubDomainTooLong {
         /// The error code.
         #[cfg_attr(feature = "serde", serde(default))]
-        #[cfg_attr(feature = "utoipa", schema(inline))]
+        #[cfg_attr(feature = "utoipa", schema(inline, required))]
         code: EmailAddressErrorCode,
 
         /// A human-readable error message.
@@ -122,7 +122,7 @@ pub enum EmailAddressError {
     DomainTooFew {
         /// The error code.
         #[cfg_attr(feature = "serde", serde(default))]
-        #[cfg_attr(feature = "utoipa", schema(inline))]
+        #[cfg_attr(feature = "utoipa", schema(inline, required))]
         code: EmailAddressErrorCode,
 
         /// A human-readable error message.
@@ -133,7 +133,7 @@ pub enum EmailAddressError {
     DomainInvalidSeparator {
         /// The error code.
         #[cfg_attr(feature = "serde", serde(default))]
-        #[cfg_attr(feature = "utoipa", schema(inline))]
+        #[cfg_attr(feature = "utoipa", schema(inline, required))]
         code: EmailAddressErrorCode,
 
         /// A human-readable error message.
@@ -144,7 +144,7 @@ pub enum EmailAddressError {
     UnbalancedQuotes {
         /// The error code.
         #[cfg_attr(feature = "serde", serde(default))]
-        #[cfg_attr(feature = "utoipa", schema(inline))]
+        #[cfg_attr(feature = "utoipa", schema(inline, required))]
         code: EmailAddressErrorCode,
 
         /// A human-readable error message.
@@ -155,7 +155,7 @@ pub enum EmailAddressError {
     InvalidComment {
         /// The error code.
         #[cfg_attr(feature = "serde", serde(default))]
-        #[cfg_attr(feature = "utoipa", schema(inline))]
+        #[cfg_attr(feature = "utoipa", schema(inline, required))]
         code: EmailAddressErrorCode,
 
         /// A human-readable error message.
@@ -166,7 +166,7 @@ pub enum EmailAddressError {
     InvalidIPAddress {
         /// The error code.
         #[cfg_attr(feature = "serde", serde(default))]
-        #[cfg_attr(feature = "utoipa", schema(inline))]
+        #[cfg_attr(feature = "utoipa", schema(inline, required))]
         code: EmailAddressErrorCode,
 
         /// A human-readable error message.
@@ -177,7 +177,7 @@ pub enum EmailAddressError {
     UnsupportedDomainLiteral {
         /// The error code.
         #[cfg_attr(feature = "serde", serde(default))]
-        #[cfg_attr(feature = "utoipa", schema(inline))]
+        #[cfg_attr(feature = "utoipa", schema(inline, required))]
         code: EmailAddressErrorCode,
 
         /// A human-readable error message.
@@ -188,7 +188,7 @@ pub enum EmailAddressError {
     UnsupportedDisplayName {
         /// The error code.
         #[cfg_attr(feature = "serde", serde(default))]
-        #[cfg_attr(feature = "utoipa", schema(inline))]
+        #[cfg_attr(feature = "utoipa", schema(inline, required))]
         code: EmailAddressErrorCode,
 
         /// A human-readable error message.
@@ -199,7 +199,7 @@ pub enum EmailAddressError {
     MissingDisplayName {
         /// The error code.
         #[cfg_attr(feature = "serde", serde(default))]
-        #[cfg_attr(feature = "utoipa", schema(inline))]
+        #[cfg_attr(feature = "utoipa", schema(inline, required))]
         code: EmailAddressErrorCode,
 
         /// A human-readable error message.
@@ -210,7 +210,7 @@ pub enum EmailAddressError {
     MissingEndBracket {
         /// The error code.
         #[cfg_attr(feature = "serde", serde(default))]
-        #[cfg_attr(feature = "utoipa", schema(inline))]
+        #[cfg_attr(feature = "utoipa", schema(inline, required))]
         code: EmailAddressErrorCode,
 
         /// A human-readable error message.
