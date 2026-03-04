@@ -30,7 +30,7 @@ pub enum PhoneNumberError {
     NoNumber {
         /// The error code.
         #[cfg_attr(feature = "serde", serde(default))]
-        #[cfg_attr(feature = "utoipa", schema(inline))]
+        #[cfg_attr(feature = "utoipa", schema(inline, required))]
         code: PhoneNumberErrorCode,
 
         /// A human-readable error message.
@@ -41,7 +41,7 @@ pub enum PhoneNumberError {
     InvalidCountryCode {
         /// The error code.
         #[cfg_attr(feature = "serde", serde(default))]
-        #[cfg_attr(feature = "utoipa", schema(inline))]
+        #[cfg_attr(feature = "utoipa", schema(inline, required))]
         code: PhoneNumberErrorCode,
 
         /// A human-readable error message.
@@ -52,7 +52,7 @@ pub enum PhoneNumberError {
     TooShortAfterIdd {
         /// The error code.
         #[cfg_attr(feature = "serde", serde(default))]
-        #[cfg_attr(feature = "utoipa", schema(inline))]
+        #[cfg_attr(feature = "utoipa", schema(inline, required))]
         code: PhoneNumberErrorCode,
 
         /// A human-readable error message.
@@ -63,7 +63,7 @@ pub enum PhoneNumberError {
     TooShortNsn {
         /// The error code.
         #[cfg_attr(feature = "serde", serde(default))]
-        #[cfg_attr(feature = "utoipa", schema(inline))]
+        #[cfg_attr(feature = "utoipa", schema(inline, required))]
         code: PhoneNumberErrorCode,
 
         /// A human-readable error message.
@@ -74,7 +74,7 @@ pub enum PhoneNumberError {
     TooLong {
         /// The error code.
         #[cfg_attr(feature = "serde", serde(default))]
-        #[cfg_attr(feature = "utoipa", schema(inline))]
+        #[cfg_attr(feature = "utoipa", schema(inline, required))]
         code: PhoneNumberErrorCode,
 
         /// A human-readable error message.
@@ -85,7 +85,7 @@ pub enum PhoneNumberError {
     MalformedInteger {
         /// The error code.
         #[cfg_attr(feature = "serde", serde(default))]
-        #[cfg_attr(feature = "utoipa", schema(inline))]
+        #[cfg_attr(feature = "utoipa", schema(inline, required))]
         code: PhoneNumberErrorCode,
 
         /// A human-readable error message.
@@ -96,7 +96,7 @@ pub enum PhoneNumberError {
     DisallowedCountryCode {
         /// The error code.
         #[cfg_attr(feature = "serde", serde(default))]
-        #[cfg_attr(feature = "utoipa", schema(inline))]
+        #[cfg_attr(feature = "utoipa", schema(inline, required))]
         code: PhoneNumberErrorCode,
 
         /// Allowed country codes.
