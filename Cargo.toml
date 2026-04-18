@@ -1,6 +1,6 @@
 [workspace]
 members = ["benchmarks/*", "examples/*", "packages/*"]
-resolver = "2"
+resolver = "3"
 
 [workspace.package]
 authors = ["Rust for Web <info@rustforweb.org>"]
