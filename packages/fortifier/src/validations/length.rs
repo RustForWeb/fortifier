@@ -320,10 +320,7 @@ mod tests {
         }
 
         assert_eq!((&"a").validate_length(Some(1), None, None), Ok(()));
-        #[expect(unused_allocation)]
-        {
-            assert_eq!(Box::new("a").validate_length(Some(1), None, None), Ok(()));
-        }
+        assert_eq!(Box::new("a").validate_length(Some(1), None, None), Ok(()));
         assert_eq!(Arc::new("a").validate_length(Some(1), None, None), Ok(()));
         assert_eq!(Rc::new("a").validate_length(Some(1), None, None), Ok(()));
 
@@ -514,19 +511,16 @@ mod tests {
                 message: "length 1 is not equal to required length 2".to_owned(),
             })
         );
-        #[expect(unused_allocation)]
-        {
-            assert_eq!(
-                Box::new("a").validate_length(Some(2), None, None),
-                Err(LengthError::Equal {
-                    equal: 2,
-                    value: 1,
-                    code: LengthErrorCode,
-                    #[cfg(feature = "message")]
-                    message: "length 1 is not equal to required length 2".to_owned(),
-                })
-            );
-        }
+        assert_eq!(
+            Box::new("a").validate_length(Some(2), None, None),
+            Err(LengthError::Equal {
+                equal: 2,
+                value: 1,
+                code: LengthErrorCode,
+                #[cfg(feature = "message")]
+                message: "length 1 is not equal to required length 2".to_owned(),
+            })
+        );
         assert_eq!(
             Arc::new("a").validate_length(Some(2), None, None),
             Err(LengthError::Equal {
@@ -750,19 +744,16 @@ mod tests {
                 message: "length 1 is less than minimum length 3".to_owned(),
             })
         );
-        #[expect(unused_allocation)]
-        {
-            assert_eq!(
-                Box::new("a").validate_length(None, Some(3), None),
-                Err(LengthError::Min {
-                    min: 3,
-                    value: 1,
-                    code: LengthErrorCode,
-                    #[cfg(feature = "message")]
-                    message: "length 1 is less than minimum length 3".to_owned(),
-                })
-            );
-        }
+        assert_eq!(
+            Box::new("a").validate_length(None, Some(3), None),
+            Err(LengthError::Min {
+                min: 3,
+                value: 1,
+                code: LengthErrorCode,
+                #[cfg(feature = "message")]
+                message: "length 1 is less than minimum length 3".to_owned(),
+            })
+        );
         assert_eq!(
             Arc::new("a").validate_length(None, Some(3), None),
             Err(LengthError::Min {
@@ -986,19 +977,16 @@ mod tests {
                 message: "length 1 is greater than maximum length 0".to_owned(),
             })
         );
-        #[expect(unused_allocation)]
-        {
-            assert_eq!(
-                Box::new("a").validate_length(None, None, Some(0)),
-                Err(LengthError::Max {
-                    max: 0,
-                    value: 1,
-                    code: LengthErrorCode,
-                    #[cfg(feature = "message")]
-                    message: "length 1 is greater than maximum length 0".to_owned(),
-                })
-            );
-        }
+        assert_eq!(
+            Box::new("a").validate_length(None, None, Some(0)),
+            Err(LengthError::Max {
+                max: 0,
+                value: 1,
+                code: LengthErrorCode,
+                #[cfg(feature = "message")]
+                message: "length 1 is greater than maximum length 0".to_owned(),
+            })
+        );
         assert_eq!(
             Arc::new("a").validate_length(None, None, Some(0)),
             Err(LengthError::Max {

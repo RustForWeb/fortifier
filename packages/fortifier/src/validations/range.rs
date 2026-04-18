@@ -414,13 +414,10 @@ mod tests {
         {
             assert_eq!((&3).validate_range(Some(1), None, None, None), Ok(()));
         }
-        #[expect(unused_allocation)]
-        {
-            assert_eq!(
-                (Box::new(3)).validate_range(Some(1), None, None, None),
-                Ok(())
-            );
-        }
+        assert_eq!(
+            (Box::new(3)).validate_range(Some(1), None, None, None),
+            Ok(())
+        );
         assert_eq!(
             (Arc::new(3)).validate_range(Some(1), None, None, None),
             Ok(())
@@ -796,19 +793,16 @@ mod tests {
                 })
             );
         }
-        #[expect(unused_allocation)]
-        {
-            assert_eq!(
-                (Box::new(3)).validate_range(Some(4), None, None, None),
-                Err(RangeError::Min {
-                    min: 4,
-                    value: 3,
-                    code: RangeErrorCode,
-                    #[cfg(feature = "message")]
-                    message: "value 3 is less than minimum value 4".to_owned(),
-                })
-            );
-        }
+        assert_eq!(
+            (Box::new(3)).validate_range(Some(4), None, None, None),
+            Err(RangeError::Min {
+                min: 4,
+                value: 3,
+                code: RangeErrorCode,
+                #[cfg(feature = "message")]
+                message: "value 3 is less than minimum value 4".to_owned(),
+            })
+        );
         assert_eq!(
             (Arc::new(3)).validate_range(Some(4), None, None, None),
             Err(RangeError::Min {
@@ -1202,19 +1196,16 @@ mod tests {
                 })
             );
         }
-        #[expect(unused_allocation)]
-        {
-            assert_eq!(
-                (Box::new(3)).validate_range(None, Some(2), None, None),
-                Err(RangeError::Max {
-                    max: 2,
-                    value: 3,
-                    code: RangeErrorCode,
-                    #[cfg(feature = "message")]
-                    message: "value 3 is greater than maximum value 2".to_owned(),
-                })
-            );
-        }
+        assert_eq!(
+            (Box::new(3)).validate_range(None, Some(2), None, None),
+            Err(RangeError::Max {
+                max: 2,
+                value: 3,
+                code: RangeErrorCode,
+                #[cfg(feature = "message")]
+                message: "value 3 is greater than maximum value 2".to_owned(),
+            })
+        );
         assert_eq!(
             (Arc::new(3)).validate_range(None, Some(2), None, None),
             Err(RangeError::Max {
@@ -1615,20 +1606,16 @@ mod tests {
                 })
             );
         }
-        #[expect(unused_allocation)]
-        {
-            assert_eq!(
-                (Box::new(3)).validate_range(None, None, Some(3), None),
-                Err(RangeError::ExclusiveMin {
-                    exclusive_min: 3,
-                    value: 3,
-                    code: RangeErrorCode,
-                    #[cfg(feature = "message")]
-                    message: "value 3 is less than or equal to exclusive minimum value 3"
-                        .to_owned(),
-                })
-            );
-        }
+        assert_eq!(
+            (Box::new(3)).validate_range(None, None, Some(3), None),
+            Err(RangeError::ExclusiveMin {
+                exclusive_min: 3,
+                value: 3,
+                code: RangeErrorCode,
+                #[cfg(feature = "message")]
+                message: "value 3 is less than or equal to exclusive minimum value 3".to_owned(),
+            })
+        );
         assert_eq!(
             (Arc::new(3)).validate_range(None, None, Some(3), None),
             Err(RangeError::ExclusiveMin {
@@ -2031,20 +2018,16 @@ mod tests {
                 })
             );
         }
-        #[expect(unused_allocation)]
-        {
-            assert_eq!(
-                (Box::new(3)).validate_range(None, None, None, Some(3)),
-                Err(RangeError::ExclusiveMax {
-                    exclusive_max: 3,
-                    value: 3,
-                    code: RangeErrorCode,
-                    #[cfg(feature = "message")]
-                    message: "value 3 is greater than or equal to exclusive maximum value 3"
-                        .to_owned(),
-                })
-            );
-        }
+        assert_eq!(
+            (Box::new(3)).validate_range(None, None, None, Some(3)),
+            Err(RangeError::ExclusiveMax {
+                exclusive_max: 3,
+                value: 3,
+                code: RangeErrorCode,
+                #[cfg(feature = "message")]
+                message: "value 3 is greater than or equal to exclusive maximum value 3".to_owned(),
+            })
+        );
         assert_eq!(
             (Arc::new(3)).validate_range(None, None, None, Some(3)),
             Err(RangeError::ExclusiveMax {

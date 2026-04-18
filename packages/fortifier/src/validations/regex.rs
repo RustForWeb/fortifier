@@ -188,10 +188,7 @@ mod tests {
         assert_eq!(Some("1234").validate_regex(&REGEX), Ok(()));
 
         assert_eq!((&"1234").validate_regex(&REGEX), Ok(()));
-        #[expect(unused_allocation)]
-        {
-            assert_eq!(Box::new("1234").validate_regex(&REGEX), Ok(()));
-        }
+        assert_eq!(Box::new("1234").validate_regex(&REGEX), Ok(()));
         assert_eq!(Arc::new("1234").validate_regex(&REGEX), Ok(()));
         assert_eq!(Rc::new("1234").validate_regex(&REGEX), Ok(()));
 
@@ -223,17 +220,14 @@ mod tests {
         );
 
         assert_eq!((&"123").validate_regex(&REGEX), Err(RegexError::default()));
-        #[expect(unused_allocation)]
-        {
-            assert_eq!(
-                Box::new("123").validate_regex(&REGEX),
-                Err(RegexError {
-                    code: RegexErrorCode,
-                    #[cfg(feature = "message")]
-                    message: "value does not match regular expression".to_owned(),
-                })
-            );
-        }
+        assert_eq!(
+            Box::new("123").validate_regex(&REGEX),
+            Err(RegexError {
+                code: RegexErrorCode,
+                #[cfg(feature = "message")]
+                message: "value does not match regular expression".to_owned(),
+            })
+        );
         assert_eq!(
             Arc::new("123").validate_regex(&REGEX),
             Err(RegexError::default())

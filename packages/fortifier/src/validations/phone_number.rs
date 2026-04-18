@@ -347,13 +347,10 @@ mod tests {
             (&"+44 20 7946 0000").validate_phone_number(None, None),
             Ok(())
         );
-        #[expect(unused_allocation)]
-        {
-            assert_eq!(
-                Box::new("+44 20 7946 0000").validate_phone_number(None, None),
-                Ok(())
-            );
-        }
+        assert_eq!(
+            Box::new("+44 20 7946 0000").validate_phone_number(None, None),
+            Ok(())
+        );
         assert_eq!(
             Arc::new("+44 20 7946 0000").validate_phone_number(None, None),
             Ok(())
@@ -400,13 +397,10 @@ mod tests {
             (&"+44").validate_phone_number(None, None),
             Err(PhoneNumberError::from(ParseError::NoNumber))
         );
-        #[expect(unused_allocation)]
-        {
-            assert_eq!(
-                Box::new("+44").validate_phone_number(None, None),
-                Err(PhoneNumberError::from(ParseError::NoNumber))
-            );
-        }
+        assert_eq!(
+            Box::new("+44").validate_phone_number(None, None),
+            Err(PhoneNumberError::from(ParseError::NoNumber))
+        );
         assert_eq!(
             Arc::new("+44").validate_phone_number(None, None),
             Err(PhoneNumberError::from(ParseError::NoNumber))

@@ -353,10 +353,7 @@ mod tests {
         assert_eq!(Some("http://localhost").validate_url(), Ok(()));
 
         assert_eq!((&"http://localhost").validate_url(), Ok(()));
-        #[expect(unused_allocation)]
-        {
-            assert_eq!(Box::new("http://localhost").validate_url(), Ok(()));
-        }
+        assert_eq!(Box::new("http://localhost").validate_url(), Ok(()));
         assert_eq!(Arc::new("http://localhost").validate_url(), Ok(()));
         assert_eq!(Rc::new("http://localhost").validate_url(), Ok(()));
 
@@ -397,17 +394,14 @@ mod tests {
             (&"http://").validate_url(),
             Err(UrlError::from(ParseError::EmptyHost))
         );
-        #[expect(unused_allocation)]
-        {
-            assert_eq!(
-                Box::new("http://").validate_url(),
-                Err(UrlError::EmptyHost {
-                    code: UrlErrorCode,
-                    #[cfg(feature = "message")]
-                    message: "empty host".to_owned(),
-                })
-            );
-        }
+        assert_eq!(
+            Box::new("http://").validate_url(),
+            Err(UrlError::EmptyHost {
+                code: UrlErrorCode,
+                #[cfg(feature = "message")]
+                message: "empty host".to_owned(),
+            })
+        );
         assert_eq!(
             Arc::new("http://").validate_url(),
             Err(UrlError::from(ParseError::EmptyHost))
