@@ -460,13 +460,10 @@ mod tests {
         );
 
         assert_eq!((&"admin@localhost").validate_email_address(options), Ok(()));
-        #[expect(unused_allocation)]
-        {
-            assert_eq!(
-                Box::new("admin@localhost").validate_email_address(options),
-                Ok(())
-            );
-        }
+        assert_eq!(
+            Box::new("admin@localhost").validate_email_address(options),
+            Ok(())
+        );
         assert_eq!(
             Arc::new("admin@localhost").validate_email_address(options),
             Ok(())
@@ -535,15 +532,12 @@ mod tests {
                 email_address::Error::MissingSeparator
             ))
         );
-        #[expect(unused_allocation)]
-        {
-            assert_eq!(
-                Box::new("admin").validate_email_address(options),
-                Err(EmailAddressError::from(
-                    email_address::Error::MissingSeparator
-                ))
-            );
-        }
+        assert_eq!(
+            Box::new("admin").validate_email_address(options),
+            Err(EmailAddressError::from(
+                email_address::Error::MissingSeparator
+            ))
+        );
         assert_eq!(
             Arc::new("admin").validate_email_address(options),
             Err(EmailAddressError::from(
