@@ -18,7 +18,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let address = SocketAddr::new(IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1)), 8080);
     let listener = TcpListener::bind(&address).await?;
 
-    println!("listening on http://{}", &address);
+    println!("listening on http://{}", address);
     axum::serve(listener, router).await?;
 
     Ok(())

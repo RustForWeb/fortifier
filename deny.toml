@@ -6,6 +6,8 @@ ignore = [
     { id = "RUSTSEC-2023-0089", reason = "No maintained version available for `atomic-polyfill`." },
     { id = "RUSTSEC-2024-0436", reason = "No maintained version available for `paste`." },
     { id = "RUSTSEC-2026-0173", reason = "No maintained version available for `proc-macro-error2`." },
+    { id = "RUSTSEC-2026-0194", reason = "No safe upgrade available for `quick-xml` due to other depedencies." },
+    { id = "RUSTSEC-2026-0195", reason = "No safe upgrade available for `quick-xml` due to other depedencies." },
 ]
 yanked = "deny"
 
