@@ -18,7 +18,7 @@ validator = ["dep:validator"]
 
 [dependencies]
 fortifier = { workspace = true, features = ["email-address", "serde", "url"], optional = true }
-validator = { version = "0.20.0", features = ["derive"], optional = true }
+validator = { version = "0.21.0", features = ["derive"], optional = true }
 
 [lints]
 workspace = true
