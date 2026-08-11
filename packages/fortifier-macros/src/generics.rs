@@ -176,7 +176,7 @@ fn const_param_matches_argument(_param: &ConstParam, argument: &GenericArgument)
 fn type_matches_ident(r#type: &Type, ident: &Ident) -> bool {
     match r#type {
         Type::Array(_) => false,
-        Type::BareFn(_) => false,
+        Type::FnPtr(_) => false,
         Type::Group(r#type) => type_matches_ident(&r#type.elem, ident),
         Type::ImplTrait(_) => false,
         Type::Infer(_) => false,

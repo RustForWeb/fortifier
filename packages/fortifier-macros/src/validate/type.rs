@@ -418,7 +418,7 @@ pub fn should_validate_type(generics: &Generics, r#type: &Type) -> Option<Valida
                 result
             })
         },
-        Type::BareFn(_) => None,
+        Type::FnPtr(_) => None,
         Type::Group(r#type) => should_validate_type(generics, &r#type.elem),
         Type::ImplTrait(r#type) => {
             r#type.bounds
