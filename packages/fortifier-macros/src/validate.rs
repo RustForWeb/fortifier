@@ -60,6 +60,7 @@ impl<'a> Validate<'a> {
                     result.validations.push(Box::new(Custom::parse(
                         // Type is never used in the custom validation, so pass an arbitrary value.
                         &Type::Never(TypeNever {
+                            attrs: Default::default(),
                             bang_token: Default::default(),
                         }),
                         &meta,
@@ -104,6 +105,7 @@ impl<'a> ToTokens for Validate<'a> {
         let context_type = match &self.context_type {
             Some(context_type) => context_type,
             None => &Type::Tuple(TypeTuple {
+                attrs: Default::default(),
                 paren_token: Default::default(),
                 elems: Punctuated::new(),
             }),
