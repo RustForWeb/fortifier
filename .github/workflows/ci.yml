@@ -12,4 +12,4 @@ permissions:
 jobs:
     rust:
         name: Rust
-        uses: RustForWeb/.github/.github/workflows/rust.yml@d6e6ead9b4da3d70245d3ee4e06fe339244bb200
+        uses: RustForWeb/.github/.github/workflows/rust.yml@dc2442c27ef9f920a1a889ec94e615b419b491b2 # v1.0.1
