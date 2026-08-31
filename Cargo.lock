@@ -244,9 +244,9 @@ dependencies = [
 
 [[package]]
 name = "constant-string"
-version = "1.0.1"
+version = "1.0.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "fca1829c3b093c20be8a8c35d5dba5a251ae2e2e7bac8398b9364eb8cf77cd47"
+checksum = "9c61e04c6bf963f8ff079339d646f31f201aca5f912a85eaba8d40ee6025e191"
 dependencies = [
  "serde",
  "utoipa",
