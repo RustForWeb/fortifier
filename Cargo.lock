@@ -324,7 +324,7 @@ dependencies = [
 
 [[package]]
 name = "fortifier"
-version = "0.2.15"
+version = "0.2.16"
 dependencies = [
  "cfg-if",
  "chrono",
@@ -345,7 +345,7 @@ dependencies = [
 
 [[package]]
 name = "fortifier-benchmark-compile"
-version = "0.2.15"
+version = "0.2.16"
 dependencies = [
  "fortifier",
  "validator",
@@ -353,7 +353,7 @@ dependencies = [
 
 [[package]]
 name = "fortifier-example-basic"
-version = "0.2.15"
+version = "0.2.16"
 dependencies = [
  "fortifier",
  "regex",
@@ -362,7 +362,7 @@ dependencies = [
 
 [[package]]
 name = "fortifier-example-generics"
-version = "0.2.15"
+version = "0.2.16"
 dependencies = [
  "fortifier",
  "serde",
@@ -371,7 +371,7 @@ dependencies = [
 
 [[package]]
 name = "fortifier-example-server"
-version = "0.2.15"
+version = "0.2.16"
 dependencies = [
  "axum",
  "fortifier",
@@ -386,7 +386,7 @@ dependencies = [
 
 [[package]]
 name = "fortifier-macros"
-version = "0.2.15"
+version = "0.2.16"
 dependencies = [
  "convert_case",
  "proc-macro-crate",
@@ -397,7 +397,7 @@ dependencies = [
 
 [[package]]
 name = "fortifier-macros-tests"
-version = "0.2.15"
+version = "0.2.16"
 dependencies = [
  "chrono",
  "constant-string",
