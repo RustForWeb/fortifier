@@ -276,9 +276,9 @@ checksum = "0e9c71c2167ca323c882b99918929403426e2373ea17242ff5653e0d5e1058be"
 
 [[package]]
 name = "email_address"
-version = "0.2.9"
+version = "0.2.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e079f19b08ca6239f47f8ba8509c11cf3ea30095831f7fed61441475edd8c449"
+checksum = "5ab6bbd053d3cdc62ba3de82aae11530a97bbd5b3a572fbdbcd0f0e545e3ff21"
 dependencies = [
  "serde",
 ]
